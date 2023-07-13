@@ -75,9 +75,6 @@ def fetch_and_save_pool_data(
         t0debt = Decimal(pool_data["t0debt"])
         pending_inflator = Decimal(inflators.get(pool_data["id"], 1))
         debt = t0debt * pending_inflator
-        actual_utilization = Decimal("0")
-        if pool_size > 0:
-            actual_utilization = debt / pool_size
 
         # If lup is max price, set it to 0 as max price means there are no loans
         lup = Decimal(pool_data["lup"])
@@ -117,7 +114,7 @@ def fetch_and_save_pool_data(
             "burn_epoch": pool_data["burnEpoch"],
             "total_ajna_burned": pool_data["totalAjnaBurned"],
             "min_debt_amount": pool_data["minDebtAmount"],
-            "actual_utilization": actual_utilization,
+            "actual_utilization": pool_data["actualUtilization"],
             "target_utilization": pool_data["targetUtilization"],
             "total_bond_escrowed": pool_data["totalBondEscrowed"],
             "quote_token_balance": pool_data["quoteTokenBalance"],
