@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/requirements"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    reviewers:
+      - "0xCommanderKeen"
+    labels:
+      - "dependencies"
+      - "automerge"

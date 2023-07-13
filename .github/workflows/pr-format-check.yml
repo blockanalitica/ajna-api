@@ -1,0 +1,36 @@
+name: Pull request format check
+
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize, edited ]
+    branches:
+      - main
+
+jobs:
+  check-pull-request:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Pull Request - Title verification (starts with "feat: PR title" or "Merge pull request...")'
+        if: always()
+        uses: gsactions/commit-message-checker@v1
+        with:
+          pattern: '^(?:feat|fix|docs|style|refactor|revert|perf|test|build|ci|chore(deps)|deps)\!?: .+| [A-Za-z].+$'
+          flags: 'g'
+          error: 'Pull request - Title not in correct format (e.g.: "feat: Short title" or "revert: Short title")'
+          excludeDescription: 'true'
+
+      - name: Pull Request - Title verification (must not end with "." dot)
+        uses: gsactions/commit-message-checker@v1
+        with:
+          pattern: '^.+[^\.]$'
+          error: 'Pull request - Title must not end with dot "."'
+          excludeDescription: 'true'
+
+      - name: Pull Request - Title length validation
+        if: always()
+        uses: gsactions/commit-message-checker@v1
+        with:
+          pattern: '^[^#].{0,80}$'
+          error: 'Pull Request - Maximum title line length is 80 characters'
+          excludeDescription: 'true'

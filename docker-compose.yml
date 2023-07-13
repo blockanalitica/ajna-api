@@ -1,0 +1,49 @@
+version: "3.10"
+volumes:
+  ipython_data_local: {}
+services:
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile.local
+    env_file:
+      - .env
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+      - ipython_data_local:/root/.ipython/profile_default # persist ipython data, including ipython history
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - cache
+    environment:
+      - AJNA_DB_HOST=db
+      - AJNA_DB_PASSWORD=postgres
+      - AJNA_DB_PORT=5432
+      - AJNA_DB_USER=ajna
+      - AJNA_DB_NAME=ajna
+      - AJNA_DEBUG=1
+      - AJNA_INTERNAL_IPS=172.18.0.1;0.0.0.0;localhost;127.0.0.1
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - AJNA_CORS_ALLOWED_ORIGINS=http://localhost:3000
+      - AJNA_REDIS_HOST=cache
+      - AJNA_REDIS_PORT=6379
+    mem_limit: 800M
+  db:
+    image: postgres:15.2
+    command: >
+      -c max_wal_size=16384
+    volumes:
+      - ./.data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=ajna
+      - POSTGRES_USER=ajna
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5436:5432"
+
+  cache:
+    image: redis:7.0
+    ports:
+      - "6375:6379"

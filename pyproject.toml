@@ -1,0 +1,19 @@
+[tool.black]
+target-version = ["py310"]
+exclude=".*/migrations/.*"
+extend-exclude = '''
+/(
+  # The following are specific to Black, you probably don't want those.
+  | .data
+)/
+'''
+skip-numeric-underscore-normalization = true
+
+
+[tool.isort]
+profile = "black"
+skip_glob="*/migrations/*"
+
+
+[tool.pytest.ini_options]
+addopts = "--ds=config.settings.test --no-migrations --capture=no --verbose"
