@@ -22,7 +22,7 @@ Ajna API is Django-based web application that provides a RESTful API for the Ajn
 
 The application is designed to interact seamlessly with various data sources, primarily utilizing Subgraph as the primary data source. This ensures that the API is always up-to-date with the latest information, providing accurate and reliable data for the Ajna Analytics Dashboard.
 
-Ajna API serves as the backend for the Ajna Analytics Dashboard, which is a separate project with its own repository, focusing on the user interface and user experience. You can find the Ajna Analytics Dashboard UI project at this link: [Ajna Analytics Dashboard UI](https://github.com/blockanalitica/ajna-info)
+Ajna API serves as the backend for the Ajna Analytics Dashboard, which is a separate project with its own repository, focusing on the user interface and user experience. You can find the Ajna Analytics Dashboard UI project at this link: [Ajna Analytics Dashboard UI](https://github.com/blockanalitica/ajna-api)
 
 ## Installation
 
@@ -30,8 +30,8 @@ Ajna API serves as the backend for the Ajna Analytics Dashboard, which is a sepa
 
 To install and run Ajna API using Docker Compose, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/blockanalitica/ajna-info-api.git`
-2. Navigate to the project directory: `cd ajna-info-api`
+1. Clone the repository: `git clone https://github.com/blockanalitica/ajna-api.git`
+2. Navigate to the project directory: `cd ajna-api`
 3. Create a `.env` file with the necessary environment variables (see `.env.example` for an example)
 4. Install dependencies: `docker compose build`
 5. Run migrations: `docker compose run --rm web django-admin migrate`
@@ -42,8 +42,8 @@ To install and run Ajna API using Docker Compose, follow these steps:
 
 To install and run Ajna API using `python manage.py`, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/blockanalitica/ajna-info-api.git`
-2. Navigate to the project directory: `cd ajna-info-api`
+1. Clone the repository: `git clone https://github.com/blockanalitica/ajna-api.git`
+2. Navigate to the project directory: `cd ajna-api`
 3. Install dependencies: `pip install -r requirements.txt -r lint-requirements.txt`
 4. Run migrations: `python manage.py migrate`
 5. Run the development server: `python manage.py runserver`
