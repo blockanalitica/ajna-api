@@ -72,7 +72,7 @@ class Subgraph:
             if len(data) < page_size:
                 break
 
-            log.warning(
+            log.error(
                 "Potential data loss while fetching from subgraph",
                 extra={
                     "endpoint": self.client.endpoint,

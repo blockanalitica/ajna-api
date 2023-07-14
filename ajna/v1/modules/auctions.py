@@ -1,9 +1,19 @@
 from datetime import datetime
 from decimal import Decimal
 
+from web3 import Web3
+
+
+def _get_wallet_address(chain, address):
+    address = Web3.toChecksumAddress(address)
+    code = chain.eth.get_code(address).hex()
+    if len(code) > 2:
+        address = chain.get_eoa(address)
+    return address.lower()
+
 
 def fetch_and_save_settled_liquidation_auctions(
-    subgraph, liquidation_auction_model, price_feed_model, settle_time=0
+    chain, subgraph, liquidation_auction_model, price_feed_model, settle_time=0
 ):
     """
     Fetches liquidationAuctions from the Subgraph and saves it to the LiquidationAuctions
@@ -44,6 +54,9 @@ def fetch_and_save_settled_liquidation_auctions(
                 .earliest()
                 .price
             )
+
+        wallet_address = _get_wallet_address(chain, auction["borrower"])
+
         liquidation_auction_model.objects.update_or_create(
             uid=auction["id"],
             defaults={
@@ -57,6 +70,7 @@ def fetch_and_save_settled_liquidation_auctions(
                 "collateral_remaining": Decimal(auction["collateralRemaining"]),
                 "collateral": Decimal(auction["collateral"]),
                 "borrower": auction["borrower"],
+                "wallet_address": wallet_address,
                 "bond_size": Decimal(auction["bondSize"]),
                 "bond_factor": Decimal(auction["bondFactor"]),
                 "last_take_price": Decimal(auction["lastTakePrice"]),
@@ -70,7 +84,9 @@ def fetch_and_save_settled_liquidation_auctions(
         )
 
 
-def fetch_and_save_active_liquidation_auctions(subgraph, liquidation_auction_model):
+def fetch_and_save_active_liquidation_auctions(
+    chain, subgraph, liquidation_auction_model
+):
     """
     Fetches liquidationAuctions from the Subgraph and saves it to the LiquidationAuctions
     model.
@@ -79,6 +95,7 @@ def fetch_and_save_active_liquidation_auctions(subgraph, liquidation_auction_mod
     for auction in auctions:
         collateral_token_address = auction["pool"]["collateralToken"]["id"]
         debt_token_address = auction["pool"]["quoteToken"]["id"]
+        wallet_address = _get_wallet_address(chain, auction["borrower"])
         liquidation_auction_model.objects.update_or_create(
             uid=auction["id"],
             defaults={
@@ -92,6 +109,7 @@ def fetch_and_save_active_liquidation_auctions(subgraph, liquidation_auction_mod
                 "collateral_remaining": Decimal(auction["collateralRemaining"]),
                 "collateral": Decimal(auction["collateral"]),
                 "borrower": auction["borrower"],
+                "wallet_address": wallet_address,
                 "bond_size": Decimal(auction["bondSize"]),
                 "bond_factor": Decimal(auction["bondFactor"]),
                 "last_take_price": Decimal(auction["lastTakePrice"]),
