@@ -13,6 +13,7 @@ class Command(BaseCommand):
         auctions = models.liqudation_auction.objects.all()
         for auction in auctions:
             auction.wallet_address = _get_wallet_address(chain, auction.borrower)
+            auction.save()
 
     def _fix_goerli(self):
         self.stdout.write("Fixing goerli auctions")
@@ -21,6 +22,7 @@ class Command(BaseCommand):
         auctions = models.liqudation_auction.objects.all()
         for auction in auctions:
             auction.wallet_address = _get_wallet_address(chain, auction.borrower)
+            auction.save()
 
     def handle(self, *args, **options):
         self._fix_eth()
