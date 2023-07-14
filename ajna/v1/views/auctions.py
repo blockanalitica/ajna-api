@@ -31,6 +31,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , la.debt
                 , la.collateral
                 , la.borrower
+                , la.wallet_address
                 , la.debt * la.debt_underlying_price AS debt_usd
                 , la.collateral * la.collateral_underlying_price AS collateral_usd
                 , la.pool_address
@@ -175,6 +176,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 , la.collateral
                 , la.collateral_remaining
                 , la.borrower
+                , la.wallet_address
                 , tc.symbol AS collateral_token_symbol
                 , td.symbol AS debt_token_symbol
             FROM {liqudation_auction_table} la
