@@ -212,12 +212,14 @@ def sync_liquidation_auctions_tasks():
     else:
         last_settle_time = 0
 
+    chain = Ethereum()
     subgraph = EthereumSubgraph()
     fetch_and_save_settled_liquidation_auctions(
-        subgraph, models.liqudation_auction, models.price_feed, last_settle_time
+        chain, subgraph, models.liqudation_auction, models.price_feed, last_settle_time
     )
-    subgraph = EthereumSubgraph()
-    fetch_and_save_active_liquidation_auctions(subgraph, models.liqudation_auction)
+    fetch_and_save_active_liquidation_auctions(
+        chain, subgraph, models.liqudation_auction
+    )
 
 
 @app.task

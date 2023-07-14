@@ -287,6 +287,7 @@ class LiquidationAuction(models.Model):
     collateral_remaining = models.DecimalField(max_digits=32, decimal_places=18)
     collateral = models.DecimalField(max_digits=32, decimal_places=18)
     borrower = models.CharField(max_length=42)
+    wallet_address = models.CharField(max_length=42, null=True)
     bond_size = models.DecimalField(max_digits=32, decimal_places=18)
     bond_factor = models.DecimalField(max_digits=32, decimal_places=18)
     last_take_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)

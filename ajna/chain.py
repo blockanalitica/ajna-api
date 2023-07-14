@@ -64,3 +64,18 @@ class Blockchain:
         multi = Multicall(multicalls, _w3=self.web3, block_id=block_id)
 
         return multi()
+
+    def get_eoa(self, contract_address):
+        abi = [
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function",
+            },
+        ]
+        contract = self.eth.contract(
+            address=Web3.toChecksumAddress(contract_address), abi=abi
+        )
+        return contract.caller.owner()
