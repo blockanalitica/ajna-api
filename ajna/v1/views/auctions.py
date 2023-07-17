@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from ajna.utils.db import fetch_all, fetch_one
+from ajna.utils.utils import date_to_timestamp
 
 from . import BaseChainView, RawSQLPaginatedChainView
 
@@ -53,7 +54,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
 
 
 class AuctionsSettledGraphsView(BaseChainView):
-    def _get_collateral_graph_data(self, date_trunc):
+    def _get_collateral_graph_data(self, from_ts, date_trunc):
         sql = """
             SELECT
                 DATE_TRUNC(%s, TO_TIMESTAMP(la.settle_time)) AS date
@@ -72,11 +73,11 @@ class AuctionsSettledGraphsView(BaseChainView):
         )
 
         with connection.cursor() as cursor:
-            cursor.execute(sql, [date_trunc, self.days_ago_dt.timestamp()])
+            cursor.execute(sql, [date_trunc, from_ts])
             auctions = fetch_all(cursor)
         return auctions
 
-    def _get_debt_graph_data(self, date_trunc):
+    def _get_debt_graph_data(self, from_ts, date_trunc):
         sql = """
             SELECT
                 DATE_TRUNC(%s, TO_TIMESTAMP(la.settle_time)) AS date
@@ -95,17 +96,21 @@ class AuctionsSettledGraphsView(BaseChainView):
         )
 
         with connection.cursor() as cursor:
-            cursor.execute(sql, [date_trunc, self.days_ago_dt.timestamp()])
+            cursor.execute(sql, [date_trunc, from_ts])
             auctions = fetch_all(cursor)
         return auctions
 
     def get(self, request, graph_type):
         date_trunc = "day" if self.days_ago <= 30 else "month"
+
+        # Always select the full day, otherwise bar chart doesn't make sense
+        from_ts = date_to_timestamp(self.days_ago_dt)
+
         match graph_type:
             case "collateral":
-                data = self._get_collateral_graph_data(date_trunc)
+                data = self._get_collateral_graph_data(from_ts, date_trunc)
             case "debt":
-                data = self._get_debt_graph_data(date_trunc)
+                data = self._get_debt_graph_data(from_ts, date_trunc)
             case _:
                 raise Http404
 
