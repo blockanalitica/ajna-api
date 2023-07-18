@@ -332,13 +332,13 @@ class PoolHistoricView(BaseChainView):
 
     days_ago_required = False
     days_ago_default = 7
-    days_ago_options = [1, 7, 30, 365]
+    days_ago_options = [30, 365]
 
-    def _get_tvl(self, pool_address, trunc):
+    def _get_tvl(self, pool_address):
         sql_vars = [self.days_ago_dt, pool_address]
         sql = """
-            SELECT DISTINCT ON (DATE_TRUNC('{date_trunc}', ps.datetime))
-                  DATE_TRUNC('{date_trunc}', ps.datetime) AS date
+            SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
+                  DATE_TRUNC('day', ps.datetime) AS date
                 , (ps.collateral_token_balance * ps.collateral_token_price)
                   + (quote_token_balance * ps.quote_token_price) AS amount
             FROM {pool_snapshot_table} ps
@@ -346,68 +346,64 @@ class PoolHistoricView(BaseChainView):
             ORDER BY 1, ps.datetime DESC
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            date_trunc=trunc,
         )
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_vars)
             data = fetch_all(cursor)
         return data
 
-    def _get_pool_size(self, pool_address, trunc):
+    def _get_pool_size(self, pool_address):
         sql_vars = [self.days_ago_dt, pool_address]
         sql = """
-            SELECT DISTINCT ON (DATE_TRUNC('{date_trunc}', ps.datetime))
-                  DATE_TRUNC('{date_trunc}', ps.datetime) AS date
+            SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
+                  DATE_TRUNC('day', ps.datetime) AS date
                 , ps.pool_size AS amount
             FROM {pool_snapshot_table} ps
             WHERE ps.datetime >= %s AND ps.address = %s
             ORDER BY 1, ps.datetime DESC
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            date_trunc=trunc,
         )
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_vars)
             data = fetch_all(cursor)
         return data
 
-    def _get_debt(self, pool_address, trunc):
+    def _get_debt(self, pool_address):
         sql_vars = [self.days_ago_dt, pool_address]
         sql = """
-            SELECT DISTINCT ON (DATE_TRUNC('{date_trunc}', ps.datetime))
-                  DATE_TRUNC('{date_trunc}', ps.datetime) AS date
+            SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
+                  DATE_TRUNC('day', ps.datetime) AS date
                 , ps.t0debt * ps.pending_inflator AS amount
             FROM {pool_snapshot_table} ps
             WHERE ps.datetime >= %s AND ps.address = %s
             ORDER BY 1, ps.datetime DESC
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            date_trunc=trunc,
         )
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_vars)
             data = fetch_all(cursor)
         return data
 
-    def _get_pledged_collateral(self, pool_address, trunc):
+    def _get_pledged_collateral(self, pool_address):
         sql_vars = [self.days_ago_dt, pool_address]
         sql = """
-            SELECT DISTINCT ON (DATE_TRUNC('{date_trunc}', ps.datetime))
-                  DATE_TRUNC('{date_trunc}', ps.datetime) AS date
+            SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
+                  DATE_TRUNC('day', ps.datetime) AS date
                 , ps.pledged_collateral AS amount
             FROM {pool_snapshot_table} ps
             WHERE ps.datetime >= %s AND ps.address = %s
             ORDER BY 1, ps.datetime DESC
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            date_trunc=trunc,
         )
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_vars)
             data = fetch_all(cursor)
         return data
 
-    def _get_volume(self, pool_address, trunc):
+    def _get_volume(self, pool_address):
         sql_vars = [self.days_ago_dt.date(), pool_address]
         sql = """
             SELECT
@@ -445,24 +441,45 @@ class PoolHistoricView(BaseChainView):
         )
         return data
 
-    def get(self, request, pool_address, historic_type):
-        if self.days_ago <= 7:
+    def _get_apr(self, pool_address):
+        if self.days_ago == 30:
             trunc = "hour"
         else:
             trunc = "day"
 
+        sql_vars = [self.days_ago_dt, pool_address]
+        sql = """
+            SELECT DISTINCT ON (DATE_TRUNC('{date_trunc}', ps.datetime))
+                  DATE_TRUNC('{date_trunc}', ps.datetime) AS date
+                , ps.lend_rate AS lend_rate
+                , ps.borrow_rate AS borrow_rate
+            FROM {pool_snapshot_table} ps
+            WHERE ps.datetime >= %s AND ps.address = %s
+            ORDER BY 1, ps.datetime DESC
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            date_trunc=trunc,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+        return data
+
+    def get(self, request, pool_address, historic_type):
         data = None
         match historic_type:
             case "tvl":
-                data = self._get_tvl(pool_address, trunc)
+                data = self._get_tvl(pool_address)
             case "pool_size":
-                data = self._get_pool_size(pool_address, trunc)
+                data = self._get_pool_size(pool_address)
             case "debt":
-                data = self._get_debt(pool_address, trunc)
+                data = self._get_debt(pool_address)
             case "pledged_collateral":
-                data = self._get_pledged_collateral(pool_address, trunc)
+                data = self._get_pledged_collateral(pool_address)
             case "volume":
-                data = self._get_volume(pool_address, trunc)
+                data = self._get_volume(pool_address)
+            case "apr":
+                data = self._get_apr(pool_address)
             case _:
                 raise Http404
 
