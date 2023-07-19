@@ -466,6 +466,30 @@ class PoolHistoricView(BaseChainView):
             data = fetch_all(cursor)
         return data
 
+    def _get_mau_tu(self, pool_address):
+        if self.days_ago == 30:
+            trunc = "hour"
+        else:
+            trunc = "day"
+
+        sql_vars = [self.days_ago_dt, pool_address]
+        sql = """
+            SELECT DISTINCT ON (DATE_TRUNC('{date_trunc}', ps.datetime))
+                  DATE_TRUNC('{date_trunc}', ps.datetime) AS date
+                , ps.actual_utilization
+                , ps.target_utilization
+            FROM {pool_snapshot_table} ps
+            WHERE ps.datetime >= %s AND ps.address = %s
+            ORDER BY 1, ps.datetime DESC
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            date_trunc=trunc,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+        return data
+
     def get(self, request, pool_address, historic_type):
         data = None
         match historic_type:
@@ -481,6 +505,8 @@ class PoolHistoricView(BaseChainView):
                 data = self._get_volume(pool_address)
             case "apr":
                 data = self._get_apr(pool_address)
+            case "mau_tu":
+                data = self._get_mau_tu(pool_address)
             case _:
                 raise Http404
 
