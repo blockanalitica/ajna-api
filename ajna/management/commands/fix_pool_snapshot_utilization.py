@@ -1,8 +1,9 @@
 from decimal import Decimal
+
 from django.core.management.base import BaseCommand
 
-from ajna.v1.goerli.chain import GoerliModels
 from ajna.v1.ethereum.chain import EthereumModels
+from ajna.v1.goerli.chain import GoerliModels
 
 
 class Command(BaseCommand):
