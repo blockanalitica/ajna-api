@@ -104,6 +104,7 @@ class PoolFactory(factory.django.DjangoModelFactory):
     min_debt_amount = factory.Faker(
         "pydecimal", min_value=0, max_value=10000, right_digits=18
     )
+    utilization = factory.Faker("random_int", min=0, max=100)
     actual_utilization = factory.Faker("random_int", min=0, max=100)
     target_utilization = factory.Faker("random_int", min=0, max=100)
     total_bond_escrowed = factory.Faker(

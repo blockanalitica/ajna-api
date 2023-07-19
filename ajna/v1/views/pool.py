@@ -116,6 +116,7 @@ class PoolView(BaseChainView):
                     / NULLIF(
                         (pool.t0debt * pool.pending_inflator * quote_token.underlying_price), 0)
                     ) as collateralization
+                , pool.utilization
                 , pool.actual_utilization
                 , pool.target_utilization
                 , pool.quote_token_balance
