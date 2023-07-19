@@ -119,7 +119,7 @@ def fetch_and_save_pool_data(
             "total_ajna_burned": pool_data["totalAjnaBurned"],
             "min_debt_amount": pool_data["minDebtAmount"],
             "utilization": utilization,
-            "actual_utilization": utilization,
+            "actual_utilization": pool_data["actualUtilization"],
             "target_utilization": pool_data["targetUtilization"],
             "total_bond_escrowed": pool_data["totalBondEscrowed"],
             "quote_token_balance": pool_data["quoteTokenBalance"],
