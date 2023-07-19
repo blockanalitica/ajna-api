@@ -29,8 +29,10 @@ class PoolBase(models.Model):
     burn_epoch = models.BigIntegerField()
     total_ajna_burned = models.DecimalField(max_digits=32, decimal_places=18)
     min_debt_amount = models.DecimalField(max_digits=32, decimal_places=18)
-    actual_utilization = models.DecimalField(max_digits=32, decimal_places=18)
-    target_utilization = models.DecimalField(max_digits=32, decimal_places=18)
+    # Our calculation of utilization
+    utilization = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    actual_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # MAU
+    target_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # TU
     total_bond_escrowed = models.DecimalField(max_digits=32, decimal_places=18)
 
     datetime = models.DateTimeField(db_index=True)
@@ -74,17 +76,6 @@ class PoolSnapshot(PoolBase):
     class Meta:
         abstract = True
         unique_together = ("address", "datetime")
-
-
-# class PoolCreated(models.Model):
-#     pool = models.CharField(max_length=42, unique=True)
-#     block_number = models.BigIntegerField()
-#     timestamp = models.BigIntegerField()
-#     datetime = models.DateTimeField()
-#     transaction_hash = models.CharField(max_length=66, null=True)
-
-#     def __str__(self):
-#         return self.pool
 
 
 class Token(models.Model):
