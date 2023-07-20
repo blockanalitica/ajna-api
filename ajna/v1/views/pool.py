@@ -109,6 +109,9 @@ class PoolView(BaseChainView):
                 , pool.lup
                 , pool.htp
                 , pool.hpb
+                , pool.lup_index
+                , pool.htp_index
+                , pool.hpb_index
                 , pool.lend_rate
                 , pool.borrow_rate
                 , pool.total_ajna_burned
