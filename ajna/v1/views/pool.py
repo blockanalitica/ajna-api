@@ -914,9 +914,7 @@ class PoolLendersCsvView(BaseChainView):
             "amount_usd",
             "token_symbol",
         ]
-        writer = csv.DictWriter(
-            response, fieldnames=fieldnames, dialect='unix'
-        )
+        writer = csv.DictWriter(response, fieldnames=fieldnames, dialect="unix")
         writer.writeheader()
         writer.writerows(borrowers)
         return response
