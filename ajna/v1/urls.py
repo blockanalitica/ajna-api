@@ -93,4 +93,15 @@ urlpatterns = [
         auctions.AuctionsActiveView.as_view(),
         name="auctions-active",
     ),
+    # URLS that we use internally
+    path(
+        "pools/<pool_address>/borrowers-csv/",
+        pool.PoolBorrowersCsvView.as_view(),
+        name="pool-borrowers-csv",
+    ),
+    path(
+        "pools/<pool_address>/lenders-csv/",
+        pool.PoolLendersCsvView.as_view(),
+        name="pool-lenders-csv",
+    ),
 ]
