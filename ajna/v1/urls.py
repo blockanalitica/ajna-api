@@ -34,6 +34,11 @@ urlpatterns = [
         name="pool-events",
     ),
     path(
+        "pools/<pool_address>/borrowers/",
+        pool.PoolBorrowersView.as_view(),
+        name="pool-borrowers",
+    ),
+    path(
         "tokens/",
         tokens.TokensView.as_view(),
         name="tokens",

@@ -700,3 +700,67 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 sql_vars = [pool_address, timestamp] * 6
 
         return sql, sql_vars
+
+
+class PoolBorrowersView(RawSQLPaginatedChainView):
+    order_nulls_last = True
+    default_order = "-debt"
+    ordering_fields = [
+        "debt",
+        "collateral",
+        "health_rate",
+    ]
+
+    def get_raw_sql(self, pool_address, search_filters, query_params, **kwargs):
+        sql_vars = [pool_address, pool_address]
+        sql = """
+            SELECT
+                  y.borrower
+                , y.debt AS debt
+                , y.debt * quote_token.underlying_price AS debt_usd
+                , y.collateral
+                , y.collateral * collateral_token.underlying_price AS collateral_usd
+                , collateral_token.symbol AS collateral_token_symbol
+                , quote_token.symbol AS quote_token_symbol
+                , (y.collateral * collateral_token.underlying_price) /
+                  (y.debt * quote_token.underlying_price) as health_rate
+            FROM (
+                SELECT
+                      x.borrower
+                    , x.pool_address
+                    , SUM(x.debt) AS debt
+                    , SUM(x.collateral) AS collateral
+                FROM (
+                    SELECT
+                         dd.borrower
+                       , dd.pool_address
+                       , dd.amount_borrowed AS debt
+                       , dd.collateral_pledged AS collateral
+                    FROM {draw_debt_table} AS dd
+                    WHERE dd.pool_address = %s
+
+                    UNION
+
+                    SELECT
+                          rd.borrower
+                        , rd.pool_address
+                        , rd.quote_repaid * -1 AS debt
+                        , rd.collateral_pulled * -1 AS collateral
+                    FROM {repay_debt_table} rd
+                    WHERE pool_address = %s
+                ) x
+                GROUP BY 1, 2
+            ) y
+            JOIN {pool_table} pool
+                ON pool.address = y.pool_address
+            JOIN {token_table} AS collateral_token
+                ON pool.collateral_token_address = collateral_token.underlying_address
+            JOIN {token_table} AS quote_token
+                ON pool.quote_token_address = quote_token.underlying_address
+        """.format(
+            draw_debt_table=self.models.draw_debt._meta.db_table,
+            repay_debt_table=self.models.repay_debt._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+        return sql, sql_vars
