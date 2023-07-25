@@ -39,6 +39,11 @@ urlpatterns = [
         name="pool-borrowers",
     ),
     path(
+        "pools/<pool_address>/lenders/",
+        pool.PoolLendersView.as_view(),
+        name="pool-lenders",
+    ),
+    path(
         "tokens/",
         tokens.TokensView.as_view(),
         name="tokens",
