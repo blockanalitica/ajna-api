@@ -88,8 +88,6 @@ class Command(BaseCommand):
         eth_blocks = self._get_eth_blocks()
         models = EthereumModels()
 
-        print(eth_blocks)
-
         self.stdout.write("Fixing ethereum pool snapshot lend_rate")
         subgraph = EthereumSubgraph()
 
