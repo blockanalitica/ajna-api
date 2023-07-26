@@ -78,14 +78,18 @@ class PoolsView(RawSQLPaginatedChainView):
         days_ago_options (list): List of allowed values for the `days_ago` parameter.
     """
 
+    order_nulls_last = True
     days_ago_required = False
     days_ago_default = 1
     days_ago_options = [1, 7, 30, 365]
     default_order = "-tvl"
     ordering_fields = [
         "pledged_collateral",
+        "pledged_collateral_usd",
         "pool_size",
+        "pool_size_usd",
         "debt",
+        "debt_usd",
         "borrow_rate",
         "lend_rate",
         "total_ajna_burned",
