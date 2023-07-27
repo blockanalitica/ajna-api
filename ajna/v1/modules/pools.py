@@ -12,7 +12,7 @@ from ajna.utils.utils import (
 )
 
 
-def get_pending_inflators(chain):
+def get_pools_chain_data(chain):
     calls = []
 
     pool_addresses = chain.pool.objects.all().values_list("address", flat=True)
@@ -25,14 +25,33 @@ def get_pending_inflators(chain):
                     "poolLoansInfo(address)((uint256,uint256,address,uint256,uint256))",
                     pool_address,
                 ],
-                [f"{pool_address}", None],
+                [f"{pool_address}:loansInfo", None],
             )
         )
+        calls.append(
+            (
+                chain.pool_info_address,
+                [
+                    "poolPricesInfo(address)((uint256,uint256,uint256,uint256,uint256,uint256))",
+                    pool_address,
+                ],
+                [f"{pool_address}:pricesInfo", None],
+            )
+        )
+
     data = chain.call_multicall(calls)
-    inflators = {}
-    for pool_address, pool_data in data.items():
-        inflators[pool_address] = pool_data[3] / 10**18
-    return inflators
+
+    pools_data = {}
+    for pool_address in pool_addresses:
+        loans_info = data[f"{pool_address}:loansInfo"]
+        prices_info = data[f"{pool_address}:pricesInfo"]
+        pools_data[pool_address] = {
+            "pending_inflator": loans_info[3] / 10**18,
+            "hpb_index": prices_info[1],
+            "htp_index": prices_info[3],
+            "lup_index": prices_info[5],
+        }
+    return pools_data
 
 
 def fetch_pools_data(chain, subgraph, models):
@@ -62,7 +81,7 @@ def fetch_and_save_pool_data(
     Usage:
         fetch_and_save_pool_data(Pool, Token, PoolSnapshot)
     """
-    inflators = get_pending_inflators(chain)
+    chain_pools_data = get_pools_chain_data(chain)
     pools_data = subgraph.pools()
 
     dt = datetime_to_full_hour(datetime.now())
@@ -71,9 +90,11 @@ def fetch_and_save_pool_data(
         collateral_token = pool_data["collateralToken"]
         quote_token = pool_data["quoteToken"]
 
+        chain_pool_data = chain_pools_data[pool_data["id"]]
+
         pool_size = Decimal(pool_data["poolSize"])
         t0debt = Decimal(pool_data["t0debt"])
-        pending_inflator = Decimal(inflators.get(pool_data["id"], 1))
+        pending_inflator = Decimal(chain_pool_data.get("pending_inflator", 1))
         debt = t0debt * pending_inflator
 
         utilization = Decimal("0")
@@ -106,11 +127,11 @@ def fetch_and_save_pool_data(
             "loans_count": pool_data["loansCount"],
             "max_borrower": pool_data["maxBorrower"],
             "hpb": pool_data["hpb"],
-            "hpb_index": pool_data["hpbIndex"],
+            "hpb_index": chain_pool_data["hpb_index"],
             "htp": pool_data["htp"],
-            "htp_index": pool_data["htpIndex"],
+            "htp_index": chain_pool_data["htp_index"],
             "lup": lup,
-            "lup_index": pool_data["lupIndex"],
+            "lup_index": chain_pool_data["lup_index"],
             "momp": pool_data["momp"],
             "reserves": pool_data["reserves"],
             "claimable_reserves": pool_data["claimableReserves"],
