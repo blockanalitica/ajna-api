@@ -80,7 +80,7 @@ def fetch_and_save_pool_data(
         fetch_and_save_pool_data(Pool, Token, PoolSnapshot)
     """
 
-    pools_data = subgraph.pools()
+    pools_data = list(subgraph.pools())
     pool_addresses = [pool_data["id"] for pool_data in pools_data]
     chain_pools_data = get_pools_chain_data(chain, pool_addresses)
 
@@ -150,6 +150,7 @@ def fetch_and_save_pool_data(
         _, created = pool_model.objects.update_or_create(
             address=pool_data["id"], defaults=pool_defaults
         )
+
         if created:
             _, collateral_created = token_model.objects.get_or_create(
                 underlying_address=collateral_token["id"],
