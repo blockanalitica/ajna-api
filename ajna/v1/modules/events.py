@@ -163,6 +163,34 @@ def fetch_and_save_remove_quote_tokens(
         )
 
 
+def fetch_and_save_move_quote_tokens(
+    subgraph, move_quote_tokens_model, price_feed_model, from_block_number
+):
+    """
+    Fetches moveQuoteToken events from the Subgraph and saves it to the MoveQuoteToken
+    model.
+    """
+    move_quote_tokens = subgraph.move_quote_tokens(from_block_number)
+    for move_quote_token in move_quote_tokens:
+        underlying_address = move_quote_token["pool"]["quoteToken"]["id"]
+        timestamp = move_quote_token["blockTimestamp"]
+        price = _get_price(price_feed_model, underlying_address, timestamp)
+        move_quote_tokens_model.objects.create(
+            pool_address=move_quote_token["pool"]["id"],
+            bucket_index_from=move_quote_token["from"]["bucketIndex"],
+            bucket_index_to=move_quote_token["to"]["bucketIndex"],
+            lender=move_quote_token["lender"],
+            transaction_hash=move_quote_token["transactionHash"],
+            amount=move_quote_token["amount"],
+            lp_redeemed_from=move_quote_token["lpRedeemedFrom"],
+            lp_awarded_to=move_quote_token["lpAwardedTo"],
+            lup=move_quote_token["lup"],
+            block_number=move_quote_token["blockNumber"],
+            block_timestamp=move_quote_token["blockTimestamp"],
+            price=price,
+        )
+
+
 def fetch_and_save_draw_debts(
     subgraph, draw_debt_model, price_feed_model, from_block_number
 ):

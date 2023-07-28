@@ -37,6 +37,10 @@ class V1EthereumRemoveQuoteToken(base.RemoveQuoteToken):
     pass
 
 
+class V1EthereumMoveQuoteToken(base.MoveQuoteToken):
+    pass
+
+
 class V1EthereumDrawDebt(base.DrawDebt):
     pass
 

@@ -351,6 +351,46 @@ class Subgraph:
             query, "removeQuoteTokens", "blockNumber", block_number
         )
 
+    def move_quote_tokens(self, block_number):
+        query = """
+            query ($blockNumber: BigInt!, $first: Int){
+              moveQuoteTokens(
+                first: $first
+                orderBy: blockNumber
+                orderDirection: asc
+                where: {blockNumber_gt: $blockNumber}
+              ) {
+                amount
+                blockNumber
+                blockTimestamp
+                from {
+                  bucketIndex
+                }
+                to {
+                  bucketIndex
+                }
+                id
+                lender
+                lpRedeemedFrom
+                lpAwardedTo
+                lup
+                transactionHash
+                pool {
+                  id
+                  collateralToken {
+                    id
+                  }
+                  quoteToken {
+                    id
+                  }
+                }
+              }
+            }
+        """
+        yield from self._fetch_all_by_field(
+            query, "moveQuoteTokens", "blockNumber", block_number
+        )
+
     def draw_debts(self, block_number):
         query = """
             query ($blockNumber: BigInt!, $first: Int){

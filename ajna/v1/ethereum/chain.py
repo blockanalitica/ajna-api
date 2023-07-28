@@ -14,6 +14,7 @@ MODEL_MAP = {
     "add_collateral": models.V1EthereumAddCollateral,
     "add_quote_token": models.V1EthereumAddQuoteToken,
     "remove_quote_token": models.V1EthereumRemoveQuoteToken,
+    "move_quote_token": models.V1EthereumMoveQuoteToken,
     "draw_debt": models.V1EthereumDrawDebt,
     "repay_debt": models.V1EthereumRepayDebt,
     "liqudation_auction": models.V1EthereumLiquidationAuction,
