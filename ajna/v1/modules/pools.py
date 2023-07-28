@@ -90,7 +90,7 @@ def fetch_and_save_pool_data(
         collateral_token = pool_data["collateralToken"]
         quote_token = pool_data["quoteToken"]
 
-        chain_pool_data = chain_pools_data[pool_data["id"]]
+        chain_pool_data = chain_pools_data.get(pool_data["id"], {})
 
         pool_size = Decimal(pool_data["poolSize"])
         t0debt = Decimal(pool_data["t0debt"])
@@ -127,11 +127,11 @@ def fetch_and_save_pool_data(
             "loans_count": pool_data["loansCount"],
             "max_borrower": pool_data["maxBorrower"],
             "hpb": pool_data["hpb"],
-            "hpb_index": chain_pool_data["hpb_index"],
+            "hpb_index": chain_pool_data.get("hpb_index", pool_data["hpbIndex"]),
             "htp": pool_data["htp"],
-            "htp_index": chain_pool_data["htp_index"],
+            "htp_index": chain_pool_data.get("htp_index", pool_data["htpIndex"]),
             "lup": lup,
-            "lup_index": chain_pool_data["lup_index"],
+            "lup_index": chain_pool_data.get("lup_index", pool_data["lupIndex"]),
             "momp": pool_data["momp"],
             "reserves": pool_data["reserves"],
             "claimable_reserves": pool_data["claimableReserves"],
