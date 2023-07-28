@@ -37,6 +37,10 @@ class V1GoerliRemoveQuoteToken(base.RemoveQuoteToken):
     pass
 
 
+class V1GoerliMoveQuoteToken(base.MoveQuoteToken):
+    pass
+
+
 class V1GoerliDrawDebt(base.DrawDebt):
     pass
 

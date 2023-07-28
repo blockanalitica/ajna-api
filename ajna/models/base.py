@@ -205,6 +205,31 @@ class RemoveQuoteToken(models.Model):
         unique_together = ("pool_address", "bucket_index", "lender", "transaction_hash")
 
 
+class MoveQuoteToken(models.Model):
+    pool_address = models.CharField(max_length=42, db_index=True)
+    bucket_index_from = models.BigIntegerField()
+    bucket_index_to = models.BigIntegerField()
+    lender = models.CharField(max_length=42)
+    amount = models.DecimalField(max_digits=32, decimal_places=18)
+    lp_redeemed_from = models.DecimalField(max_digits=32, decimal_places=18)
+    lp_awarded_to = models.DecimalField(max_digits=32, decimal_places=18)
+    lup = models.DecimalField(max_digits=32, decimal_places=18)
+    block_number = models.BigIntegerField()
+    block_timestamp = models.BigIntegerField()
+    transaction_hash = models.CharField(max_length=66)
+    price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+
+    class Meta:
+        abstract = True
+        unique_together = (
+            "pool_address",
+            "bucket_index_from",
+            "bucket_index_to",
+            "lender",
+            "transaction_hash",
+        )
+
+
 class DrawDebt(models.Model):
     index = models.CharField(max_length=128, null=True)
     pool_address = models.CharField(max_length=42, db_index=True)

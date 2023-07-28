@@ -535,6 +535,8 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , block_number
                 , block_timestamp
                 , transaction_hash
+                , CAST(NULL AS numeric) AS bucket_index_from
+                , CAST(NULL AS numeric) AS bucket_index_to
             FROM {add_collateral_table}
             WHERE pool_address = %s AND block_timestamp >= %s
         """.format(
@@ -555,6 +557,8 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , block_number
                 , block_timestamp
                 , transaction_hash
+                , CAST(NULL AS numeric) AS bucket_index_from
+                , CAST(NULL AS numeric) AS bucket_index_to
             FROM {remove_collateral_table}
             WHERE pool_address = %s AND block_timestamp >= %s
         """.format(
@@ -575,6 +579,8 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , block_number
                 , block_timestamp
                 , transaction_hash
+                , CAST(NULL AS numeric) AS bucket_index_from
+                , CAST(NULL AS numeric) AS bucket_index_to
             FROM {add_quote_token_table}
             WHERE pool_address = %s AND block_timestamp >= %s
         """.format(
@@ -595,10 +601,34 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , block_number
                 , block_timestamp
                 , transaction_hash
+                , CAST(NULL AS numeric) AS bucket_index_from
+                , CAST(NULL AS numeric) AS bucket_index_to
             FROM {remove_quote_token_table}
             WHERE pool_address = %s AND block_timestamp >= %s
         """.format(
             remove_quote_token_table=self.models.remove_quote_token._meta.db_table,
+            quote_symbol=pool_data["quote_token_symbol"],
+        )
+
+    def _get_sql_move_quote_token(self, pool_data):
+        return """
+            SELECT
+                CONCAT('move_quote_token', id) AS id
+                , 'move_quote_token' AS event_type
+                , amount
+                , '{quote_symbol}' AS amount_symbol
+                , CAST(NULL AS numeric) AS collateral
+                , NULL AS collateral_symbol
+                , lender AS account
+                , block_number
+                , block_timestamp
+                , transaction_hash
+                , bucket_index_from
+                , bucket_index_to
+            FROM {remove_quote_token_table}
+            WHERE pool_address = %s AND block_timestamp >= %s
+        """.format(
+            remove_quote_token_table=self.models.move_quote_token._meta.db_table,
             quote_symbol=pool_data["quote_token_symbol"],
         )
 
@@ -615,6 +645,8 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , block_number
                 , block_timestamp
                 , transaction_hash
+                , CAST(NULL AS numeric) AS bucket_index_from
+                , CAST(NULL AS numeric) AS bucket_index_to
             FROM {draw_debt_table}
             WHERE pool_address = %s AND block_timestamp >= %s
         """.format(
@@ -636,6 +668,8 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , block_number
                 , block_timestamp
                 , transaction_hash
+                , CAST(NULL AS numeric) AS bucket_index_from
+                , CAST(NULL AS numeric) AS bucket_index_to
             FROM {repay_debt_table}
             WHERE pool_address = %s AND block_timestamp >= %s
         """.format(
@@ -681,6 +715,8 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 sql = self._get_sql_remove_collateral(pool_data)
             case "add_quote_token":
                 sql = self._get_sql_add_quote_token(pool_data)
+            case "move_quote_token":
+                sql = self._get_sql_move_quote_token(pool_data)
             case "remove_quote_token":
                 sql = self._get_sql_remove_quote_token(pool_data)
             case "draw_debt":
@@ -693,12 +729,13 @@ class PoolEventsView(RawSQLPaginatedChainView):
                         self._get_sql_add_collateral(pool_data),
                         self._get_sql_remove_collateral(pool_data),
                         self._get_sql_add_quote_token(pool_data),
+                        self._get_sql_move_quote_token(pool_data),
                         self._get_sql_remove_quote_token(pool_data),
                         self._get_sql_draw_debt(pool_data),
                         self._get_sql_repay_debt(pool_data),
                     ]
                 )
-                sql_vars = [pool_address, timestamp] * 6
+                sql_vars = [pool_address, timestamp] * 7
 
         return sql, sql_vars
 

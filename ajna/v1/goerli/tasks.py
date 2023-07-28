@@ -14,6 +14,7 @@ from ..modules.events import (
     fetch_and_save_add_collaterals,
     fetch_and_save_add_quote_tokens,
     fetch_and_save_draw_debts,
+    fetch_and_save_move_quote_tokens,
     fetch_and_save_remove_collaterals,
     fetch_and_save_remove_quote_tokens,
     fetch_and_save_repay_debts,
@@ -49,15 +50,15 @@ SCHEDULE = {
     "save_remove_quote_token_events_tasks": {
         "schedule": crontab(minute="*/5"),
     },
+    "save_move_quote_token_events_task": {
+        "schedule": crontab(minute="*/5"),
+    },
     "save_draw_debts_events_tasks": {
         "schedule": crontab(minute="*/5"),
     },
     "save_repay_debts_events_tasks": {
         "schedule": crontab(minute="*/5"),
     },
-    # "save_pools_data_snapshot_task": {
-    #     "schedule": crontab(minute="1", hour="*/1"),
-    # },
     "calculate_pool_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
         # the snapshot
@@ -78,12 +79,6 @@ def fetch_pools_data_task():
     chain = Goerli()
     subgraph = GoerliSubgraph()
     fetch_pools_data(chain, subgraph, models)
-
-
-# @app.task
-# def save_pools_data_snapshot_task():
-#     models = GoerliModels()
-#     save_pools_data_snapshot(models)
 
 
 @app.task
@@ -159,6 +154,25 @@ def save_remove_quote_token_events_tasks():
     subgraph = GoerliSubgraph()
     fetch_and_save_remove_quote_tokens(
         subgraph, models.remove_quote_token, models.price_feed, last_block_number
+    )
+
+
+@app.task
+def save_move_quote_token_events_task():
+    models = GoerliModels()
+    block_number = (
+        models.move_quote_token.objects.all()
+        .order_by("-block_number")
+        .values("block_number")[:1]
+    )
+    if block_number:
+        last_block_number = block_number[0]["block_number"]
+    else:
+        last_block_number = 0
+
+    subgraph = GoerliSubgraph()
+    fetch_and_save_move_quote_tokens(
+        subgraph, models.move_quote_token, models.price_feed, last_block_number
     )
 
 
