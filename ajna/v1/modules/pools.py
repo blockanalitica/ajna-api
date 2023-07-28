@@ -12,10 +12,8 @@ from ajna.utils.utils import (
 )
 
 
-def get_pools_chain_data(chain):
+def get_pools_chain_data(chain, pool_addresses):
     calls = []
-
-    pool_addresses = chain.pool.objects.all().values_list("address", flat=True)
 
     for pool_address in pool_addresses:
         calls.append(
@@ -81,8 +79,10 @@ def fetch_and_save_pool_data(
     Usage:
         fetch_and_save_pool_data(Pool, Token, PoolSnapshot)
     """
-    chain_pools_data = get_pools_chain_data(chain)
+
     pools_data = subgraph.pools()
+    pool_addresses = [pool_data["id"] for pool_data in pools_data]
+    chain_pools_data = get_pools_chain_data(chain, pool_addresses)
 
     dt = datetime_to_full_hour(datetime.now())
 
