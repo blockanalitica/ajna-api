@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 'Pull Request - Title verification (starts with "feat: PR title" or "Merge pull request...")'
+      - name: 'Pull Request - Title verification (eg: "feat: PR title")'
         if: always()
         uses: gsactions/commit-message-checker@v1
         with:
