@@ -14,6 +14,7 @@ MODEL_MAP = {
     "add_collateral": models.V1GoerliAddCollateral,
     "add_quote_token": models.V1GoerliAddQuoteToken,
     "remove_quote_token": models.V1GoerliRemoveQuoteToken,
+    "move_quote_token": models.V1GoerliMoveQuoteToken,
     "draw_debt": models.V1GoerliDrawDebt,
     "repay_debt": models.V1GoerliRepayDebt,
     "liqudation_auction": models.V1GoerliLiquidationAuction,
