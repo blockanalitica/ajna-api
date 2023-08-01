@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: 'Pull Request - Title verification (eg: "feat: PR title")'
         if: always()
-        uses: gsactions/commit-message-checker@v1
+        uses: gsactions/commit-message-checker@v2
         with:
           pattern: '^(feat|fix|docs|style|refactor|revert|perf|test|build|ci|chore|deps)\!?: [A-Za-z].+$'
           flags: 'g'
@@ -21,7 +21,7 @@ jobs:
           excludeDescription: 'true'
 
       - name: Pull Request - Title verification (must not end with "." dot)
-        uses: gsactions/commit-message-checker@v1
+        uses: gsactions/commit-message-checker@v2
         with:
           pattern: '^.+[^\.]$'
           error: 'Pull request - Title must not end with dot "."'
@@ -29,7 +29,7 @@ jobs:
 
       - name: Pull Request - Title length validation
         if: always()
-        uses: gsactions/commit-message-checker@v1
+        uses: gsactions/commit-message-checker@v2
         with:
           pattern: '^[^#].{0,80}$'
           error: 'Pull Request - Maximum title line length is 80 characters'
