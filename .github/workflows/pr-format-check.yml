@@ -15,7 +15,7 @@ jobs:
         if: always()
         uses: gsactions/commit-message-checker@v2
         with:
-          pattern: '^(feat|fix|docs|style|refactor|revert|perf|test|build|ci|chore|deps)\!?: [A-Za-z].+$'
+          pattern: '^(feat|fix|docs|style|refactor|revert|perf|test|build|ci|deps|chore|chore\(\S+\))\!?: [A-Za-z].+$'
           flags: 'g'
           error: 'Pull request - Title not in correct format (e.g.: "feat: Short title" or "revert: Short title")'
           excludeDescription: 'true'
