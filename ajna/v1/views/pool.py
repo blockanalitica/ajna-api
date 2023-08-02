@@ -749,7 +749,7 @@ BORROWERS_SQL = sql = """
         , y.collateral * collateral_token.underlying_price AS collateral_usd
         , collateral_token.symbol AS collateral_token_symbol
         , quote_token.symbol AS quote_token_symbol
-        , (y.collateral * pool.lup) /
+        , (y.collateral * pool.lup * collateral_token.underlying_price) /
           NULLIF(y.debt * quote_token.underlying_price, 0) as health_rate
     FROM (
         SELECT
