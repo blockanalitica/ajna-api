@@ -333,3 +333,26 @@ class PoolVolumeSnapshot(models.Model):
     class Meta:
         abstract = True
         unique_together = ("pool_address", "date")
+
+
+class CurrentWalletPoolPosition(models.Model):
+    wallet_address = models.CharField(max_length=42, db_index=True)
+    pool_address = models.CharField(max_length=42, db_index=True)
+
+    supply = models.DecimalField(max_digits=32, decimal_places=18)
+    collateral = models.DecimalField(max_digits=32, decimal_places=18)
+    t0debt = models.DecimalField(max_digits=32, decimal_places=18)
+    debt = models.DecimalField(max_digits=32, decimal_places=18)
+
+    datetime = models.DateTimeField()
+    block_number = models.BigIntegerField(db_index=True)
+
+    class Meta:
+        unique_together = [
+            "wallet_address",
+            "block_number",
+            "pool_address",
+        ]
+        get_latest_by = "block_number"
+        ordering = ("block_number",)
+        abstract = True

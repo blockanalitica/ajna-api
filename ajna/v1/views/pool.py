@@ -740,7 +740,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
         return sql, sql_vars
 
 
-BORROWERS_SQL = sql = """
+BORROWERS_SQL = """
     SELECT
           y.borrower
         , y.debt AS debt
@@ -856,7 +856,7 @@ LENDERS_SQL = """
             , SUM(x.amount) AS amount
         FROM (
             SELECT
-                  aqt.lender AS lender
+                  aqt.lender
                 , aqt.bucket_index
                 , aqt.pool_address
                 , aqt.amount
@@ -866,7 +866,7 @@ LENDERS_SQL = """
             UNION
 
             SELECT
-                  rqt.lender AS wallet
+                  rqt.lender
                 , rqt.bucket_index
                 , rqt.pool_address
                 , rqt.amount * -1 AS collateral

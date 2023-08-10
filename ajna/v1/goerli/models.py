@@ -55,3 +55,7 @@ class V1GoerliLiquidationAuction(base.LiquidationAuction):
 
 class V1GoerliPoolVolumeSnapshot(base.PoolVolumeSnapshot):
     pass
+
+
+class V1GoerliCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
+    pass

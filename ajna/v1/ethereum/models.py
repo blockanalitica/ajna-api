@@ -55,3 +55,7 @@ class V1EthereumLiquidationAuction(base.LiquidationAuction):
 
 class V1EthereumPoolVolumeSnapshot(base.PoolVolumeSnapshot):
     pass
+
+
+class V1EthereumCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
+    pass
