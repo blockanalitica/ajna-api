@@ -58,6 +58,10 @@ class DaysAgoMixin:
         elif self.days_ago_required:
             raise ValidationError("days_ago is a required param")
 
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        self._handle_days_ago(request)
+
 
 class BaseChainMixin:
     _chain = None
@@ -66,9 +70,7 @@ class BaseChainMixin:
     def chain(self):
         if not self._chain:
             module = _get_module(self.protocol_version, self.protocol_network)
-            cls_name = "{}".format(
-                self.protocol_version.capitalize(), self.protocol_network.capitalize()
-            )
+            cls_name = self.protocol_network.capitalize()
             cls = getattr(module, cls_name)
             self._chain = cls()
         return self._chain
@@ -76,9 +78,6 @@ class BaseChainMixin:
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
         self.protocol_version, self.protocol_network = _get_path_parts(request)
-
-        self._handle_days_ago(request)
-
         self.models = ModelMapping(self.protocol_version, self.protocol_network)
 
 

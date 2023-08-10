@@ -22,3 +22,8 @@ def generate_pools(number=3):
         for pool in pools:
             V1TokenFactory.create(underlying_address=pool.collateral_token_address)
             V1TokenFactory.create(underlying_address=pool.quote_token_address)
+
+
+class V1GrantProposalFactory(factories.GrantProposalFactory):
+    class Meta:
+        model = "ajna.V1EthereumGrantProposal"
