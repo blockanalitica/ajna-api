@@ -2,18 +2,35 @@ import importlib
 import logging
 from datetime import datetime, timedelta
 
+from django.http import Http404
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 
+from ajna.constants import AJNA_DEPLOYMENTS
 from ajna.utils.views import PaginatedApiView, RawSQLPaginatedApiView
 
 log = logging.getLogger(__name__)
 
 
+def _get_module(version, network):
+    module_path = ".".join([version.lower(), network.lower()])
+    module = importlib.import_module("ajna.{}.chain".format(module_path))
+    return module
+
+
+def _get_path_parts(request):
+    version, network = request.path.lstrip("/").rstrip("/").split("/")[:2]
+    if (
+        version not in AJNA_DEPLOYMENTS["versions"]
+        or network not in AJNA_DEPLOYMENTS["networks"]
+    ):
+        raise Http404("Invalid path")
+    return version, network
+
+
 class ModelMapping:
     def __init__(self, version, network, **kwargs):
-        module_path = ".".join([version.lower(), network.lower()])
-        module = importlib.import_module("ajna.{}.chain".format(module_path))
+        module = _get_module(version, network)
         if hasattr(module, "MODEL_MAP"):
             for key, model in module.MODEL_MAP.items():
                 setattr(self, key, model)
@@ -41,17 +58,27 @@ class DaysAgoMixin:
         elif self.days_ago_required:
             raise ValidationError("days_ago is a required param")
 
-
-class BaseChainMixin:
-    def dispatch(self, request, *args, **kwargs):
-        path_parts = request.path.lstrip("/").rstrip("/").split("/")
-        self.protocol_version, self.protocol_network = path_parts[:2]
-
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
         self._handle_days_ago(request)
 
-        self.models = ModelMapping(self.protocol_version, self.protocol_network)
 
-        return super().dispatch(request, *args, **kwargs)
+class BaseChainMixin:
+    _chain = None
+
+    @property
+    def chain(self):
+        if not self._chain:
+            module = _get_module(self.protocol_version, self.protocol_network)
+            cls_name = self.protocol_network.capitalize()
+            cls = getattr(module, cls_name)
+            self._chain = cls()
+        return self._chain
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        self.protocol_version, self.protocol_network = _get_path_parts(request)
+        self.models = ModelMapping(self.protocol_version, self.protocol_network)
 
 
 class BaseChainView(DaysAgoMixin, BaseChainMixin, APIView):

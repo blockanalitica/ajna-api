@@ -333,3 +333,19 @@ class PoolVolumeSnapshot(models.Model):
     class Meta:
         abstract = True
         unique_together = ("pool_address", "date")
+
+
+class GrantProposal(models.Model):
+    uid = models.CharField(max_length=100, db_index=True, unique=True)
+    description = models.JSONField()
+    executed = models.BooleanField()
+    screening_votes_received = models.DecimalField(max_digits=32, decimal_places=18)
+    funding_votes_received = models.DecimalField(max_digits=32, decimal_places=18)
+    total_tokens_requested = models.DecimalField(max_digits=32, decimal_places=18)
+    start_block = models.BigIntegerField()
+    end_block = models.BigIntegerField(db_index=True)
+    funding_start_block_number = models.BigIntegerField()
+    finalize_start_block_number = models.BigIntegerField()
+
+    class Meta:
+        abstract = True
