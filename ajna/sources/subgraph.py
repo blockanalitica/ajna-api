@@ -542,6 +542,47 @@ class Subgraph:
             query, "liquidationAuctions", page_size=1000
         )
 
+    def grant_proposals(self, end_block_number):
+        query = """
+            query (
+              $endBlock: BigInt!, $first: Int, $skip: Int, $orderBy: Proposal_orderBy,
+              $orderDirection: OrderDirection
+            ) {
+              proposals(
+                first: $first
+                skip: $skip
+                orderBy: $orderBy
+                orderDirection: $orderDirection
+                where: {
+                  distribution_: {
+                    endBlock_gte: $endBlock
+                  }
+                }
+              ) {
+                  id
+                  proposalId
+                  description
+                  executed
+                  screeningVotesReceived
+                  fundingVotesReceived
+                  totalTokensRequested
+                  distribution {
+                    startBlock
+                    endBlock
+                  }
+              }
+            }
+        """
+        variables = {
+            "orderBy": "id",
+            "orderDirection": "asc",
+            "endBlock": end_block_number,
+        }
+
+        yield from self._fetch_all_with_skip(
+            query, "proposals", variables=variables, page_size=1000
+        )
+
 
 class GoerliSubgraph(Subgraph):
     def __init__(self):
