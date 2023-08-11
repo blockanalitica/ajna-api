@@ -99,7 +99,7 @@ def fetch_and_save_pool_data(
 
         utilization = Decimal("0")
         if pool_size > 0:
-            utilization = debt / pool_size
+            utilization = min(debt / pool_size, Decimal("1"))
 
         # If lup is max price, set it to 0 as max price means there are no loans
         lup = Decimal(pool_data["lup"])
