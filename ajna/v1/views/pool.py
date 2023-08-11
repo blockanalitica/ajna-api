@@ -116,6 +116,7 @@ class PoolView(BaseChainView):
                 , pool.lend_rate
                 , pool.borrow_rate
                 , pool.total_ajna_burned
+                , pool.min_debt_amount
                 , ((pool.pledged_collateral * collateral_token.underlying_price)
                     / NULLIF(
                         (pool.t0debt * pool.pending_inflator * quote_token.underlying_price), 0)
