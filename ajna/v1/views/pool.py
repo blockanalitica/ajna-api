@@ -87,6 +87,7 @@ class PoolView(BaseChainView):
                         , ps.total_ajna_burned
                         , ps.quote_token_price
                         , ps.collateral_token_price
+                        , ps.reserves
                     FROM {pool_snapshot_table} ps
                     WHERE ps.datetime <= %s AND ps.address = %s
                     ORDER BY ps.address, ps.datetime DESC
@@ -117,6 +118,7 @@ class PoolView(BaseChainView):
                 , pool.borrow_rate
                 , pool.total_ajna_burned
                 , pool.min_debt_amount
+                , pool.reserves
                 , ((pool.pledged_collateral * collateral_token.underlying_price)
                     / NULLIF(
                         (pool.t0debt * pool.pending_inflator * quote_token.underlying_price), 0)
@@ -147,6 +149,7 @@ class PoolView(BaseChainView):
                 , prev.total_ajna_burned as prev_total_ajna_burned
                 , prev.quote_token_price as prev_quote_token_price
                 , prev.collateral_token_price as prev_collateral_token_price
+                , prev.reserves as prev_reserves
                 , f.total_fees AS fees
             FROM {pool_table} AS pool
             JOIN {token_table} AS collateral_token
