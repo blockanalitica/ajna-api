@@ -60,9 +60,9 @@ SCHEDULE = {
     "save_repay_debts_events_tasks": {
         "schedule": crontab(minute="*/5"),
     },
-    "save_grant_proposals_task": {
-        "schedule": crontab(minute="*/5"),
-    },
+    # "save_grant_proposals_task": {
+    #     "schedule": crontab(minute="*/5"),
+    # },
     "calculate_pool_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
         # the snapshot
