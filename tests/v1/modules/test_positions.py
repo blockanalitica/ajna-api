@@ -1,26 +1,23 @@
-from datetime import timedelta, datetime
+from collections import defaultdict
+from datetime import datetime
 from decimal import Decimal
 
 import pytest
-import responses
-from django.conf import settings
-from collections import defaultdict
 
-from ajna.sources.subgraph import GoerliSubgraph
 from ajna.v1.ethereum.chain import EthereumModels
 from ajna.v1.modules.positions import (
-    save_wallet_positions,
     _handle_debt_events,
     _handle_quote_token_events,
-)
-from tests.v1.factories import (
-    V1RepayDebtFactory,
-    V1DrawDebtFactory,
-    V1AddQuoteTokenFactory,
-    V1MoveQuoteTokenFactory,
-    V1RemoveQuoteTokenFactory,
+    save_wallet_positions,
 )
 from tests.utils import generate_ethereum_address
+from tests.v1.factories import (
+    V1AddQuoteTokenFactory,
+    V1DrawDebtFactory,
+    V1MoveQuoteTokenFactory,
+    V1RemoveQuoteTokenFactory,
+    V1RepayDebtFactory,
+)
 
 
 @pytest.fixture

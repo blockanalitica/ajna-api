@@ -59,3 +59,7 @@ class V1GoerliPoolVolumeSnapshot(base.PoolVolumeSnapshot):
 
 class V1GoerliCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
     pass
+
+
+class V1GoerliGrantProposal(base.GrantProposal):
+    pass

@@ -19,6 +19,7 @@ MODEL_MAP = {
     "repay_debt": models.V1GoerliRepayDebt,
     "liqudation_auction": models.V1GoerliLiquidationAuction,
     "pool_volume_snapshot": models.V1GoerliPoolVolumeSnapshot,
+    "grant_proposal": models.V1GoerliGrantProposal,
     "current_position": models.V1GoerliCurrentWalletPoolPosition,
     "wallet_pool_state": "",
 }

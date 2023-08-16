@@ -1,12 +1,9 @@
 from django.core.management.base import BaseCommand
 from django.db import connection
 
-from ajna.v1.modules.positions import *
-from ajna.v1.ethereum.chain import Ethereum, EthereumModels
-
-from django.db import connection
-
 from ajna.utils.db import fetch_all
+from ajna.v1.ethereum.chain import Ethereum, EthereumModels
+from ajna.v1.modules.positions import *
 
 
 class Command(BaseCommand):

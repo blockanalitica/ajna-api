@@ -1,6 +1,7 @@
+from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
-from collections import defaultdict
+
 from django.db import connection
 
 from ajna.utils.db import fetch_all

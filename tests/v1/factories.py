@@ -39,3 +39,8 @@ class V1TokenFactory(factories.TokenFactory):
 class V1BucketFactory(factories.BucketFactory):
     class Meta:
         model = "ajna.V1EthereumBucket"
+
+
+class V1GrantProposalFactory(factories.GrantProposalFactory):
+    class Meta:
+        model = "ajna.V1EthereumGrantProposal"

@@ -19,6 +19,7 @@ from ..modules.events import (
     fetch_and_save_remove_quote_tokens,
     fetch_and_save_repay_debts,
 )
+from ..modules.grants import fetch_and_save_grant_proposals_data
 from ..modules.pools import (
     calculate_pool_volume_for_date,
     fetch_pools_data,
@@ -59,6 +60,9 @@ SCHEDULE = {
     "save_repay_debts_events_tasks": {
         "schedule": crontab(minute="*/5"),
     },
+    # "save_grant_proposals_task": {
+    #     "schedule": crontab(minute="*/5"),
+    # },
     "calculate_pool_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
         # the snapshot
@@ -235,6 +239,13 @@ def sync_liquidation_auctions_tasks():
     fetch_and_save_active_liquidation_auctions(
         chain, subgraph, models.liqudation_auction
     )
+
+
+@app.task
+def save_grant_proposals_task():
+    chain = Goerli()
+    subgraph = GoerliSubgraph()
+    fetch_and_save_grant_proposals_data(chain, subgraph)
 
 
 @app.task

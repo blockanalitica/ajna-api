@@ -1,9 +1,12 @@
-from datetime import datetime, timedelta
+import json
 import random
+from datetime import datetime, timedelta
 
 import factory
 from factory.django import DjangoModelFactory
 from faker.providers import BaseProvider
+
+from ajna.constants import CHALLENGE_PERIOD_LENGTH, SCREENING_PERIOD_LENGTH
 from tests.utils import generate_ethereum_address, generate_transaction_hash
 
 
@@ -35,6 +38,17 @@ class EthereumProvider(BaseProvider):
 
 
 factory.Faker.add_provider(EthereumProvider)
+
+
+class JSONFactory(factory.DictFactory):
+    """
+    Use with factory.Dict to make JSON strings.
+    """
+
+    @classmethod
+    def _generate(cls, create, attrs):
+        obj = super()._generate(create, attrs)
+        return json.dumps(obj)
 
 
 class PoolFactory(DjangoModelFactory):
@@ -290,4 +304,29 @@ class RepayDebtFactory(DjangoModelFactory):
     )
     quote_token_price = factory.Faker(
         "pydecimal", min_value=0, max_value=10000, right_digits=18
+    )
+
+
+class GrantProposalFactory(factory.django.DjangoModelFactory):
+    uid = factory.LazyAttribute(
+        lambda o: "".join(random.choices("0123456789abcdef", k=77))
+    )
+    description = factory.Dict({"title": "foo"}, dict_factory=JSONFactory)
+    executed = False
+    screening_votes_received = factory.Faker(
+        "pydecimal", min_value=0, max_value=10000, right_digits=18
+    )
+    funding_votes_received = factory.Faker(
+        "pydecimal", min_value=0, max_value=10000, right_digits=18
+    )
+    total_tokens_requested = factory.Faker(
+        "pydecimal", min_value=0, max_value=10000, right_digits=18
+    )
+    start_block = factory.Faker("random_number", digits=8)
+    end_block = factory.Faker("random_number", digits=8)
+    funding_start_block_number = factory.LazyAttribute(
+        lambda o: o.start_block + SCREENING_PERIOD_LENGTH
+    )
+    finalize_start_block_number = factory.LazyAttribute(
+        lambda o: o.start_block - CHALLENGE_PERIOD_LENGTH
     )

@@ -59,3 +59,7 @@ class V1EthereumPoolVolumeSnapshot(base.PoolVolumeSnapshot):
 
 class V1EthereumCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
     pass
+
+
+class V1EthereumGrantProposal(base.GrantProposal):
+    pass
