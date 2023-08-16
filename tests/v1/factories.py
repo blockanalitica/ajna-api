@@ -31,6 +31,16 @@ class V1MoveQuoteTokenFactory(factories.MoveQuoteTokenFactory):
         model = "ajna.V1EthereumMoveQuoteToken"
 
 
+class V1AddCollateralFactory(factories.AddCollateralFactory):
+    class Meta:
+        model = "ajna.V1EthereumAddCollateral"
+
+
+class V1RemoveCollateralFactory(factories.RemoveCollateralFactory):
+    class Meta:
+        model = "ajna.V1EthereumRemoveCollateral"
+
+
 class V1TokenFactory(factories.TokenFactory):
     class Meta:
         model = "ajna.V1EthereumToken"

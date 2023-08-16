@@ -10,5 +10,7 @@ CACHES = {
 
 CELERY_ALWAYS_EAGER = True
 
-
-SUBGRAPH_ENDPOINT_GOERLI = "http://localhost:8000/subgraph/"
+SUBGRAPH_ENDPOINT_GOERLI = "http://subgraph:8000/goerli/"
+SUBGRAPH_ENDPOINT_MAINNET = "http://subgraph:8000/mainnet/"
+GOERLI_NODE = "http://eth_node/goerli"
+ETHEREUM_NODE = "http://eth_node/mainnet"

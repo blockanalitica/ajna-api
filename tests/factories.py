@@ -157,7 +157,6 @@ class BucketFactory(DjangoModelFactory):
     lpb = factory.Faker("pydecimal", left_digits=3, right_digits=18, positive=True)
 
 
-# TODO
 class AddCollateralFactory(DjangoModelFactory):
     pool_address = factory.Faker("ethereum_address")
     bucket_index = factory.Sequence(lambda n: n)
@@ -172,9 +171,9 @@ class AddCollateralFactory(DjangoModelFactory):
         "block_timestamp", block_number=factory.SelfAttribute("..block_number")
     )
     transaction_hash = factory.Faker("transaction_hash")
+    price = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
 
 
-# TODO
 class RemoveCollateralFactory(DjangoModelFactory):
     pool_address = factory.Faker("ethereum_address")
     bucket_index = factory.Sequence(lambda n: n)
@@ -189,6 +188,7 @@ class RemoveCollateralFactory(DjangoModelFactory):
         "block_timestamp", block_number=factory.SelfAttribute("..block_number")
     )
     transaction_hash = factory.Faker("transaction_hash")
+    price = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
 
 
 class AddQuoteTokenFactory(DjangoModelFactory):

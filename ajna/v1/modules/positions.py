@@ -6,6 +6,31 @@ from django.db import connection
 
 from ajna.utils.db import fetch_all
 
+POOL_INFLATORS = defaultdict(dict)
+
+
+def _get_inflator(chain, pool_address, block_number):
+    global POOL_INFLATORS
+
+    if block_number not in POOL_INFLATORS[pool_address]:
+        calls = [
+            (
+                chain.pool_info_address,
+                [
+                    "poolLoansInfo(address)((uint256,uint256,address,uint256,uint256))",
+                    pool_address,
+                ],
+                [pool_address, None],
+            )
+        ]
+
+        data = chain.call_multicall(calls, block_id=block_number)
+        POOL_INFLATORS[pool_address][block_number] = data[pool_address][3] / Decimal(
+            "1e18"
+        )
+
+    return POOL_INFLATORS[pool_address][block_number]
+
 
 def _update_current_positions_block(current_position, event):
     # Only update block_number and datetime if event's block_number is greater
@@ -18,7 +43,8 @@ def _update_current_positions_block(current_position, event):
         )
 
 
-def _handle_debt_events(models, wallet_address, from_block_number, curr_positions):
+def _handle_debt_events(chain, wallet_address, from_block_number, curr_positions):
+    # TODO: from_block_number
     sql = """
         SELECT
               x.pool_address
@@ -50,22 +76,28 @@ def _handle_debt_events(models, wallet_address, from_block_number, curr_position
         GROUP BY 1, 2, 3
         ORDER BY block_number
     """.format(
-        draw_debt_table=models.draw_debt._meta.db_table,
-        repay_debt_table=models.repay_debt._meta.db_table,
+        draw_debt_table=chain.draw_debt._meta.db_table,
+        repay_debt_table=chain.repay_debt._meta.db_table,
     )
     with connection.cursor() as cursor:
         cursor.execute(sql, [wallet_address, wallet_address])
         events = fetch_all(cursor)
 
     for event in events:
-        curr_positions[event["pool_address"]]["t0debt"] += event["debt"]
+        inflator = _get_inflator(chain, event["pool_address"], event["block_number"])
+        curr_positions[event["pool_address"]]["debt"] += event["debt"]
+        # Round to 18 decimals as our model accepts only 18 decimals
+        curr_positions[event["pool_address"]]["t0debt"] += round(
+            event["debt"] / inflator, 18
+        )
         curr_positions[event["pool_address"]]["collateral"] += event["collateral"]
         _update_current_positions_block(curr_positions, event)
 
 
 def _handle_quote_token_events(
-    models, wallet_address, from_block_number, curr_positions
+    chain, wallet_address, from_block_number, curr_positions
 ):
+    # TODO: from_block_number
     sql = """
         SELECT
               aqt.pool_address
@@ -109,9 +141,9 @@ def _handle_quote_token_events(
 
         ORDER BY block_number
     """.format(
-        add_quote_token_table=models.add_quote_token._meta.db_table,
-        remove_quote_token_table=models.remove_quote_token._meta.db_table,
-        move_quote_token_table=models.move_quote_token._meta.db_table,
+        add_quote_token_table=chain.add_quote_token._meta.db_table,
+        remove_quote_token_table=chain.remove_quote_token._meta.db_table,
+        move_quote_token_table=chain.move_quote_token._meta.db_table,
     )
     with connection.cursor() as cursor:
         cursor.execute(sql, [wallet_address, wallet_address, wallet_address])
@@ -130,13 +162,54 @@ def _handle_quote_token_events(
         _update_current_positions_block(curr_positions, event)
 
 
-def save_wallet_positions(models, wallet_address, from_block_number):
+def _handle_collateral_events(chain, wallet_address, from_block_number, curr_positions):
+    # TODO: from_block_number
+    sql = """
+        SELECT
+              x.pool_address
+            , x.block_timestamp
+            , x.block_number
+            , SUM(x.amount) AS amount
+        FROM (
+            SELECT
+                 ac.pool_address
+               , ac.block_timestamp
+               , ac.block_number
+               , ac.amount
+            FROM {add_collateral_table} AS ac
+            WHERE ac.actor = %s
+
+            UNION
+
+            SELECT
+                  rc.pool_address
+                , rc.block_timestamp
+                , rc.block_number
+                , rc.amount * -1 AS amount
+            FROM {remove_collateral_table} rc
+            WHERE rc.claimer = %s
+        ) x
+        GROUP BY 1, 2, 3
+        ORDER BY block_number
+    """.format(
+        add_collateral_table=chain.add_collateral._meta.db_table,
+        remove_collateral_table=chain.remove_collateral._meta.db_table,
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(sql, [wallet_address, wallet_address])
+        events = fetch_all(cursor)
+
+    for event in events:
+        curr_positions[event["pool_address"]]["collateral"] += event["amount"]
+        _update_current_positions_block(curr_positions, event)
+
+
+def save_wallet_positions(chain, wallet_address, from_block_number):
     curr_positions = defaultdict(lambda: defaultdict(Decimal))
 
-    _handle_debt_events(models, wallet_address, from_block_number, curr_positions)
-    _handle_quote_token_events(
-        models, wallet_address, from_block_number, curr_positions
-    )
+    _handle_debt_events(chain, wallet_address, from_block_number, curr_positions)
+    _handle_quote_token_events(chain, wallet_address, from_block_number, curr_positions)
+    _handle_collateral_events(chain, wallet_address, from_block_number, curr_positions)
 
     # TODO: wallet_market_state
 
@@ -144,16 +217,17 @@ def save_wallet_positions(models, wallet_address, from_block_number):
         # Can't use update_or_create because we need to set some values to 0 only when
         # creating the model
         try:
-            current_position = models.current_position.objects.get(
+            current_position = chain.current_position.objects.get(
                 wallet_address=wallet_address, pool_address=pool_address
             )
-        except models.current_position.DoesNotExist:
-            current_position = models.current_position(
+        except chain.current_position.DoesNotExist:
+            current_position = chain.current_position(
                 wallet_address=wallet_address,
                 pool_address=pool_address,
                 debt=0,  # TODO: this should be updated here!
             )
 
+        current_position.debt = pool_position["debt"]
         current_position.t0debt = pool_position["t0debt"]
         current_position.collateral = pool_position["collateral"]
         current_position.supply = pool_position["supply"]
