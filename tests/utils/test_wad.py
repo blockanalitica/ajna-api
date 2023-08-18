@@ -14,6 +14,8 @@ from ajna.utils.wad import wad_to_decimal
         (69, Decimal("0.000000000000000069")),
         (6900000000000000000000, Decimal("6900")),
         (69000000000000000000001, Decimal("69000.000000000000000001")),
+        (0, Decimal("0")),
+        (None, Decimal("0")),
     ],
 )
 def test_wad_to_decimal(wad, expected):

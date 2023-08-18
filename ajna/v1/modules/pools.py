@@ -46,6 +46,13 @@ def get_pools_chain_data(chain, pool_addresses):
         )
         calls.append(
             (
+                pool_address,
+                ["debtInfo()((uint256,uint256,uint256,uint256))"],
+                [f"{pool_address}:debtInfo", None],
+            ),
+        )
+        calls.append(
+            (
                 chain.pool_info_address,
                 [
                     "lenderInterestMargin(address)(uint256)",
@@ -62,6 +69,7 @@ def get_pools_chain_data(chain, pool_addresses):
         loans_info = data[f"{pool_address}:loansInfo"]
         prices_info = data[f"{pool_address}:pricesInfo"]
         interest_rate_info = data[f"{pool_address}:interestRateInfo"]
+        debt_info = data[f"{pool_address}:debtInfo"]
         lim = data[f"{pool_address}:lenderInterestMargin"]
 
         pools_data[pool_address] = {
@@ -71,9 +79,48 @@ def get_pools_chain_data(chain, pool_addresses):
             "lup_index": prices_info[5],
             "borrow_rate": wad_to_decimal(interest_rate_info[0]),
             "lender_interest_margin": wad_to_decimal(lim),
+            "pending_debt": wad_to_decimal(debt_info[0]),
         }
 
+    # _calculate_lend_rates mutates pools_data and adds keys to it
+    _calculate_lend_rates(chain, pools_data)
+
     return pools_data
+
+
+def _calculate_lend_rates(chain, pools_data):
+    """
+    NOTE: This function mutates pools_data dictionary that is passed in this function
+    as parameter!
+    """
+    calls = []
+    for pool_address, pool_data in pools_data.items():
+        calls.append(
+            (
+                pool_address,
+                [
+                    "depositUpToIndex(uint256)(uint256)",
+                    max(pool_data["lup_index"], pool_data["htp_index"]),
+                ],
+                [pool_address, None],
+            )
+        )
+
+    deposit_data = chain.call_multicall(calls)
+
+    for pool_address, pool_data in pools_data.items():
+        meaningful_deposit = wad_to_decimal(deposit_data[pool_address])
+
+        lend_rate = Decimal("0")
+        if meaningful_deposit:
+            utilization = pool_data["pending_debt"] / meaningful_deposit
+            lend_rate = (
+                pool_data["borrow_rate"]
+                * pool_data["lender_interest_margin"]
+                * utilization
+            )
+
+        pool_data["lend_rate"] = lend_rate
 
 
 def fetch_pools_data(chain, subgraph, models):
@@ -131,15 +178,6 @@ def fetch_and_save_pool_data(
         if lup > Decimal("1004968987"):
             lup = Decimal("0")
 
-        borrow_rate = chain_pool_data.get(
-            "borrow_rate", Decimal(str(pool_data["borrowRate"]))
-        )
-        lender_interest_margin = chain_pool_data.get(
-            "lender_interest_margin", Decimal("0")
-        )
-
-        lend_rate = borrow_rate * lender_interest_margin * utilization
-
         pool_defaults = {
             "created_at_block_number": pool_data["createdAtBlockNumber"],
             "created_at_timestamp": pool_data["createdAtTimestamp"],
@@ -150,8 +188,12 @@ def fetch_and_save_pool_data(
             "t0debt": pool_data["t0debt"],
             "inflator": pool_data["inflator"],
             "pending_inflator": pending_inflator,
-            "borrow_rate": borrow_rate,
-            "lend_rate": lend_rate,
+            "borrow_rate": chain_pool_data.get(
+                "borrow_rate", Decimal(str(pool_data["borrowRate"]))
+            ),
+            "lend_rate": chain_pool_data.get(
+                "lend_rate", Decimal(str(pool_data["lendRate"]))
+            ),
             "borrow_fee_rate": pool_data["borrowFeeRate"],
             "deposit_fee_rate": pool_data["depositFeeRate"],
             "pledged_collateral": pool_data["pledgedCollateral"],
@@ -180,6 +222,7 @@ def fetch_and_save_pool_data(
             "collateral_token_balance": pool_data["collateralBalance"],
             "datetime": datetime.now(),
         }
+
         _, created = pool_model.objects.update_or_create(
             address=pool_data["id"], defaults=pool_defaults
         )
@@ -191,7 +234,7 @@ def fetch_and_save_pool_data(
                     "symbol": collateral_token["symbol"],
                     "name": collateral_token["name"],
                     "decimals": collateral_token["decimals"],
-                    "is_erc721": collateral_token["isERC721"],
+                    "is_erc721": collateral_token["isERC721"]
                 },
             )
 
@@ -201,7 +244,7 @@ def fetch_and_save_pool_data(
                     "symbol": quote_token["symbol"],
                     "name": quote_token["name"],
                     "decimals": quote_token["decimals"],
-                    "is_erc721": quote_token["isERC721"],
+                    "is_erc721": quote_token["isERC721"]
                 },
             )
 
