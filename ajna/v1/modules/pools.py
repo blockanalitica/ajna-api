@@ -10,6 +10,7 @@ from ajna.utils.utils import (
     datetime_to_full_hour,
     datetime_to_next_full_hour,
 )
+from ajna.utils.wad import wad_to_decimal
 
 
 def get_pools_chain_data(chain, pool_addresses):
@@ -36,6 +37,23 @@ def get_pools_chain_data(chain, pool_addresses):
                 [f"{pool_address}:pricesInfo", None],
             )
         )
+        calls.append(
+            (
+                pool_address,
+                ["interestRateInfo()((uint256,uint256))"],
+                [f"{pool_address}:interestRateInfo", None],
+            ),
+        )
+        calls.append(
+            (
+                chain.pool_info_address,
+                [
+                    "lenderInterestMargin(address)(uint256)",
+                    pool_address,
+                ],
+                [f"{pool_address}:lenderInterestMargin", None],
+            )
+        )
 
     data = chain.call_multicall(calls)
 
@@ -43,12 +61,18 @@ def get_pools_chain_data(chain, pool_addresses):
     for pool_address in pool_addresses:
         loans_info = data[f"{pool_address}:loansInfo"]
         prices_info = data[f"{pool_address}:pricesInfo"]
+        interest_rate_info = data[f"{pool_address}:interestRateInfo"]
+        lim = data[f"{pool_address}:lenderInterestMargin"]
+
         pools_data[pool_address] = {
-            "pending_inflator": loans_info[3] / 10**18,
+            "pending_inflator": wad_to_decimal(loans_info[3]),
             "hpb_index": prices_info[1],
             "htp_index": prices_info[3],
             "lup_index": prices_info[5],
+            "borrow_rate": wad_to_decimal(interest_rate_info[0]),
+            "lender_interest_margin": wad_to_decimal(lim),
         }
+
     return pools_data
 
 
@@ -94,7 +118,7 @@ def fetch_and_save_pool_data(
 
         pool_size = Decimal(pool_data["poolSize"])
         t0debt = Decimal(pool_data["t0debt"])
-        pending_inflator = Decimal(chain_pool_data.get("pending_inflator", 1))
+        pending_inflator = chain_pool_data.get("pending_inflator", Decimal("1"))
         debt = t0debt * pending_inflator
 
         utilization = Decimal("0")
@@ -107,6 +131,15 @@ def fetch_and_save_pool_data(
         if lup > Decimal("1004968987"):
             lup = Decimal("0")
 
+        borrow_rate = chain_pool_data.get(
+            "borrow_rate", Decimal(str(pool_data["borrowRate"]))
+        )
+        lender_interest_margin = chain_pool_data.get(
+            "lender_interest_margin", Decimal("0")
+        )
+
+        lend_rate = borrow_rate * lender_interest_margin * utilization
+
         pool_defaults = {
             "created_at_block_number": pool_data["createdAtBlockNumber"],
             "created_at_timestamp": pool_data["createdAtTimestamp"],
@@ -117,8 +150,8 @@ def fetch_and_save_pool_data(
             "t0debt": pool_data["t0debt"],
             "inflator": pool_data["inflator"],
             "pending_inflator": pending_inflator,
-            "borrow_rate": pool_data["borrowRate"],
-            "lend_rate": pool_data["lendRate"],
+            "borrow_rate": borrow_rate,
+            "lend_rate": lend_rate,
             "borrow_fee_rate": pool_data["borrowFeeRate"],
             "deposit_fee_rate": pool_data["depositFeeRate"],
             "pledged_collateral": pool_data["pledgedCollateral"],
