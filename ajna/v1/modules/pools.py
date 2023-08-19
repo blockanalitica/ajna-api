@@ -13,7 +13,7 @@ from ajna.utils.utils import (
 from ajna.utils.wad import wad_to_decimal
 
 
-def get_pools_chain_data(chain, pool_addresses):
+def get_pools_chain_data(chain, pool_addresses, block_number=None):
     calls = []
 
     for pool_address in pool_addresses:
@@ -62,7 +62,7 @@ def get_pools_chain_data(chain, pool_addresses):
             )
         )
 
-    data = chain.call_multicall(calls)
+    data = chain.call_multicall(calls, block_id=block_number)
 
     pools_data = {}
     for pool_address in pool_addresses:
@@ -83,12 +83,12 @@ def get_pools_chain_data(chain, pool_addresses):
         }
 
     # _calculate_lend_rates mutates pools_data and adds keys to it
-    _calculate_lend_rates(chain, pools_data)
+    _calculate_lend_rates(chain, pools_data, block_number)
 
     return pools_data
 
 
-def _calculate_lend_rates(chain, pools_data):
+def _calculate_lend_rates(chain, pools_data, block_number=None):
     """
     NOTE: This function mutates pools_data dictionary that is passed in this function
     as parameter!
@@ -106,7 +106,7 @@ def _calculate_lend_rates(chain, pools_data):
             )
         )
 
-    deposit_data = chain.call_multicall(calls)
+    deposit_data = chain.call_multicall(calls, block_id=block_number)
 
     for pool_address, pool_data in pools_data.items():
         meaningful_deposit = wad_to_decimal(deposit_data[pool_address])
