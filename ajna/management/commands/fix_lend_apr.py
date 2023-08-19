@@ -63,7 +63,12 @@ class Command(BaseCommand):
             data = get_pools_chain_data(chain, snapshot_map.keys(), int(block))
             for pool_address, snapshot in snapshot_map.items():
                 snapshot.lend_rate = data[pool_address]["lend_rate"]
-                snapshot.save(update_fields=["lend_rate"])
+                snapshot.current_meaningful_utilization = data[pool_address][
+                    "current_meaningful_utilization"
+                ]
+                snapshot.save(
+                    update_fields=["lend_rate", "current_meaningful_utilization"]
+                )
 
     def _fix_goerli(self):
         goerli_blocks = self._get_goerli_blocks()
