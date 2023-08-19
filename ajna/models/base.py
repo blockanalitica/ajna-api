@@ -31,6 +31,9 @@ class PoolBase(models.Model):
     min_debt_amount = models.DecimalField(max_digits=32, decimal_places=18)
     # Our calculation of utilization
     utilization = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    current_meaningful_utilization = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
     actual_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # MAU
     target_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # TU
     total_bond_escrowed = models.DecimalField(max_digits=32, decimal_places=18)

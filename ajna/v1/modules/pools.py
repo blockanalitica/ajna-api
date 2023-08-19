@@ -111,6 +111,7 @@ def _calculate_lend_rates(chain, pools_data, block_number=None):
     for pool_address, pool_data in pools_data.items():
         meaningful_deposit = wad_to_decimal(deposit_data[pool_address])
 
+        utilization = None
         lend_rate = Decimal("0")
         if meaningful_deposit:
             utilization = pool_data["pending_debt"] / meaningful_deposit
@@ -120,6 +121,7 @@ def _calculate_lend_rates(chain, pools_data, block_number=None):
                 * utilization
             )
 
+        pool_data["current_meaningful_utilization"] = utilization
         pool_data["lend_rate"] = lend_rate
 
 
@@ -215,6 +217,9 @@ def fetch_and_save_pool_data(
             "total_ajna_burned": pool_data["totalAjnaBurned"],
             "min_debt_amount": pool_data["minDebtAmount"],
             "utilization": utilization,
+            "current_meaningful_utilization": chain_pool_data[
+                "current_meaningful_utilization"
+            ],
             "actual_utilization": pool_data["actualUtilization"],
             "target_utilization": pool_data["targetUtilization"],
             "total_bond_escrowed": pool_data["totalBondEscrowed"],
