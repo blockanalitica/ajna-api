@@ -234,7 +234,7 @@ def fetch_and_save_pool_data(
                     "symbol": collateral_token["symbol"],
                     "name": collateral_token["name"],
                     "decimals": collateral_token["decimals"],
-                    "is_erc721": collateral_token["isERC721"]
+                    "is_erc721": collateral_token["isERC721"],
                 },
             )
 
@@ -244,7 +244,7 @@ def fetch_and_save_pool_data(
                     "symbol": quote_token["symbol"],
                     "name": quote_token["name"],
                     "decimals": quote_token["decimals"],
-                    "is_erc721": quote_token["isERC721"]
+                    "is_erc721": quote_token["isERC721"],
                 },
             )
 
