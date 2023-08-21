@@ -33,13 +33,16 @@ def fetch_and_save_settled_liquidation_auctions(
                 .price
             )
         except price_feed_model.DoesNotExist:
-            collateral_underlying_price = (
-                price_feed_model.objects.filter(
-                    underlying_address=collateral_token_address
+            try:
+                collateral_underlying_price = (
+                    price_feed_model.objects.filter(
+                        underlying_address=collateral_token_address
+                    )
+                    .earliest()
+                    .price
                 )
-                .earliest()
-                .price
-            )
+            except price_feed_model.DoesNotExist:
+                collateral_underlying_price = None
         try:
             debt_underlying_price = (
                 price_feed_model.objects.filter(
@@ -49,11 +52,14 @@ def fetch_and_save_settled_liquidation_auctions(
                 .price
             )
         except price_feed_model.DoesNotExist:
-            debt_underlying_price = (
-                price_feed_model.objects.filter(underlying_address=debt_token_address)
-                .earliest()
-                .price
-            )
+            try:
+                debt_underlying_price = (
+                    price_feed_model.objects.filter(underlying_address=debt_token_address)
+                    .earliest()
+                    .price
+                )
+            except price_feed_model.DoesNotExist:
+                debt_underlying_price = None
 
         wallet_address = _get_wallet_address(chain, auction["borrower"])
 
