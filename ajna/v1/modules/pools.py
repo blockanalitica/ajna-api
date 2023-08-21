@@ -10,9 +10,10 @@ from ajna.utils.utils import (
     datetime_to_full_hour,
     datetime_to_next_full_hour,
 )
+from ajna.utils.wad import wad_to_decimal
 
 
-def get_pools_chain_data(chain, pool_addresses):
+def get_pools_chain_data(chain, pool_addresses, block_number=None):
     calls = []
 
     for pool_address in pool_addresses:
@@ -36,20 +37,92 @@ def get_pools_chain_data(chain, pool_addresses):
                 [f"{pool_address}:pricesInfo", None],
             )
         )
+        calls.append(
+            (
+                pool_address,
+                ["interestRateInfo()((uint256,uint256))"],
+                [f"{pool_address}:interestRateInfo", None],
+            ),
+        )
+        calls.append(
+            (
+                pool_address,
+                ["debtInfo()((uint256,uint256,uint256,uint256))"],
+                [f"{pool_address}:debtInfo", None],
+            ),
+        )
+        calls.append(
+            (
+                chain.pool_info_address,
+                [
+                    "lenderInterestMargin(address)(uint256)",
+                    pool_address,
+                ],
+                [f"{pool_address}:lenderInterestMargin", None],
+            )
+        )
 
-    data = chain.call_multicall(calls)
+    data = chain.call_multicall(calls, block_id=block_number)
 
     pools_data = {}
     for pool_address in pool_addresses:
         loans_info = data[f"{pool_address}:loansInfo"]
         prices_info = data[f"{pool_address}:pricesInfo"]
+        interest_rate_info = data[f"{pool_address}:interestRateInfo"]
+        debt_info = data[f"{pool_address}:debtInfo"]
+        lim = data[f"{pool_address}:lenderInterestMargin"]
+
         pools_data[pool_address] = {
-            "pending_inflator": loans_info[3] / 10**18,
+            "pending_inflator": wad_to_decimal(loans_info[3]),
             "hpb_index": prices_info[1],
             "htp_index": prices_info[3],
             "lup_index": prices_info[5],
+            "borrow_rate": wad_to_decimal(interest_rate_info[0]),
+            "lender_interest_margin": wad_to_decimal(lim),
+            "pending_debt": wad_to_decimal(debt_info[0]),
         }
+
+    # _calculate_lend_rates mutates pools_data and adds keys to it
+    _calculate_lend_rates(chain, pools_data, block_number)
+
     return pools_data
+
+
+def _calculate_lend_rates(chain, pools_data, block_number=None):
+    """
+    NOTE: This function mutates pools_data dictionary that is passed in this function
+    as parameter!
+    """
+    calls = []
+    for pool_address, pool_data in pools_data.items():
+        calls.append(
+            (
+                pool_address,
+                [
+                    "depositUpToIndex(uint256)(uint256)",
+                    max(pool_data["lup_index"], pool_data["htp_index"]),
+                ],
+                [pool_address, None],
+            )
+        )
+
+    deposit_data = chain.call_multicall(calls, block_id=block_number)
+
+    for pool_address, pool_data in pools_data.items():
+        meaningful_deposit = wad_to_decimal(deposit_data[pool_address])
+
+        utilization = None
+        lend_rate = Decimal("0")
+        if meaningful_deposit:
+            utilization = pool_data["pending_debt"] / meaningful_deposit
+            lend_rate = (
+                pool_data["borrow_rate"]
+                * pool_data["lender_interest_margin"]
+                * utilization
+            )
+
+        pool_data["current_meaningful_utilization"] = utilization
+        pool_data["lend_rate"] = lend_rate
 
 
 def fetch_pools_data(chain, subgraph, models):
@@ -94,7 +167,7 @@ def fetch_and_save_pool_data(
 
         pool_size = Decimal(pool_data["poolSize"])
         t0debt = Decimal(pool_data["t0debt"])
-        pending_inflator = Decimal(chain_pool_data.get("pending_inflator", 1))
+        pending_inflator = chain_pool_data.get("pending_inflator", Decimal("1"))
         debt = t0debt * pending_inflator
 
         utilization = Decimal("0")
@@ -117,8 +190,12 @@ def fetch_and_save_pool_data(
             "t0debt": pool_data["t0debt"],
             "inflator": pool_data["inflator"],
             "pending_inflator": pending_inflator,
-            "borrow_rate": pool_data["borrowRate"],
-            "lend_rate": pool_data["lendRate"],
+            "borrow_rate": chain_pool_data.get(
+                "borrow_rate", Decimal(str(pool_data["borrowRate"]))
+            ),
+            "lend_rate": chain_pool_data.get(
+                "lend_rate", Decimal(str(pool_data["lendRate"]))
+            ),
             "borrow_fee_rate": pool_data["borrowFeeRate"],
             "deposit_fee_rate": pool_data["depositFeeRate"],
             "pledged_collateral": pool_data["pledgedCollateral"],
@@ -140,6 +217,9 @@ def fetch_and_save_pool_data(
             "total_ajna_burned": pool_data["totalAjnaBurned"],
             "min_debt_amount": pool_data["minDebtAmount"],
             "utilization": utilization,
+            "current_meaningful_utilization": chain_pool_data[
+                "current_meaningful_utilization"
+            ],
             "actual_utilization": pool_data["actualUtilization"],
             "target_utilization": pool_data["targetUtilization"],
             "total_bond_escrowed": pool_data["totalBondEscrowed"],
@@ -147,6 +227,7 @@ def fetch_and_save_pool_data(
             "collateral_token_balance": pool_data["collateralBalance"],
             "datetime": datetime.now(),
         }
+
         _, created = pool_model.objects.update_or_create(
             address=pool_data["id"], defaults=pool_defaults
         )
