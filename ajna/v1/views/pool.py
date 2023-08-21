@@ -712,7 +712,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
             raise Http404
 
         # TODO: change this to a reasonable number (perhaps 1 day or something like that)
-        timestamp = (datetime.now() - timedelta(days=60)).timestamp()
+        timestamp = (datetime.now() - timedelta(days=365)).timestamp()
 
         sql_vars = [pool_address, timestamp]
 

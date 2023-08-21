@@ -5,31 +5,45 @@ from decimal import Decimal
 from django.db import connection
 
 from ajna.utils.db import fetch_all
+from ajna.utils.wad import wad_to_decimal, round_ceil
 
-POOL_INFLATORS = defaultdict(dict)
+POOL_BLOCK_DATA = defaultdict(dict)
 
 
-def _get_inflator(chain, pool_address, block_number):
-    global POOL_INFLATORS
+def _get_pool_block_data(chain, pool_address, block_number):
+    global POOL_BLOCK_DATA
 
-    if block_number not in POOL_INFLATORS[pool_address]:
-        calls = [
+    if block_number not in POOL_BLOCK_DATA[pool_address]:
+        interest_rate_calls = [
             (
-                chain.pool_info_address,
-                [
-                    "poolLoansInfo(address)((uint256,uint256,address,uint256,uint256))",
-                    pool_address,
-                ],
-                [pool_address, None],
-            )
+                pool_address,
+                ["interestRateInfo()((uint256,uint256))"],
+                ["interestRateInfo", None],
+            ),
         ]
-
-        data = chain.call_multicall(calls, block_id=block_number)
-        POOL_INFLATORS[pool_address][block_number] = data[pool_address][3] / Decimal(
-            "1e18"
+        # Get interestRateInfo from the previous block, because when drawDebt event
+        # happens, immediately after the `UpdateInterestRate` is called changing
+        # the borrow rate for the current block, but the drawDebt calculation happens
+        # with the previous blocks borrow rate
+        interest_rates = chain.call_multicall(
+            interest_rate_calls, block_id=block_number - 1
         )
 
-    return POOL_INFLATORS[pool_address][block_number]
+        inflator_info_calls = [
+            (
+                pool_address,
+                ["inflatorInfo()((uint256,uint256))"],
+                ["inflatorInfo", None],
+            ),
+        ]
+        inflator_info = chain.call_multicall(inflator_info_calls, block_id=block_number)
+
+        POOL_BLOCK_DATA[pool_address][block_number] = {
+            "inflator": wad_to_decimal(inflator_info["inflatorInfo"][0]),
+            "borrow_rate": wad_to_decimal(interest_rates["interestRateInfo"][0]),
+        }
+
+    return POOL_BLOCK_DATA[pool_address][block_number]
 
 
 def _update_current_positions_block(current_position, event):
@@ -47,33 +61,24 @@ def _handle_debt_events(chain, wallet_address, from_block_number, curr_positions
     # TODO: from_block_number
     sql = """
         SELECT
-              x.pool_address
-            , x.block_timestamp
-            , x.block_number
-            , SUM(x.debt) AS debt
-            , SUM(x.collateral) AS collateral
-        FROM (
-            SELECT
-                 dd.pool_address
-               , dd.block_timestamp
-               , dd.block_number
-               , dd.amount_borrowed AS debt
-               , dd.collateral_pledged AS collateral
-            FROM {draw_debt_table} AS dd
-            WHERE dd.borrower = %s
+             dd.pool_address
+           , dd.block_timestamp
+           , dd.block_number
+           , dd.amount_borrowed AS debt
+           , dd.collateral_pledged AS collateral
+        FROM {draw_debt_table} AS dd
+        WHERE dd.borrower = %s
 
-            UNION
+        UNION
 
-            SELECT
-                  rd.pool_address
-                , rd.block_timestamp
-                , rd.block_number
-                , rd.quote_repaid * -1 AS debt
-                , rd.collateral_pulled * -1 AS collateral
-            FROM {repay_debt_table} rd
-            WHERE rd.borrower = %s
-        ) x
-        GROUP BY 1, 2, 3
+        SELECT
+              rd.pool_address
+            , rd.block_timestamp
+            , rd.block_number
+            , rd.quote_repaid * -1 AS debt
+            , rd.collateral_pulled * -1 AS collateral
+        FROM {repay_debt_table} rd
+        WHERE rd.borrower = %s
         ORDER BY block_number
     """.format(
         draw_debt_table=chain.draw_debt._meta.db_table,
@@ -84,12 +89,24 @@ def _handle_debt_events(chain, wallet_address, from_block_number, curr_positions
         events = fetch_all(cursor)
 
     for event in events:
-        inflator = _get_inflator(chain, event["pool_address"], event["block_number"])
-        curr_positions[event["pool_address"]]["debt"] += event["debt"]
-        # Round to 18 decimals as our model accepts only 18 decimals
-        curr_positions[event["pool_address"]]["t0debt"] += round(
-            event["debt"] / inflator, 18
+        block_data = _get_pool_block_data(
+            chain, event["pool_address"], event["block_number"]
         )
+
+        # In contract they round t0debt to ceiling, while origination fee and others
+        # below are rounded normally
+        t0debt = round_ceil(event["debt"] / block_data["inflator"])
+        if event["debt"] > 0:
+            origination_fee = round(
+                max(round(block_data["borrow_rate"] / 52, 18), Decimal("0.0005"))
+                * t0debt,
+                18,
+            )
+
+            t0debt += origination_fee
+
+        curr_positions[event["pool_address"]]["debt"] += event["debt"]
+        curr_positions[event["pool_address"]]["t0debt"] += t0debt
         curr_positions[event["pool_address"]]["collateral"] += event["collateral"]
         _update_current_positions_block(curr_positions, event)
 
@@ -234,3 +251,5 @@ def save_wallet_positions(chain, wallet_address, from_block_number):
         current_position.block_number = pool_position["block_number"]
         current_position.datetime = pool_position["datetime"]
         current_position.save()
+
+    print(current_position.__dict__)

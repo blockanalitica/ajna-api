@@ -1,6 +1,16 @@
 from django.urls import path
 
-from .views import auctions, grants, pool, pools, search, stats, token, tokens
+from .views import (
+    auctions,
+    grants,
+    pool,
+    pools,
+    positions,
+    search,
+    stats,
+    token,
+    tokens,
+)
 
 urlpatterns = [
     path(
@@ -118,5 +128,10 @@ urlpatterns = [
         "pools/<pool_address>/lenders-csv/",
         pool.PoolLendersCsvView.as_view(),
         name="pool-lenders-csv",
+    ),
+    path(
+        "positions/",
+        positions.PositionsView.as_view(),
+        name="positions",
     ),
 ]
