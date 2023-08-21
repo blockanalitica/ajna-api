@@ -12,6 +12,7 @@ class TokensView(RawSQLPaginatedChainView):
         days_ago_options (list): List of allowed values for the `days_ago` parameter.
     """
 
+    order_nulls_last = True
     days_ago_required = False
     days_ago_default = 7
     days_ago_options = [1, 7, 30, 365]
@@ -23,6 +24,7 @@ class TokensView(RawSQLPaginatedChainView):
         "collateral_amount",
         "quote_amount",
         "tvl",
+        "underlying_price",
     ]
     search_fields = ["sub.symbol", "sub.name"]
 
