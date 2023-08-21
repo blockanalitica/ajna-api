@@ -11,6 +11,7 @@ class TokensView(RawSQLPaginatedChainView):
         days_ago_default (int): Default value for the `days_ago` parameter.
         days_ago_options (list): List of allowed values for the `days_ago` parameter.
     """
+
     order_nulls_last = True
     days_ago_required = False
     days_ago_default = 7

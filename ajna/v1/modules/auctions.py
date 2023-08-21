@@ -54,7 +54,9 @@ def fetch_and_save_settled_liquidation_auctions(
         except price_feed_model.DoesNotExist:
             try:
                 debt_underlying_price = (
-                    price_feed_model.objects.filter(underlying_address=debt_token_address)
+                    price_feed_model.objects.filter(
+                        underlying_address=debt_token_address
+                    )
                     .earliest()
                     .price
                 )
