@@ -5,7 +5,7 @@ from web3 import Web3
 
 
 def _get_wallet_address(chain, address):
-    address = Web3.toChecksumAddress(address)
+    address = Web3.to_checksum_address(address)
     code = chain.eth.get_code(address).hex()
     if len(code) > 2:
         address = chain.get_eoa(address)
