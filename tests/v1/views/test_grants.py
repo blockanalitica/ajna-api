@@ -8,7 +8,8 @@ from tests.v1.factories import V1GrantProposalFactory
 def test_grants_funding_proposals(client, monkeypatch):
     current_block = 9500000
     monkeypatch.setattr(
-        "ajna.chain.Blockchain.get_latest_block", lambda x: current_block
+        "chain_harvester.networks.ethereum.mainnet.EthereumMainnetChain.get_latest_block",
+        lambda x: current_block,
     )
 
     V1GrantProposalFactory(
@@ -85,7 +86,8 @@ def test_grants_funding_proposals(client, monkeypatch):
 def test_grants_finalize_proposals(client, monkeypatch):
     current_block = 9500000
     monkeypatch.setattr(
-        "ajna.chain.Blockchain.get_latest_block", lambda x: current_block
+        "chain_harvester.networks.ethereum.mainnet.EthereumMainnetChain.get_latest_block",
+        lambda x: current_block,
     )
     V1GrantProposalFactory(
         finalize_start_block_number=9499999,
