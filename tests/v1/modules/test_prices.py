@@ -3,7 +3,7 @@ from decimal import Decimal
 import pytest
 import responses
 
-from ajna.v1.ethereum import models
+from ajna.v1.ethereum.chain import EthereumModels
 from ajna.v1.modules.prices import update_token_prices
 from tests.v1.factories import V1TokenFactory
 
@@ -20,9 +20,13 @@ def test_update_token_prices():
     """
 
     # Create tokens using the TokenFactory
-    token_1 = V1TokenFactory()
+    token_1 = V1TokenFactory(symbol="WBTC")
     token_2 = V1TokenFactory()
     token_3 = V1TokenFactory()
+    token_4 = V1TokenFactory(
+        symbol="YieldBTC",
+        underlying_address="0x0274a704a6d9129f90a62ddc6f6024b33ecdad36",
+    )
 
     # Mock response for get_current_prices
     mock_response = {
@@ -50,9 +54,8 @@ def test_update_token_prices():
             },
         }
     }
-    token_model = models.V1EthereumToken
-    price_feed_model = models.V1EthereumPriceFeed
-    addresses = token_model.objects.all().values_list("underlying_address", flat=True)
+    models = EthereumModels()
+    addresses = models.token.objects.all().values_list("underlying_address", flat=True)
     coins = [f"ethereum:{address}" for address in addresses]
     external_api_url = "https://coins.llama.fi/prices/current/{}/".format(
         ",".join(coins)
@@ -65,17 +68,28 @@ def test_update_token_prices():
         content_type="application/json",
     )
 
+    external_rhino_url = "https://api.stg.rhino.fi/market-data/ticker/YIELDBTC:BTC"
+    responses.add(
+        responses.GET,
+        external_rhino_url,
+        json=[0, 0, 0, 0, 0, 0, 1.4, 0, 0, 0],
+        status=200,
+        content_type="application/json",
+    )
+
     update_token_prices(models)
 
     # Assert that the underlying_price field has been updated for tokens
-    assert token_model.objects.get(
+    assert models.token.objects.get(
         underlying_address=token_1.underlying_address
     ).underlying_price == Decimal("1")
-    assert token_model.objects.get(
+    assert models.token.objects.get(
         underlying_address=token_2.underlying_address
     ).underlying_price == Decimal("1000")
-    assert token_model.objects.get(
+    assert models.token.objects.get(
         underlying_address=token_3.underlying_address
     ).underlying_price == Decimal("0.089")
-
-    assert price_feed_model.objects.count() == 3
+    assert models.token.objects.get(
+        underlying_address=token_4.underlying_address
+    ).underlying_price == Decimal("1.4")
+    assert models.token.objects.count() == 4

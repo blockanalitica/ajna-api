@@ -45,6 +45,7 @@ def _handle_rhinofi_tokens(models, done_addresses):
         conversion_price = fetch_pair_price(data["rhino_pair"])
         price_token = models.token.objects.get(symbol=data["price_token"])
 
+        print("lalalla", price_token.underlying_price, conversion_price)
         price = price_token.underlying_price * conversion_price
         _save_price_for_address(models, address, price)
 
