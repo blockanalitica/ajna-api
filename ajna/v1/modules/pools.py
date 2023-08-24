@@ -62,7 +62,7 @@ def get_pools_chain_data(chain, pool_addresses, block_number=None):
             )
         )
 
-    data = chain.call_multicall(calls, block_id=block_number)
+    data = chain.multicall(calls, block_identifier=block_number)
 
     pools_data = {}
     for pool_address in pool_addresses:
@@ -106,7 +106,7 @@ def _calculate_lend_rates(chain, pools_data, block_number=None):
             )
         )
 
-    deposit_data = chain.call_multicall(calls, block_id=block_number)
+    deposit_data = chain.multicall(calls, block_identifier=block_number)
 
     for pool_address, pool_data in pools_data.items():
         meaningful_deposit = wad_to_decimal(deposit_data[pool_address])

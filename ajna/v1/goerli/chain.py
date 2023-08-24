@@ -1,6 +1,7 @@
+from chain_harvester.networks.ethereum.goerli import EthereumGoerliChain
 from django.conf import settings
 
-from ajna.chain import Blockchain
+from ajna.chain import AjnaChainMixin
 
 from . import models
 
@@ -35,15 +36,9 @@ class GoerliModels:
             setattr(self, key, model)
 
 
-class Goerli(Blockchain):
-    def __init__(
-        self,
-        node=settings.GOERLI_NODE,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self._node_address = node
+class Goerli(AjnaChainMixin, EthereumGoerliChain):
+    def __init__(self, *args, **kwargs):
+        super().__init__(rpc=settings.GOERLI_NODE, *args, **kwargs)
         self.pool_info_address = "0xBB61407715cDf92b2784E9d2F1675c4B8505cBd8"
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)
