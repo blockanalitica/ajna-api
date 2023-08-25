@@ -1,6 +1,7 @@
+from chain_harvester.networks.ethereum.mainnet import EthereumMainnetChain
 from django.conf import settings
 
-from ajna.chain import Blockchain
+from ajna.chain import AjnaChainMixin
 
 from . import models
 
@@ -37,15 +38,9 @@ class EthereumModels:
             setattr(self, key, model)
 
 
-class Ethereum(Blockchain):
-    def __init__(
-        self,
-        node=settings.ETHEREUM_NODE,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self._node_address = node
+class Ethereum(AjnaChainMixin, EthereumMainnetChain):
+    def __init__(self, *args, **kwargs):
+        super().__init__(rpc=settings.ETHEREUM_NODE, *args, **kwargs)
         self.pool_info_address = "0x154FFf344f426F99E328bacf70f4Eb632210ecdc"
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)

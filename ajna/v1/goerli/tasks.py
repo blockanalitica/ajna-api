@@ -20,11 +20,8 @@ from ..modules.events import (
     fetch_and_save_repay_debts,
 )
 from ..modules.grants import fetch_and_save_grant_proposals_data
-from ..modules.pools import (
-    calculate_pool_volume_for_date,
-    fetch_pools_data,
-    update_token_prices,
-)
+from ..modules.pools import calculate_pool_volume_for_date, fetch_pools_data
+from ..modules.prices import update_token_prices
 from .chain import Goerli, GoerliModels
 
 log = logging.getLogger(__name__)
@@ -74,7 +71,7 @@ SCHEDULE = {
 @app.task
 def fetch_market_price_task():
     models = GoerliModels()
-    update_token_prices(models.token, models.price_feed, network="goerli")
+    update_token_prices(models, network="goerli")
 
 
 @app.task
