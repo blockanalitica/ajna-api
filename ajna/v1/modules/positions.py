@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.db import connection
 
 from ajna.utils.db import fetch_all
-from ajna.utils.wad import wad_to_decimal, round_ceil
+from ajna.utils.utils import wad_to_decimal, round_ceil
 
 POOL_BLOCK_DATA = defaultdict(dict)
 
@@ -25,7 +25,7 @@ def _get_pool_block_data(chain, pool_address, block_number):
         # happens, immediately after the `UpdateInterestRate` is called changing
         # the borrow rate for the current block, but the drawDebt calculation happens
         # with the previous blocks borrow rate
-        interest_rates = chain.call_multicall(
+        interest_rates = chain.multicall(
             interest_rate_calls, block_id=block_number - 1
         )
 
@@ -36,7 +36,7 @@ def _get_pool_block_data(chain, pool_address, block_number):
                 ["inflatorInfo", None],
             ),
         ]
-        inflator_info = chain.call_multicall(inflator_info_calls, block_id=block_number)
+        inflator_info = chain.multicall(inflator_info_calls, block_id=block_number)
 
         POOL_BLOCK_DATA[pool_address][block_number] = {
             "inflator": wad_to_decimal(inflator_info["inflatorInfo"][0]),
@@ -221,6 +221,50 @@ def _handle_collateral_events(chain, wallet_address, from_block_number, curr_pos
         _update_current_positions_block(curr_positions, event)
 
 
+# def _handle_auctions(chain, wallet_address, from_block_number, curr_positions):
+#     # TODO: from_block_number
+#     sql = """
+#         SELECT
+#              la.pool_address
+#            , dd.block_timestamp
+#            , dd.block_number
+#            , dd.amount_borrowed AS debt
+#            , dd.collateral_pledged AS collateral
+#         FROM {liquidation_auction_table} AS la
+#         WHERE dd.borrower = %s
+#         ORDER BY block_number
+#     """.format(
+#         liquidation_auction_table=chain.liquidation_auction._meta.db_table,
+#     )
+#     with connection.cursor() as cursor:
+#         cursor.execute(sql, [wallet_address, wallet_address])
+#         events = fetch_all(cursor)
+
+#     for event in events:
+#         block_data = _get_pool_block_data(
+#             chain, event["pool_address"], event["block_number"]
+#         )
+
+#         # In contract they round t0debt to ceiling, while origination fee and others
+#         # below are rounded normally
+#         t0debt = round_ceil(event["debt"] / block_data["inflator"])
+#         if event["debt"] > 0:
+#             origination_fee = round(
+#                 max(round(block_data["borrow_rate"] / 52, 18), Decimal("0.0005"))
+#                 * t0debt,
+#                 18,
+#             )
+
+#             t0debt += origination_fee
+
+#         curr_positions[event["pool_address"]]["debt"] += event["debt"]
+#         curr_positions[event["pool_address"]]["t0debt"] += t0debt
+#         curr_positions[event["pool_address"]]["collateral"] += event["collateral"]
+#         _update_current_positions_block(curr_positions, event)
+
+
+
+
 def save_wallet_positions(chain, wallet_address, from_block_number):
     curr_positions = defaultdict(lambda: defaultdict(Decimal))
 
@@ -228,8 +272,10 @@ def save_wallet_positions(chain, wallet_address, from_block_number):
     _handle_quote_token_events(chain, wallet_address, from_block_number, curr_positions)
     _handle_collateral_events(chain, wallet_address, from_block_number, curr_positions)
 
-    # TODO: wallet_market_state
+    # _handle_auctions(chain, wallet_address, from_block_number, curr_positions)
 
+    # TODO: wallet_market_state
+    # print(curr_positions)
     for pool_address, pool_position in curr_positions.items():
         # Can't use update_or_create because we need to set some values to 0 only when
         # creating the model
@@ -252,4 +298,4 @@ def save_wallet_positions(chain, wallet_address, from_block_number):
         current_position.datetime = pool_position["datetime"]
         current_position.save()
 
-    print(current_position.__dict__)
+        print(current_position.__dict__)

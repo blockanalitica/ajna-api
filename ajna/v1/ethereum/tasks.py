@@ -18,6 +18,7 @@ from ..modules.events import (
     fetch_and_save_remove_collaterals,
     fetch_and_save_remove_quote_tokens,
     fetch_and_save_repay_debts,
+    fetch_and_save_events_for_pool,
 )
 from ..modules.grants import fetch_and_save_grant_proposals_data
 from ..modules.pools import calculate_pool_volume_for_date, fetch_pools_data
@@ -55,6 +56,9 @@ SCHEDULE = {
         "schedule": crontab(minute="*/5"),
     },
     "save_repay_debts_events_tasks": {
+        "schedule": crontab(minute="*/5"),
+    },
+    "fetch_and_save_events_task": {
         "schedule": crontab(minute="*/5"),
     },
     # "save_grant_proposals_task": {
@@ -251,3 +255,17 @@ def calculate_pool_volume_for_yesterday_task():
     models = EthereumModels()
     yesterday = (datetime.now() - timedelta(days=1)).date()
     calculate_pool_volume_for_date(models, yesterday)
+
+
+@app.task
+def fetch_and_save_events_task():
+    models = EthereumModels()
+    pool_addresses = models.pool.objects.all().values_list("address", flat=True)
+    for pool_address in pool_addresses:
+        fetch_and_save_events_for_pool_task.delay(pool_address)
+
+
+@app.task
+def fetch_and_save_events_for_pool_task(pool_address):
+    chain = Ethereum()
+    fetch_and_save_events_for_pool(chain, pool_address)

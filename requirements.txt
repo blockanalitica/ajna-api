@@ -49,7 +49,7 @@ certifi==2023.7.22
     #   sentry-sdk
 cffi==1.15.1
     # via cryptography
-chain-harvester==0.3.1
+chain-harvester==0.5.0
     # via -r requirements.in
 charset-normalizer==3.2.0
     # via
@@ -348,7 +348,7 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.6
     # via prompt-toolkit
-web3==6.8.0
+web3==6.9.0
     # via
     #   -r requirements.in
     #   chain-harvester

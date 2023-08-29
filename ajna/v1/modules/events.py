@@ -1,10 +1,71 @@
 import logging
 from datetime import datetime
 from decimal import Decimal
+from django.core.cache import cache
 
+from web3 import Web3
 from ajna.sources.defillama import get_price_for_timestamp
+from ajna.utils.utils import compute_order_index
+
 
 log = logging.getLogger(__name__)
+
+
+def fetch_and_save_events_for_pool(chain, pool_address, from_block=None):
+    cache_key = "fetch_and_save_events_for_pool.{}.last_block_number".format(
+        pool_address
+    )
+
+    if not from_block:
+        # from_block = cache.get(cache_key)
+        if not from_block:
+            last_event = (
+                chain.pool_event.objects.filter(pool_address=pool_address)
+                .order_by("-block_number")
+                .first()
+            )
+
+            if last_event:
+                from_block = last_event.block_number + 1
+            else:
+                pool = chain.pool.objects.get(address=pool_address)
+                from_block = pool.created_at_block_number
+
+    to_block = chain.get_latest_block()
+
+    events = chain.get_events_for_contract(
+        Web3.to_checksum_address(pool_address), from_block=from_block, to_block=to_block
+    )
+
+    pool_events = []
+    cnt = 0
+    for event in events:
+        cnt += 1
+        pool_events.append(
+            chain.pool_event(
+                pool_address=pool_address.lower(),
+                block_number=event["blockNumber"],
+                block_datetime=chain.get_block_datetime(event["blockNumber"]),
+                order_index=compute_order_index(
+                    event["blockNumber"], event["transactionIndex"], event["logIndex"]
+                ),
+                transaction_hash=event["transactionHash"].hex(),
+                name=event["event"],
+                data=dict(event["args"]),
+            )
+        )
+
+        if len(pool_events) > 500:
+            chain.pool_event.objects.bulk_create(pool_events, ignore_conflicts=True)
+            pool_events = []
+
+    if pool_events:
+        chain.pool_event.objects.bulk_create(pool_events, ignore_conflicts=True)
+
+    # Set the block number up to which we've fetch the events so next run we start
+    # fetching from this block number. This immensly helps with pools which are not
+    # that active.
+    cache.set(cache_key, to_block, timeout=None)
 
 
 def _get_price(price_feed_model, underlying_address, timestamp):

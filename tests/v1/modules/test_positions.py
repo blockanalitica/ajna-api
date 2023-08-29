@@ -163,7 +163,7 @@ def test_handle_debt_events(dummy_models, monkeypatch):
 
     monkeypatch.setattr(
         chain,
-        "call_multicall",
+        "multicall",
         lambda calls, block_id: {
             pool_address_1: (
                 1,
@@ -284,7 +284,7 @@ def test_save_wallet_positions(dummy_models, monkeypatch):
     chain = Ethereum()
     monkeypatch.setattr(
         chain,
-        "call_multicall",
+        "multicall",
         lambda calls, block_id: {
             pool_address_1: (
                 1,

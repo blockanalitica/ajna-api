@@ -264,4 +264,6 @@ class RawSQLPaginatedApiView(APIView):
         if self.serializer_class:
             serializer = self.serializer_class(page, many=True)
             page = serializer.data
+
+        print(page)
         return self.paginator.get_paginated_response(page, additional_data)

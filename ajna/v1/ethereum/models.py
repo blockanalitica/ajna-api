@@ -63,3 +63,7 @@ class V1EthereumCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
 
 class V1EthereumGrantProposal(base.GrantProposal):
     pass
+
+
+class V1EthereumPoolEvent(base.PoolEvent):
+    pass

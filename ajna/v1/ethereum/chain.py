@@ -5,6 +5,7 @@ from ajna.chain import AjnaChainMixin
 
 from . import models
 
+
 MODEL_MAP = {
     "pool": models.V1EthereumPool,
     "token": models.V1EthereumToken,
@@ -23,6 +24,7 @@ MODEL_MAP = {
     "grant_proposal": models.V1EthereumGrantProposal,
     "current_position": models.V1EthereumCurrentWalletPoolPosition,
     "wallet_pool_state": "",
+    "pool_event": models.V1EthereumPoolEvent,
 }
 
 
@@ -40,8 +42,16 @@ class EthereumModels:
 
 class Ethereum(AjnaChainMixin, EthereumMainnetChain):
     def __init__(self, *args, **kwargs):
-        super().__init__(rpc=settings.ETHEREUM_NODE, *args, **kwargs)
+        super().__init__(
+            rpc=settings.ETHEREUM_NODE,
+            step=50000,
+            api_key=settings.ETHERSCAN_API_KEY,
+            *args,
+            **kwargs,
+        )
         self.pool_info_address = "0x154FFf344f426F99E328bacf70f4Eb632210ecdc"
+        self.erc20_pool_default_contract = "0x05bB4F6362B02F17C1A3F2B047A8b23368269A21"
+
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)
 

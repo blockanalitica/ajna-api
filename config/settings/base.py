@@ -191,6 +191,15 @@ sentry_sdk.init(
 )
 ignore_logger("django.security.DisallowedHost")
 
+
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "ajna.shit.ShitRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ]
+}
+
+
 STATSD_HOST = env("STATSD_HOST", default="localhost")
 STATSD_PORT = env("STATSD_PORT", default=8125)
 STATSD_PREFIX = env("STATSD_PREFIX", default=None)
@@ -261,3 +270,4 @@ SUBGRAPH_ENDPOINT_GOERLI = env("SUBGRAPH_ENDPOINT", default="")
 SUBGRAPH_ENDPOINT_MAINNET = env("SUBGRAPH_ENDPOINT_MAINNET", default="")
 GOERLI_NODE = env("GOERLI_NODE", default="")
 ETHEREUM_NODE = env("ETHEREUM_NODE", default="")
+ETHERSCAN_API_KEY = env("ETHERSCAN_API_KEY", default="")

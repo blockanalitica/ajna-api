@@ -10,6 +10,7 @@ from .views import (
     stats,
     token,
     tokens,
+    wallet,
 )
 
 urlpatterns = [
@@ -133,5 +134,21 @@ urlpatterns = [
         "positions/",
         positions.PositionsView.as_view(),
         name="positions",
+    ),
+    path(
+        "wallets/<wallet_address>/positions/",
+        wallet.WalletPositionsView.as_view(),
+        name="wallet-positions",
+    ),
+    path(
+        "wallets/<wallet_address>/events/",
+        wallet.WalletEventsView.as_view(),
+        name="wallet-events",
+    ),
+
+    path(
+        "pools/<pool_address>/events1337/",
+        wallet.PoolEventsView.as_view(),
+        name="pool-events-1337",
     ),
 ]

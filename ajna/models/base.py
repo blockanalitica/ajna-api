@@ -375,3 +375,17 @@ class CurrentWalletPoolPosition(models.Model):
         get_latest_by = "block_number"
         ordering = ("block_number",)
         abstract = True
+
+
+class PoolEvent(models.Model):
+    pool_address = models.CharField(max_length=42, db_index=True)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+    order_index = models.CharField(max_length=26, db_index=True)
+    transaction_hash = models.CharField(max_length=66)
+    name = models.CharField(max_length=42, db_index=True)
+    data = models.JSONField()
+
+    class Meta:
+        abstract = True
+        unique_together = ("pool_address", "order_index")

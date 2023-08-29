@@ -63,3 +63,7 @@ class V1GoerliCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
 
 class V1GoerliGrantProposal(base.GrantProposal):
     pass
+
+
+class V1GoerliPoolEvent(base.PoolEvent):
+    pass

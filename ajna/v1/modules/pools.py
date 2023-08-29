@@ -8,8 +8,8 @@ from ajna.utils.utils import (
     date_to_timestamp,
     datetime_to_full_hour,
     datetime_to_next_full_hour,
+    wad_to_decimal,
 )
-from ajna.utils.wad import wad_to_decimal
 
 
 def get_pools_chain_data(chain, pool_addresses, block_number=None):
