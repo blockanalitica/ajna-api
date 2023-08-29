@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 
@@ -354,6 +355,29 @@ class GrantProposal(models.Model):
         abstract = True
 
 
+class PoolEvent(models.Model):
+    pool_address = models.CharField(max_length=42)
+    wallet_addresses = ArrayField(models.CharField(max_length=42), null=True)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+    order_index = models.CharField(max_length=26)
+    transaction_hash = models.CharField(max_length=66)
+    name = models.CharField(max_length=42)
+    data = models.JSONField()
+    pool_inflator = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+
+    class Meta:
+        abstract = True
+        unique_together = ("pool_address", "order_index")
+        indexes = [
+            models.Index(fields=["pool_address", "order_index"]),
+            models.Index(fields=["pool_address", "wallet_addresses", "order_index"]),
+            models.Index(fields=["pool_address", "wallet_addresses"]),
+            models.Index(fields=["pool_address"]),
+            models.Index(fields=["order_index"]),
+        ]
+
+
 class CurrentWalletPoolPosition(models.Model):
     wallet_address = models.CharField(max_length=42, db_index=True)
     pool_address = models.CharField(max_length=42, db_index=True)
@@ -377,15 +401,79 @@ class CurrentWalletPoolPosition(models.Model):
         abstract = True
 
 
-class PoolEvent(models.Model):
+class WalletPoolPosition(models.Model):
+    wallet_address = models.CharField(max_length=42, db_index=True)
     pool_address = models.CharField(max_length=42, db_index=True)
+
+    supply = models.DecimalField(max_digits=32, decimal_places=18)
+    collateral = models.DecimalField(max_digits=32, decimal_places=18)
+    t0debt = models.DecimalField(max_digits=32, decimal_places=18)
+    debt = models.DecimalField(max_digits=32, decimal_places=18)
+
+    datetime = models.DateTimeField()
+    block_number = models.BigIntegerField(db_index=True)
+
+    class Meta:
+        unique_together = [
+            "wallet_address",
+            "block_number",
+            "pool_address",
+        ]
+        get_latest_by = "block_number"
+        ordering = ("block_number",)
+        abstract = True
+
+
+class PoolBucketState(models.Model):
+    pool_address = models.CharField(max_length=42)
+    bucket_index = models.IntegerField()
+    collateral = models.DecimalField(max_digits=32, decimal_places=18)
+    deposit = models.DecimalField(max_digits=32, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
-    order_index = models.CharField(max_length=26, db_index=True)
-    transaction_hash = models.CharField(max_length=66)
-    name = models.CharField(max_length=42, db_index=True)
-    data = models.JSONField()
 
     class Meta:
         abstract = True
-        unique_together = ("pool_address", "order_index")
+        unique_together = ("pool_address", "bucket_index", "block_number")
+        indexes = [
+            models.Index(fields=["pool_address", "bucket_index", "block_number"]),
+            models.Index(fields=["pool_address", "bucket_index"]),
+            models.Index(fields=["pool_address"]),
+            models.Index(fields=["bucket_index"]),
+            models.Index(fields=["block_number"]),
+            models.Index(fields=["block_datetime"]),
+        ]
+
+
+class WalletPoolBucketState(models.Model):
+    wallet_address = models.CharField(max_length=42)
+    pool_address = models.CharField(max_length=42)
+    bucket_index = models.IntegerField()
+    deposit = models.DecimalField(max_digits=32, decimal_places=18)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+        unique_together = (
+            "pool_address",
+            "wallet_address",
+            "bucket_index",
+            "block_number",
+        )
+        indexes = [
+            models.Index(
+                fields=[
+                    "pool_address",
+                    "wallet_address",
+                    "bucket_index",
+                    "block_number",
+                ]
+            ),
+            models.Index(fields=["pool_address", "wallet_address", "bucket_index"]),
+            models.Index(fields=["pool_address"]),
+            models.Index(fields=["wallet_address"]),
+            models.Index(fields=["bucket_index"]),
+            models.Index(fields=["block_number"]),
+            models.Index(fields=["block_datetime"]),
+        ]

@@ -57,13 +57,25 @@ class V1EthereumPoolVolumeSnapshot(base.PoolVolumeSnapshot):
     pass
 
 
-class V1EthereumCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
-    pass
-
-
 class V1EthereumGrantProposal(base.GrantProposal):
     pass
 
 
 class V1EthereumPoolEvent(base.PoolEvent):
+    pass
+
+
+class V1EthereumCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
+    pass
+
+
+class V1EthereumWalletPoolPosition(base.WalletPoolPosition):
+    pass
+
+
+class V1EthereumPoolBucketState(base.PoolBucketState):
+    pass
+
+
+class V1EthereumWalletPoolBucketState(base.WalletPoolBucketState):
     pass

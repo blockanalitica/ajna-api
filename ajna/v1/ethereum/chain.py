@@ -5,7 +5,6 @@ from ajna.chain import AjnaChainMixin
 
 from . import models
 
-
 MODEL_MAP = {
     "pool": models.V1EthereumPool,
     "token": models.V1EthereumToken,
@@ -22,9 +21,11 @@ MODEL_MAP = {
     "liqudation_auction": models.V1EthereumLiquidationAuction,
     "pool_volume_snapshot": models.V1EthereumPoolVolumeSnapshot,
     "grant_proposal": models.V1EthereumGrantProposal,
-    "current_position": models.V1EthereumCurrentWalletPoolPosition,
-    "wallet_pool_state": "",
     "pool_event": models.V1EthereumPoolEvent,
+    "current_wallet_position": models.V1EthereumCurrentWalletPoolPosition,
+    "wallet_position": models.V1EthereumWalletPoolPosition,
+    "wallet_bucket_state": models.V1EthereumWalletPoolBucketState,
+    "bucket_state": models.V1EthereumPoolBucketState,
 }
 
 

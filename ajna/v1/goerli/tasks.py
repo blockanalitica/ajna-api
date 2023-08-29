@@ -14,11 +14,11 @@ from ..modules.events import (
     fetch_and_save_add_collaterals,
     fetch_and_save_add_quote_tokens,
     fetch_and_save_draw_debts,
+    fetch_and_save_events_for_pool,
     fetch_and_save_move_quote_tokens,
     fetch_and_save_remove_collaterals,
     fetch_and_save_remove_quote_tokens,
     fetch_and_save_repay_debts,
-    fetch_and_save_events_for_pool,
 )
 from ..modules.grants import fetch_and_save_grant_proposals_data
 from ..modules.pools import calculate_pool_volume_for_date, fetch_pools_data

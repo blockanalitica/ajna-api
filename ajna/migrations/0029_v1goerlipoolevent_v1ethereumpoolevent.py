@@ -28,6 +28,7 @@ class Migration(migrations.Migration):
                 ("transaction_hash", models.CharField(max_length=66)),
                 ("name", models.CharField(db_index=True, max_length=42)),
                 ("data", models.JSONField()),
+                ("pool_inflator", models.DecimalField(decimal_places=18, max_digits=32)),
             ],
             options={
                 "abstract": False,
@@ -53,6 +54,7 @@ class Migration(migrations.Migration):
                 ("transaction_hash", models.CharField(max_length=66)),
                 ("name", models.CharField(db_index=True, max_length=42)),
                 ("data", models.JSONField()),
+                ("pool_inflator", models.DecimalField(decimal_places=18, max_digits=32)),
             ],
             options={
                 "abstract": False,

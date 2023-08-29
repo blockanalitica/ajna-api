@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from decimal import Decimal, ROUND_CEILING
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 
 
 def date_to_timestamp(dt):
@@ -28,6 +28,11 @@ def wad_to_decimal(wad):
 def round_ceil(num):
     assert isinstance(num, Decimal)
     return num.quantize(Decimal(".000000000000000001"), rounding=ROUND_CEILING)
+
+
+def round_floor(num):
+    assert isinstance(num, Decimal)
+    return num.quantize(Decimal(".000000000000000001"), rounding=ROUND_FLOOR)
 
 
 def compute_order_index(block_number, tx_index, log_index):

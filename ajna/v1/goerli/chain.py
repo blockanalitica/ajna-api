@@ -21,9 +21,11 @@ MODEL_MAP = {
     "liqudation_auction": models.V1GoerliLiquidationAuction,
     "pool_volume_snapshot": models.V1GoerliPoolVolumeSnapshot,
     "grant_proposal": models.V1GoerliGrantProposal,
-    "current_position": models.V1GoerliCurrentWalletPoolPosition,
-    "wallet_pool_state": "",
     "pool_event": models.V1GoerliPoolEvent,
+    "current_wallet_position": models.V1GoerliCurrentWalletPoolPosition,
+    "wallet_position": models.V1GoerliWalletPoolPosition,
+    "wallet_bucket_state": models.V1GoerliWalletPoolBucketState,
+    "bucket_state": models.V1GoerliPoolBucketState,
 }
 
 

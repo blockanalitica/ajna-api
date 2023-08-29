@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from ajna.utils.utils import wad_to_decimal, compute_order_index
+from ajna.utils.utils import compute_order_index, wad_to_decimal
 
 
 @pytest.mark.parametrize(
