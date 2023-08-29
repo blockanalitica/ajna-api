@@ -102,6 +102,7 @@ class PoolView(BaseChainView):
                   pool.address
                 , pool.t0debt * pool.pending_inflator as debt
                 , pool.quote_token_address
+                , pool.collateral_token_address
                 , pool.t0debt * pool.pending_inflator * quote_token.underlying_price as debt_usd
                 , pool.pledged_collateral
                 , pool.pledged_collateral * collateral_token.underlying_price
