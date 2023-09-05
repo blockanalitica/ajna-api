@@ -66,3 +66,9 @@ def datetime_to_next_full_hour(dt):
         hours=1
     )
     return dt
+
+
+def compute_order_index(block_number, tx_index, log_index):
+    return "_".join(
+        (str(block_number).zfill(12), str(tx_index).zfill(6), str(log_index).zfill(6))
+    )

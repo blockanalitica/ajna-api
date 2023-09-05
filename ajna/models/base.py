@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 
@@ -13,7 +14,7 @@ class PoolBase(models.Model):
     deposit_fee_rate = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     pledged_collateral = models.DecimalField(max_digits=32, decimal_places=18)
     total_interest_earned = models.DecimalField(max_digits=32, decimal_places=18)
-    tx_count = models.BigIntegerField()
+    tx_count = models.BigIntegerField(null=True)
     loans_count = models.BigIntegerField()
     max_borrower = models.CharField(max_length=42, null=True)
     hpb = models.DecimalField(max_digits=32, decimal_places=18)
@@ -352,3 +353,26 @@ class GrantProposal(models.Model):
 
     class Meta:
         abstract = True
+
+
+class PoolEvent(models.Model):
+    pool_address = models.CharField(max_length=42)
+    wallet_addresses = ArrayField(models.CharField(max_length=42), null=True)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+    order_index = models.CharField(max_length=26)
+    transaction_hash = models.CharField(max_length=66)
+    name = models.CharField(max_length=42)
+    data = models.JSONField()
+    pool_inflator = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+
+    class Meta:
+        abstract = True
+        unique_together = ("pool_address", "order_index")
+        indexes = [
+            models.Index(fields=["pool_address", "order_index"]),
+            models.Index(fields=["pool_address", "wallet_addresses", "order_index"]),
+            models.Index(fields=["pool_address", "wallet_addresses"]),
+            models.Index(fields=["pool_address"]),
+            models.Index(fields=["order_index"]),
+        ]
