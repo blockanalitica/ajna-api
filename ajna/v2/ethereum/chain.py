@@ -45,6 +45,8 @@ class Ethereum(AjnaChainMixin, EthereumMainnetChain):
             *args,
             **kwargs,
         )
+
+        # TODO: wrong addresses (these are from v1)
         self.pool_info_address = "0x154FFf344f426F99E328bacf70f4Eb632210ecdc"
         self.erc20_pool_factory_address = "0xe6F4d9711121e5304b30aC2Aae57E3b085ad3c4d"
         self.erc20_pool_factory_block_number = 17622995
