@@ -68,7 +68,7 @@ def test_update_token_prices():
         content_type="application/json",
     )
 
-    external_rhino_url = "https://api.stg.rhino.fi/market-data/ticker/YIELDBTC:BTC"
+    external_rhino_url = "https://api.rhino.fi/market-data/ticker/YIELDBTC:BTC"
     responses.add(
         responses.GET,
         external_rhino_url,
