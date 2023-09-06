@@ -37,7 +37,9 @@ class PoolBase(models.Model):
     )
     actual_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # MAU
     target_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # TU
-    total_bond_escrowed = models.DecimalField(max_digits=32, decimal_places=18)
+    total_bond_escrowed = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
 
     datetime = models.DateTimeField(db_index=True)
 

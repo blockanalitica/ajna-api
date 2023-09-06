@@ -38,7 +38,12 @@ class EthereumModels:
 
 class Ethereum(AjnaChainMixin, EthereumMainnetChain):
     def __init__(self, *args, **kwargs):
-        super().__init__(rpc=settings.ETHEREUM_NODE, *args, **kwargs)
+        super().__init__(
+            rpc=settings.ETHEREUM_NODE,
+            api_key=settings.ETHERSCAN_API_KEY,
+            *args,
+            **kwargs,
+        )
         self.pool_info_address = "0x154FFf344f426F99E328bacf70f4Eb632210ecdc"
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)

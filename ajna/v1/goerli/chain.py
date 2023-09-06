@@ -38,7 +38,12 @@ class GoerliModels:
 
 class Goerli(AjnaChainMixin, EthereumGoerliChain):
     def __init__(self, *args, **kwargs):
-        super().__init__(rpc=settings.GOERLI_NODE, *args, **kwargs)
+        super().__init__(
+            rpc=settings.GOERLI_NODE,
+            api_key=settings.ETHERSCAN_API_KEY,
+            *args,
+            **kwargs,
+        )
         self.pool_info_address = "0xBB61407715cDf92b2784E9d2F1675c4B8505cBd8"
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)

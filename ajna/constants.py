@@ -7,6 +7,6 @@ SCREENING_PERIOD_LENGTH = 525600  # 73 days
 
 
 AJNA_DEPLOYMENTS = {
-    "versions": ["v1"],
+    "versions": ["v1", "v2"],
     "networks": ["ethereum", "goerli"],
 }
