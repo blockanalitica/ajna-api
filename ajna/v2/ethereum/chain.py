@@ -57,6 +57,6 @@ class Ethereum(AjnaChainMixin, EthereumMainnetChain):
         # Celery task workaround
         # Since we need to access specific tasks sometimes (ethereum, goerli,...) we've
         # attached them to chain, since chain object is the base of almost everything
-        # from . import tasks
+        from . import tasks
 
-        # self.celery_tasks = tasks
+        self.celery_tasks = tasks
