@@ -59,3 +59,23 @@ class V1GoerliPoolVolumeSnapshot(base.PoolVolumeSnapshot):
 
 class V1GoerliGrantProposal(base.GrantProposal):
     pass
+
+
+class V1GoerliPoolEvent(base.PoolEvent):
+    pass
+
+
+class V1GoerliCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
+    pass
+
+
+class V1GoerliWalletPoolPosition(base.WalletPoolPosition):
+    pass
+
+
+class V1GoerliPoolBucketState(base.PoolBucketState):
+    pass
+
+
+class V1GoerliWalletPoolBucketState(base.WalletPoolBucketState):
+    pass

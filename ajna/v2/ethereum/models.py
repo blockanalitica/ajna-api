@@ -63,3 +63,19 @@ class V2EthereumGrantProposal(base.GrantProposal):
 
 class V2EthereumPoolEvent(base.PoolEvent):
     pass
+
+
+class V2EthereumCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
+    pass
+
+
+class V2EthereumWalletPoolPosition(base.WalletPoolPosition):
+    pass
+
+
+class V2EthereumPoolBucketState(base.PoolBucketState):
+    pass
+
+
+class V2EthereumWalletPoolBucketState(base.WalletPoolBucketState):
+    pass
