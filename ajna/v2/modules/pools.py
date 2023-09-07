@@ -11,9 +11,7 @@ def fetch_new_pools(chain):
         .order_by("-order_index")
         .first()
     )
-
     from_block_number = chain.erc20_pool_factory_start_block
-
     if last_event:
         from_block_number = last_event.block_number + 1
 
@@ -26,8 +24,7 @@ def fetch_new_pools(chain):
         order_index = compute_order_index(
             event["blockNumber"], event["transactionIndex"], event["logIndex"]
         )
-        block_info = chain.get_block_info(event["blockNumber"])
-        block_datetime = datetime.fromtimestamp(block_info["timestamp"])
+        block_datetime = chain.get_block_datetime(event["blockNumber"])
         chain.pool_event.objects.create(
             pool_address=event["args"]["pool_"].lower(),
             block_number=event["blockNumber"],
