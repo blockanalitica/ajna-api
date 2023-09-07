@@ -12,7 +12,7 @@ def fetch_new_pools(chain):
         .first()
     )
 
-    from_block_number = chain.erc20_pool_factory_block_number
+    from_block_number = chain.erc20_pool_factory_start_block
 
     if last_event:
         from_block_number = last_event.block_number + 1
