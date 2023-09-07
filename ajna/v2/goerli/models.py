@@ -63,3 +63,19 @@ class V2GoerliGrantProposal(base.GrantProposal):
 
 class V2GoerliPoolEvent(base.PoolEvent):
     pass
+
+
+class V2GoerliCurrentWalletPoolPosition(base.CurrentWalletPoolPosition):
+    pass
+
+
+class V2GoerliWalletPoolPosition(base.WalletPoolPosition):
+    pass
+
+
+class V2GoerliPoolBucketState(base.PoolBucketState):
+    pass
+
+
+class V2GoerliWalletPoolBucketState(base.WalletPoolBucketState):
+    pass

@@ -22,6 +22,10 @@ MODEL_MAP = {
     "pool_volume_snapshot": models.V2EthereumPoolVolumeSnapshot,
     "grant_proposal": models.V2EthereumGrantProposal,
     "pool_event": models.V2EthereumPoolEvent,
+    "current_wallet_position": models.V2EthereumCurrentWalletPoolPosition,
+    "wallet_position": models.V2EthereumWalletPoolPosition,
+    "wallet_bucket_state": models.V2EthereumWalletPoolBucketState,
+    "bucket_state": models.V2EthereumPoolBucketState,
 }
 
 
@@ -42,12 +46,14 @@ class Ethereum(AjnaChainMixin, EthereumMainnetChain):
         super().__init__(
             rpc=settings.ETHEREUM_NODE,
             api_key=settings.ETHERSCAN_API_KEY,
+            step=50000,
             *args,
             **kwargs,
         )
 
         # TODO: wrong addresses (these are from v1)
         self.pool_info_address = "0x154FFf344f426F99E328bacf70f4Eb632210ecdc"
+        self.erc20_pool_abi_contract = "0x05bB4F6362B02F17C1A3F2B047A8b23368269A21"
         self.erc20_pool_factory_address = "0xe6F4d9711121e5304b30aC2Aae57E3b085ad3c4d"
         self.erc20_pool_factory_block_number = 17622995
 
