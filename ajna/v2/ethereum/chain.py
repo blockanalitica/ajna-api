@@ -55,7 +55,7 @@ class Ethereum(AjnaChainMixin, EthereumMainnetChain):
         self.pool_info_address = "0x154FFf344f426F99E328bacf70f4Eb632210ecdc"
         self.erc20_pool_abi_contract = "0x05bB4F6362B02F17C1A3F2B047A8b23368269A21"
         self.erc20_pool_factory_address = "0xe6F4d9711121e5304b30aC2Aae57E3b085ad3c4d"
-        self.erc20_pool_factory_block_number = 17622995
+        self.erc20_pool_factory_start_block = 17622995
 
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)

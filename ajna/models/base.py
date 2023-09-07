@@ -366,7 +366,6 @@ class PoolEvent(models.Model):
     transaction_hash = models.CharField(max_length=66)
     name = models.CharField(max_length=42)
     data = models.JSONField()
-    pool_inflator = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
         abstract = True

@@ -1,35 +1,11 @@
 import logging
-from datetime import datetime
 
-from chain_harvester.constants import MULTICALL_ADDRESSES
 from django.core.cache import cache
 from web3 import Web3
 
 from ajna.utils.utils import compute_order_index
-from ajna.utils.wad import wad_to_decimal
 
 log = logging.getLogger(__name__)
-
-
-def _fetch_pool_block_data(chain, pool_address, block_number):
-    global POOL_BLOCK_DATA
-    inflator_info_calls = [
-        (
-            pool_address,
-            ["inflatorInfo()((uint256,uint256))"],
-            ["inflatorInfo", None],
-        ),
-        (
-            MULTICALL_ADDRESSES[chain.chain_id],
-            ["getCurrentBlockTimestamp()(uint256)"],
-            ["block_timestamp", None],
-        ),
-    ]
-    data = chain.multicall(inflator_info_calls, block_identifier=block_number)
-    return {
-        "inflator": wad_to_decimal(data["inflatorInfo"][0]),
-        "block_datetime": datetime.fromtimestamp(data["block_timestamp"]),
-    }
 
 
 def _get_wallet_addresses(event):
@@ -85,16 +61,21 @@ def _get_wallet_addresses(event):
     return wallet_addresses
 
 
-def fetch_and_save_events_for_pool(chain, pool_address, from_block=None):
-    cache_key = "fetch_and_save_events_for_pool.{}.last_block_number".format(
-        pool_address
-    )
+def fetch_and_save_events(chain, from_block=None):
+    pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
+    _fetch_and_save_events_for_pools(chain, pool_addresses)
+
+
+def _fetch_and_save_events_for_pools(chain, pool_addresses, from_block=None):
+    cache_key = "fetch_and_save_events_for_pools.last_block_number"
 
     if not from_block:
         from_block = cache.get(cache_key)
         if not from_block:
+            # PoolCreated event is not created by this process, so we need to exclude
+            # it in oreder to get the correct last block number
             last_event = (
-                chain.pool_event.objects.filter(pool_address=pool_address)
+                chain.pool_event.objects.exclude(name="PoolCreated")
                 .order_by("-block_number")
                 .first()
             )
@@ -102,38 +83,30 @@ def fetch_and_save_events_for_pool(chain, pool_address, from_block=None):
             if last_event:
                 from_block = last_event.block_number + 1
             else:
-                pool = chain.pool.objects.get(address=pool_address)
-                from_block = pool.created_at_block_number
+                from_block = chain.erc20_pool_factory_start_block
 
     to_block = chain.get_latest_block()
 
-    events = chain.get_events_for_contract(
-        Web3.to_checksum_address(pool_address), from_block=from_block, to_block=to_block
+    pool_addresses = [Web3.to_checksum_address(address) for address in pool_addresses]
+    events = chain.get_events_for_contracts(
+        pool_addresses, from_block=from_block, to_block=to_block
     )
 
-    blocks_data = {}
     pool_events = []
     for event in events:
-        block_data = blocks_data.get(event["blockNumber"])
-        if not block_data:
-            block_data = _fetch_pool_block_data(
-                chain, pool_address, event["blockNumber"]
-            )
-            blocks_data[event["blockNumber"]] = block_data
-
+        pool_address = event["address"].lower()
         pool_events.append(
             chain.pool_event(
-                pool_address=pool_address.lower(),
+                pool_address=pool_address,
                 wallet_addresses=_get_wallet_addresses(event),
                 block_number=event["blockNumber"],
-                block_datetime=block_data["block_datetime"],
+                block_datetime=chain.get_block_datetime(event["blockNumber"]),
                 order_index=compute_order_index(
                     event["blockNumber"], event["transactionIndex"], event["logIndex"]
                 ),
                 transaction_hash=event["transactionHash"].hex(),
                 name=event["event"],
                 data=dict(event["args"]),
-                pool_inflator=block_data["inflator"],
             )
         )
 

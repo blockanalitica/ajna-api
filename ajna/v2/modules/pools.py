@@ -8,7 +8,7 @@ from ajna.utils.wad import wad_to_decimal
 def fetch_new_pools(chain):
     last_event = chain.pool_event.objects.all().order_by("-order_index").first()
 
-    from_block_number = chain.erc20_pool_factory_block_number
+    from_block_number = chain.erc20_pool_factory_start_block
 
     if last_event:
         from_block_number = last_event.block_number + 1
