@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from decimal import Decimal
 
-from django.db import connection
+from django.db import IntegrityError, connection
 
 from ajna.utils.db import fetch_one
 from ajna.utils.wad import wad_to_decimal
@@ -85,24 +85,46 @@ class EventProcessor:
             # Handle wallet buckets
             for wallet_address in wallet_addresses:
                 info = results[f"{bucket_index}:{wallet_address}"]
-                self._chain.wallet_bucket_state.objects.create(
-                    wallet_address=wallet_address,
+                try:
+                    self._chain.wallet_bucket_state.objects.create(
+                        wallet_address=wallet_address,
+                        pool_address=self._pool_address,
+                        bucket_index=bucket_index,
+                        deposit=wad_to_decimal(info[0]),
+                        block_number=block_number,
+                        block_datetime=self._block_datetimes[block_number],
+                    )
+                except IntegrityError:
+                    log.exception("Duplicated wallet bucket state")
+
+            # handle bucket state
+            bucket_info = results[f"{bucket_index}"]
+            try:
+                self._chain.bucket_state.objects.create(
                     pool_address=self._pool_address,
                     bucket_index=bucket_index,
-                    deposit=wad_to_decimal(info[0]),
+                    bucket_price=wad_to_decimal(bucket_info[0]),
+                    exchange_rate=wad_to_decimal(bucket_info[4]),
+                    collateral=wad_to_decimal(bucket_info[2]),
+                    deposit=wad_to_decimal(bucket_info[1]),
+                    lpb=wad_to_decimal(bucket_info[3]),
                     block_number=block_number,
                     block_datetime=self._block_datetimes[block_number],
                 )
+            except IntegrityError:
+                log.exception("Duplicated bucket state")
 
             # handle bucket
-            bucket_info = results[f"{bucket_index}"]
-            self._chain.bucket_state.objects.create(
+            self._chain.bucket.objects.update_or_create(
                 pool_address=self._pool_address,
                 bucket_index=bucket_index,
-                collateral=wad_to_decimal(bucket_info[1]),
-                deposit=wad_to_decimal(bucket_info[0]),
-                block_number=block_number,
-                block_datetime=self._block_datetimes[block_number],
+                defaults={
+                    "bucket_price": wad_to_decimal(bucket_info[0]),
+                    "exchange_rate": wad_to_decimal(bucket_info[4]),
+                    "collateral": wad_to_decimal(bucket_info[1]),
+                    "deposit": wad_to_decimal(bucket_info[0]),
+                    "lpb": wad_to_decimal(bucket_info[3]),
+                },
             )
 
     def _fetch_supply_for_wallet(
@@ -245,6 +267,16 @@ class EventProcessor:
         filters = {}
         if from_block:
             filters["block_number__gt"] = from_block
+        else:
+            last_position = (
+                self._chain.current_wallet_position.objects.filter(
+                    pool_address=self._pool_address
+                )
+                .order_by("-block_number")
+                .first()
+            )
+            if last_position:
+                filters["block_number__gt"] = last_position.block_number
 
         events = (
             self._chain.pool_event.objects.filter(
