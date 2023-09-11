@@ -61,29 +61,25 @@ def _get_wallet_addresses(event):
     return wallet_addresses
 
 
-def fetch_and_save_events(chain, from_block=None):
+def fetch_and_save_events_for_all_pools(chain):
+    cache_key = "fetch_and_save_events_for_all_pools.last_block_number"
+
     pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
-    _fetch_and_save_events_for_pools(chain, pool_addresses)
 
-
-def _fetch_and_save_events_for_pools(chain, pool_addresses, from_block=None):
-    cache_key = "fetch_and_save_events_for_pools.last_block_number"
-
+    from_block = cache.get(cache_key)
     if not from_block:
-        from_block = cache.get(cache_key)
-        if not from_block:
-            # PoolCreated event is not created by this process, so we need to exclude
-            # it in oreder to get the correct last block number
-            last_event = (
-                chain.pool_event.objects.exclude(name="PoolCreated")
-                .order_by("-block_number")
-                .first()
-            )
+        # PoolCreated event is not created by this process, so we need to exclude
+        # it in oreder to get the correct last block number
+        last_event = (
+            chain.pool_event.objects.exclude(name="PoolCreated")
+            .order_by("-block_number")
+            .first()
+        )
 
-            if last_event:
-                from_block = last_event.block_number + 1
-            else:
-                from_block = chain.erc20_pool_factory_start_block
+        if last_event:
+            from_block = last_event.block_number + 1
+        else:
+            from_block = chain.erc20_pool_factory_start_block
 
     to_block = chain.get_latest_block()
 

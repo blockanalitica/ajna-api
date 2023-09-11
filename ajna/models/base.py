@@ -430,6 +430,9 @@ class PoolBucketState(models.Model):
     bucket_index = models.IntegerField()
     collateral = models.DecimalField(max_digits=32, decimal_places=18)
     deposit = models.DecimalField(max_digits=32, decimal_places=18)
+    bucket_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    exchange_rate = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    lpb = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
 

@@ -1,6 +1,8 @@
 from datetime import datetime
 from decimal import Decimal
 
+from web3 import Web3
+
 from ajna.utils.utils import chunks, compute_order_index, datetime_to_next_full_hour
 from ajna.utils.wad import wad_to_decimal
 
@@ -128,7 +130,10 @@ def _fetch_pools_data(chain, pool_addresses, block_number=None):
                 (
                     chain.pool_info_address,
                     [
-                        "poolLoansInfo(address)((uint256,uint256,address,uint256,uint256))",
+                        (
+                            "poolLoansInfo(address)("
+                            "(uint256,uint256,address,uint256,uint256))"
+                        ),
                         pool_address,
                     ],
                     [f"{pool_address}:loansInfo", None],
@@ -136,7 +141,10 @@ def _fetch_pools_data(chain, pool_addresses, block_number=None):
                 (
                     chain.pool_info_address,
                     [
-                        "poolPricesInfo(address)((uint256,uint256,uint256,uint256,uint256,uint256))",
+                        (
+                            "poolPricesInfo(address)("
+                            "(uint256,uint256,uint256,uint256,uint256,uint256))"
+                        ),
                         pool_address,
                     ],
                     [f"{pool_address}:pricesInfo", None],
@@ -170,7 +178,10 @@ def _fetch_pools_data(chain, pool_addresses, block_number=None):
                 (
                     chain.pool_info_address,
                     [
-                        "poolReservesInfo(address)((uint256,uint256,uint256,uint256,uint256))",
+                        (
+                            "poolReservesInfo(address)("
+                            "(uint256,uint256,uint256,uint256,uint256))"
+                        ),
                         pool_address,
                     ],
                     [f"{pool_address}:poolReservesInfo", None],
@@ -178,7 +189,10 @@ def _fetch_pools_data(chain, pool_addresses, block_number=None):
                 (
                     chain.pool_info_address,
                     [
-                        "poolUtilizationInfo(address)((uint256,uint256,uint256,uint256))",
+                        (
+                            "poolUtilizationInfo(address)("
+                            "(uint256,uint256,uint256,uint256))"
+                        ),
                         pool_address,
                     ],
                     [f"{pool_address}:poolUtilizationInfo", None],
@@ -303,13 +317,19 @@ def _fetch_pools_data(chain, pool_addresses, block_number=None):
 
 
 def _fetch_token_data(chain, token_address):
+    # Some tokens (like MKR) are not really erc20 compatible but are still considered
+    # to be erc20, which have name and symbol instead of string, encoded as bytes,
+    # so we request both, and then figure out which one we need
     calls = [
         (
             token_address,
-            [
-                "name()(string)",
-            ],
+            ["name()(string)"],
             ["name", None],
+        ),
+        (
+            token_address,
+            ["name()(bytes32)"],
+            ["nameBytes", None],
         ),
         (
             token_address,
@@ -321,12 +341,33 @@ def _fetch_token_data(chain, token_address):
             ["symbol()(string)"],
             ["symbol", None],
         ),
+        (
+            token_address,
+            ["symbol()(bytes32)"],
+            ["symbolBytes", None],
+        ),
     ]
 
-    return chain.multicall(calls)
+    data = chain.multicall(calls)
+
+    symbol = (
+        data["symbol"]
+        if data["symbol"]
+        else Web3.to_text(data["symbolBytes"].strip(bytes(1)))
+    )
+    name = (
+        data["name"]
+        if data["name"]
+        else Web3.to_text(data["nameBytes"].strip(bytes(1)))
+    )
+    return {
+        "symbol": symbol,
+        "name": name,
+        "decimals": data["decimals"],
+    }
 
 
-def fetch_and_save_pool_data(chain, pool_addresses):
+def _fetch_and_save_pool_data(chain, pool_addresses):
     dt = datetime.now()
 
     token_created = False
@@ -425,3 +466,13 @@ def fetch_and_save_pool_data(chain, pool_addresses):
 
     if token_created:
         chain.celery_tasks.fetch_market_price_task.delay()
+
+
+def fetch_and_save_pools_data(chain):
+    pool_addresses = list(
+        chain.pool_event.objects.filter(name="PoolCreated").values_list(
+            "pool_address", flat=True
+        )
+    )
+
+    _fetch_and_save_pool_data(chain, pool_addresses)
