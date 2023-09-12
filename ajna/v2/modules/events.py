@@ -99,7 +99,6 @@ def fetch_and_save_events_for_all_pools(chain):
     pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
 
     from_block = cache.get(cache_key)
-    from_block = None
     if not from_block:
         # PoolCreated event is not created by this process, so we need to exclude
         # it in oreder to get the correct last block number
