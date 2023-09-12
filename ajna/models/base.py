@@ -291,9 +291,15 @@ class PriceFeed(models.Model):
         return f"<{self.__class__.__name__}: underlying_address={self.underlying_address} price={self.price}>"
 
     class Meta:
+        abstract = True
         get_latest_by = "datetime"
         ordering = ("-datetime",)
-        abstract = True
+        indexes = [
+            models.Index(fields=["underlying_address"]),
+            models.Index(fields=["timestamp"]),
+            models.Index(fields=["datetime"]),
+            models.Index(fields=["underlying_address", "datetime"]),
+        ]
 
 
 class LiquidationAuction(models.Model):
@@ -366,6 +372,10 @@ class PoolEvent(models.Model):
     transaction_hash = models.CharField(max_length=66)
     name = models.CharField(max_length=42)
     data = models.JSONField()
+    collateral_token_price = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
         abstract = True

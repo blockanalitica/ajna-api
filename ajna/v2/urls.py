@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import pool, pools
+from .views import pools
 
 urlpatterns = [
     path(
@@ -10,7 +10,7 @@ urlpatterns = [
     ),
     path(
         "pools/<pool_address>/",
-        pool.PoolView.as_view(),
+        pools.PoolView.as_view(),
         name="pool",
     ),
     path(
