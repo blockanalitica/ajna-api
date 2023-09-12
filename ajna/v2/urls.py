@@ -15,12 +15,12 @@ urlpatterns = [
     ),
     path(
         "pools/<pool_address>/buckets/",
-        pool.BucketsView.as_view(),
+        pools.BucketsView.as_view(),
         name="pool-buckets",
     ),
     path(
         "pools/<pool_address>/buckets/graph/",
-        pool.BucketsGraphView.as_view(),
+        pools.BucketsGraphView.as_view(),
         name="pool-buckets-graph",
     ),
 ]
