@@ -3,7 +3,7 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 
-from ajna.utils.db import fetch_one
+from ajna.utils.db import fetch_all, fetch_one
 
 from . import BaseChainView, RawSQLPaginatedChainView
 
@@ -261,3 +261,136 @@ class PoolView(BaseChainView):
         pool_data["volume"] = today_volume["amount"]
 
         return Response({"results": pool_data}, status.HTTP_200_OK)
+
+
+class BucketsView(RawSQLPaginatedChainView):
+    order_nulls_last = True
+    default_order = "-bucket_price"
+    ordering_fields = [
+        "bucket_price",
+        "collateral",
+        "deposit",
+        "is_utilized",
+        "bucket_index",
+    ]
+
+    def get_raw_sql(self, pool_address, search_filters, query_params, **kwargs):
+        sql_vars = [pool_address]
+        sql = """
+                SELECT
+                      bucket.bucket_index
+                    , bucket.bucket_price
+                    , bucket.exchange_rate
+                    , bucket.pool_address
+                    , bucket.collateral
+                    , bucket.deposit
+                    , bucket.lpb
+                    , pool.lup
+                    , bucket.bucket_price >= pool.lup AS is_utilized
+                    , collateral_token.underlying_price AS collateral_token_underlying_price
+                    , collateral_token.symbol AS collateral_token_symbol
+                    , quote_token.symbol AS quote_token_symbol
+                    , quote_token.underlying_price AS quote_token_underlying_price
+                FROM {bucket_table} AS bucket
+                JOIN {pool_table} AS pool
+                    ON bucket.pool_address = pool.address
+                JOIN {token_table} AS collateral_token
+                    ON pool.collateral_token_address = collateral_token.underlying_address
+                JOIN {token_table} AS quote_token
+                    ON pool.quote_token_address = quote_token.underlying_address
+                WHERE pool_address = %s
+                    AND (collateral > 0 OR deposit > 0)
+
+        """.format(
+            bucket_table=self.models.bucket._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+        return sql, sql_vars
+
+
+class BucketsGraphView(BaseChainView):
+    def get(self, request, pool_address):
+        sql_vars = [pool_address]
+        sql = """
+            SELECT
+                  bucket.bucket_index
+                , bucket.bucket_price
+                , bucket.deposit
+                , pool.debt AS total_pool_debt
+            FROM {bucket_table} AS bucket
+            JOIN {pool_table} AS pool
+                ON bucket.pool_address = pool.address
+            JOIN {token_table} AS collateral_token
+                ON pool.collateral_token_address = collateral_token.underlying_address
+            JOIN {token_table} AS quote_token
+                ON pool.quote_token_address = quote_token.underlying_address
+            WHERE bucket.pool_address = %s
+                AND bucket.deposit > 0
+                AND (bucket.bucket_price > pool.hpb - pool.hpb * 0.3
+                    OR bucket.bucket_price > pool.htp - pool.htp * 0.05)
+            ORDER BY bucket.bucket_price DESC
+        """.format(
+            bucket_table=self.models.bucket._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            buckets = fetch_all(cursor)
+
+        data = []
+        if not buckets:
+            return Response(data, status.HTTP_200_OK)
+
+        remaining_debt = buckets[0]["total_pool_debt"]
+        for bucket in buckets:
+            deposit = bucket["deposit"]
+
+            if remaining_debt > 0:
+                if remaining_debt >= deposit:
+                    amount = deposit
+                    remaining_debt -= deposit
+                    data.append(
+                        {
+                            "bucket_index": bucket["bucket_index"],
+                            "bucket_price": bucket["bucket_price"],
+                            "amount": amount,
+                            "type": "utilized",
+                            "deposit": bucket["deposit"],
+                        }
+                    )
+                else:
+                    amount = deposit - remaining_debt
+                    data.append(
+                        {
+                            "bucket_index": bucket["bucket_index"],
+                            "bucket_price": bucket["bucket_price"],
+                            "amount": remaining_debt,
+                            "type": "utilized",
+                            "deposit": bucket["deposit"],
+                        }
+                    )
+                    data.append(
+                        {
+                            "bucket_index": bucket["bucket_index"],
+                            "bucket_price": bucket["bucket_price"],
+                            "amount": amount,
+                            "type": "not_utilized",
+                            "deposit": bucket["deposit"],
+                        }
+                    )
+                    remaining_debt = 0
+            else:
+                data.append(
+                    {
+                        "bucket_index": bucket["bucket_index"],
+                        "bucket_price": bucket["bucket_price"],
+                        "amount": deposit,
+                        "type": "not_utilized",
+                        "deposit": bucket["deposit"],
+                    }
+                )
+
+        return Response(data, status.HTTP_200_OK)
