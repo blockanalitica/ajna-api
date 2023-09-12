@@ -2,6 +2,7 @@ from chain_harvester.networks.ethereum.mainnet import EthereumMainnetChain
 from django.conf import settings
 
 from ajna.chain import AjnaChainMixin
+from ajna.v1.ethereum.models import V1EthereumPriceFeed
 
 from . import models
 
@@ -10,14 +11,7 @@ MODEL_MAP = {
     "token": models.V2EthereumToken,
     "pool_snapshot": models.V2EthereumPoolSnapshot,
     "bucket": models.V2EthereumBucket,
-    "price_feed": models.V2EthereumPriceFeed,
-    "remove_collateral": models.V2EthereumRemoveCollateral,
-    "add_collateral": models.V2EthereumAddCollateral,
-    "add_quote_token": models.V2EthereumAddQuoteToken,
-    "remove_quote_token": models.V2EthereumRemoveQuoteToken,
-    "move_quote_token": models.V2EthereumMoveQuoteToken,
-    "draw_debt": models.V2EthereumDrawDebt,
-    "repay_debt": models.V2EthereumRepayDebt,
+    "price_feed": V1EthereumPriceFeed,
     "liqudation_auction": models.V2EthereumLiquidationAuction,
     "pool_volume_snapshot": models.V2EthereumPoolVolumeSnapshot,
     "grant_proposal": models.V2EthereumGrantProposal,

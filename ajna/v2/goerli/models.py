@@ -21,34 +21,6 @@ class V2GoerliPriceFeed(base.PriceFeed):
     pass
 
 
-class V2GoerliRemoveCollateral(base.RemoveCollateral):
-    pass
-
-
-class V2GoerliAddCollateral(base.AddCollateral):
-    pass
-
-
-class V2GoerliAddQuoteToken(base.AddQuoteToken):
-    pass
-
-
-class V2GoerliRemoveQuoteToken(base.RemoveQuoteToken):
-    pass
-
-
-class V2GoerliMoveQuoteToken(base.MoveQuoteToken):
-    pass
-
-
-class V2GoerliDrawDebt(base.DrawDebt):
-    pass
-
-
-class V2GoerliRepayDebt(base.RepayDebt):
-    pass
-
-
 class V2GoerliLiquidationAuction(base.LiquidationAuction):
     pass
 
