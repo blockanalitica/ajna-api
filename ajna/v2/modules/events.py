@@ -8,6 +8,9 @@ from ajna.utils.utils import compute_order_index
 log = logging.getLogger(__name__)
 
 
+POOL_INFO = {}
+
+
 def _get_wallet_addresses(event):
     wallet_addresses = None
     match event["event"]:
@@ -61,6 +64,35 @@ def _get_wallet_addresses(event):
     return wallet_addresses
 
 
+def _get_token_price(chain, token_address, dt):
+    try:
+        price = (
+            chain.price_feed.objects.filter(
+                underlying_address=token_address,
+                datetime__lte=dt,
+            )
+            .latest()
+            .price
+        )
+    except chain.price_feed.DoesNotExist:
+        price = None
+
+    return price
+
+
+def _get_pool_info(chain, pool_address):
+    global POOL_INFO
+
+    if pool_address not in POOL_INFO:
+        pool = chain.pool.objects.get(address=pool_address)
+        POOL_INFO[pool_address] = {
+            "collateral_token_address": pool.collateral_token_address,
+            "quote_token_address": pool.quote_token_address,
+        }
+
+    return POOL_INFO[pool_address]
+
+
 def fetch_and_save_events_for_all_pools(chain):
     cache_key = "fetch_and_save_events_for_all_pools.last_block_number"
 
@@ -87,30 +119,57 @@ def fetch_and_save_events_for_all_pools(chain):
     events = chain.get_events_for_contracts(
         pool_addresses, from_block=from_block, to_block=to_block
     )
-
     pool_events = []
     for event in events:
         pool_address = event["address"].lower()
+        order_index = compute_order_index(
+            event["blockNumber"], event["transactionIndex"], event["logIndex"]
+        )
+        block_datetime = chain.get_block_datetime(event["blockNumber"])
+        collateral_token_price = None
+        quote_token_price = None
+        match event["event"]:
+            case "DrawDebt" | "RepayDebt":
+                pool_info = _get_pool_info(chain, pool_address)
+                collateral_token_price = _get_token_price(
+                    chain, pool_info["collateral_token_address"], block_datetime
+                )
+                quote_token_price = _get_token_price(
+                    chain, pool_info["quote_token_address"], block_datetime
+                )
+            case "AddQuoteToken" | "RemoveQuoteToken" | "MoveQuoteToken":
+                pool_info = _get_pool_info(chain, pool_address)
+                quote_token_price = _get_token_price(
+                    chain, pool_info["quote_token_address"], block_datetime
+                )
+            case "AddCollateral" | "RemoveCollateral":
+                pool_info = _get_pool_info(chain, pool_address)
+                collateral_token_price = _get_token_price(
+                    chain, pool_info["collateral_token_address"], block_datetime
+                )
+
         pool_events.append(
             chain.pool_event(
                 pool_address=pool_address,
                 wallet_addresses=_get_wallet_addresses(event),
                 block_number=event["blockNumber"],
-                block_datetime=chain.get_block_datetime(event["blockNumber"]),
-                order_index=compute_order_index(
-                    event["blockNumber"], event["transactionIndex"], event["logIndex"]
-                ),
+                block_datetime=block_datetime,
+                order_index=order_index,
                 transaction_hash=event["transactionHash"].hex(),
                 name=event["event"],
                 data=dict(event["args"]),
+                collateral_token_price=collateral_token_price,
+                quote_token_price=quote_token_price,
             )
         )
 
         if len(pool_events) > 500:
+            log.debug("Saving pool events chunk")
             chain.pool_event.objects.bulk_create(pool_events, ignore_conflicts=True)
             pool_events = []
 
     if pool_events:
+        log.debug("Saving last pool events chunk")
         chain.pool_event.objects.bulk_create(pool_events, ignore_conflicts=True)
 
     # Set the block number up to which we've fetch the events so next run we start
