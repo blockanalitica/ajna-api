@@ -23,4 +23,9 @@ urlpatterns = [
         pools.BucketsGraphView.as_view(),
         name="pool-buckets-graph",
     ),
+    path(
+        "pools/<pool_address>/historic/<historic_type>/",
+        pools.PoolHistoricView.as_view(),
+        name="pool-historic",
+    ),
 ]
