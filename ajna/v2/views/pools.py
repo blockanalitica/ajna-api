@@ -1,3 +1,6 @@
+from datetime import datetime
+from decimal import Decimal
+
 from django.db import connection
 from django.http import Http404
 from rest_framework import status
@@ -392,5 +395,191 @@ class BucketsGraphView(BaseChainView):
                         "deposit": bucket["deposit"],
                     }
                 )
+
+        return Response(data, status.HTTP_200_OK)
+
+
+class PoolHistoricView(BaseChainView):
+    """
+    A view for retrieving historic information about a specific pool.
+    """
+
+    days_ago_required = False
+    days_ago_default = 7
+    days_ago_options = [30, 365]
+
+    def _get_tvl(self, pool_address):
+        sql_vars = [self.days_ago_dt, pool_address]
+        sql = """
+            SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
+                  DATE_TRUNC('day', ps.datetime) AS date
+                , (ps.collateral_token_balance * ps.collateral_token_price)
+                  + (quote_token_balance * ps.quote_token_price) AS amount
+            FROM {pool_snapshot_table} ps
+            WHERE ps.datetime >= %s AND ps.address = %s
+            ORDER BY 1, ps.datetime DESC
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+        return data
+
+    def _get_pool_size(self, pool_address):
+        sql_vars = [self.days_ago_dt, pool_address]
+        sql = """
+            SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
+                  DATE_TRUNC('day', ps.datetime) AS date
+                , ps.pool_size AS amount
+            FROM {pool_snapshot_table} ps
+            WHERE ps.datetime >= %s AND ps.address = %s
+            ORDER BY 1, ps.datetime DESC
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+        return data
+
+    def _get_debt(self, pool_address):
+        sql_vars = [self.days_ago_dt, pool_address]
+        sql = """
+            SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
+                  DATE_TRUNC('day', ps.datetime) AS date
+                , ps.t0debt * ps.pending_inflator AS amount
+            FROM {pool_snapshot_table} ps
+            WHERE ps.datetime >= %s AND ps.address = %s
+            ORDER BY 1, ps.datetime DESC
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+        return data
+
+    def _get_pledged_collateral(self, pool_address):
+        sql_vars = [self.days_ago_dt, pool_address]
+        sql = """
+            SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
+                  DATE_TRUNC('day', ps.datetime) AS date
+                , ps.pledged_collateral AS amount
+            FROM {pool_snapshot_table} ps
+            WHERE ps.datetime >= %s AND ps.address = %s
+            ORDER BY 1, ps.datetime DESC
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+        return data
+
+    def _get_volume(self, pool_address):
+        sql_vars = [self.days_ago_dt.date(), pool_address]
+        sql = """
+            SELECT
+                  pvs.date
+                , pvs.amount
+            FROM {pool_volume_snapshot_table} pvs
+            WHERE pvs.date >= %s AND pvs.pool_address = %s
+            ORDER BY 1, pvs.date DESC
+        """.format(
+            pool_volume_snapshot_table=self.models.pool_volume_snapshot._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+
+        # Get todays volume on the fly
+        today_sql = SQL_TODAYS_VOLUME_FOR_POOL.format(
+            pool_event_table=self.models.pool_event._meta.db_table
+        )
+
+        with connection.cursor() as cursor:
+            cursor.execute(today_sql, [pool_address])
+            today_data = fetch_one(cursor)
+
+        data.append(
+            {
+                "date": datetime.now().date(),
+                "amount": today_data["amount"] or Decimal("0"),
+            }
+        )
+        return data
+
+    def _get_apr(self, pool_address):
+        if self.days_ago == 30:
+            trunc = "hour"
+        else:
+            trunc = "day"
+
+        sql_vars = [self.days_ago_dt, pool_address]
+        sql = """
+            SELECT DISTINCT ON (DATE_TRUNC('{date_trunc}', ps.datetime))
+                  DATE_TRUNC('{date_trunc}', ps.datetime) AS date
+                , ps.lend_rate AS lend_rate
+                , ps.borrow_rate AS borrow_rate
+            FROM {pool_snapshot_table} ps
+            WHERE ps.datetime >= %s AND ps.address = %s
+            ORDER BY 1, ps.datetime DESC
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            date_trunc=trunc,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+        return data
+
+    def _get_mau_tu(self, pool_address):
+        if self.days_ago == 30:
+            trunc = "hour"
+        else:
+            trunc = "day"
+
+        sql_vars = [self.days_ago_dt, pool_address]
+        sql = """
+            SELECT DISTINCT ON (DATE_TRUNC('{date_trunc}', ps.datetime))
+                  DATE_TRUNC('{date_trunc}', ps.datetime) AS date
+                , ps.actual_utilization
+                , ps.target_utilization
+                , -ps.target_utilization - 1 + sqrt(8 * ps.target_utilization + 1)
+                AS actual_utilization_upper_bound
+                , -1.02 * ps.target_utilization + 3 - sqrt(9 - 8 * 1.02 * ps.target_utilization)
+                AS actual_utilization_lower_bound
+            FROM {pool_snapshot_table} ps
+            WHERE ps.datetime >= %s AND ps.address = %s
+            ORDER BY 1, ps.datetime DESC
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            date_trunc=trunc,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+        return data
+
+    def get(self, request, pool_address, historic_type):
+        data = None
+        match historic_type:
+            case "tvl":
+                data = self._get_tvl(pool_address)
+            case "pool_size":
+                data = self._get_pool_size(pool_address)
+            case "debt":
+                data = self._get_debt(pool_address)
+            case "pledged_collateral":
+                data = self._get_pledged_collateral(pool_address)
+            case "volume":
+                data = self._get_volume(pool_address)
+            case "apr":
+                data = self._get_apr(pool_address)
+            case "mau_tu":
+                data = self._get_mau_tu(pool_address)
+            case _:
+                raise Http404
 
         return Response(data, status.HTTP_200_OK)
