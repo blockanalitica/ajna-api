@@ -28,4 +28,9 @@ urlpatterns = [
         pools.PoolHistoricView.as_view(),
         name="pool-historic",
     ),
+    path(
+        "pools/<pool_address>/events/",
+        pools.PoolEventsView.as_view(),
+        name="pool-events",
+    ),
 ]

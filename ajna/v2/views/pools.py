@@ -583,3 +583,51 @@ class PoolHistoricView(BaseChainView):
                 raise Http404
 
         return Response(data, status.HTTP_200_OK)
+
+
+class PoolEventsView(RawSQLPaginatedChainView):
+    order_nulls_last = True
+    # default_order = "-block_timestamp"
+    # ordering_fields = ["block_timestamp", "amount", "collateral", "account"]
+
+    def get_raw_sql(self, search_filters, query_params, **kwargs):
+        pool_address = kwargs["pool_address"]
+        event_name = query_params.get("name")
+        sql = """
+            SELECT
+                  pool.address
+                , collateral_token.symbol AS collateral_token_symbol
+                , quote_token.symbol AS quote_token_symbol
+            FROM {pool_table} AS pool
+            JOIN {token_table} AS collateral_token
+                ON pool.collateral_token_address = collateral_token.underlying_address
+            JOIN {token_table} AS quote_token
+                ON pool.quote_token_address = quote_token.underlying_address
+            WHERE pool.address = %s
+        """.format(
+            token_table=self.models.token._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [pool_address])
+            pool_data = fetch_one(cursor)
+
+        if not pool_data:
+            raise Http404
+
+        sql = """
+            SELECT
+                *
+            FROM {pool_event_table}
+            WHERE pool_address = %s
+        """.format(
+            pool_event_table=self.models.pool_event._meta.db_table
+        )
+
+        if event_name:
+            sql = "{} AND name = %s".format(sql)
+            sql_vars = [pool_address, event_name]
+        else:
+            sql_vars = [pool_address]
+
+        return sql, sql_vars
