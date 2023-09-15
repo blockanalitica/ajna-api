@@ -586,8 +586,8 @@ class PoolHistoricView(BaseChainView):
 
 class PoolEventsView(RawSQLPaginatedChainView):
     order_nulls_last = True
-    # default_order = "-block_timestamp"
-    # ordering_fields = ["block_timestamp", "amount", "collateral", "account"]
+    default_order = "-order_index"
+    ordering_fields = ["order_index"]
 
     def get_raw_sql(self, search_filters, query_params, **kwargs):
         pool_address = kwargs["pool_address"]
@@ -629,4 +629,131 @@ class PoolEventsView(RawSQLPaginatedChainView):
         else:
             sql_vars = [pool_address]
 
+        return sql, sql_vars
+
+
+class PoolPositionsView(RawSQLPaginatedChainView):
+    order_nulls_last = True
+
+    # TODO: calculate prev USD amounts
+    def _get_borrower_sql(self):
+        return """
+            WITH previous AS (
+                SELECT DISTINCT ON (wp.wallet_address)
+                      wp.wallet_address
+                    , wp.t0debt
+                    , wp.collateral
+                FROM {wallet_position} wp
+                WHERE wp.datetime <= %s AND wp.pool_address = %s
+                ORDER BY wp.wallet_address, wp.datetime DESC
+            )
+
+            SELECT
+                  x.wallet_address
+                , x.collateral
+                , x.collateral_usd
+                , x.debt
+                , x.debt_usd
+                , x.collateral_token_symbol
+                , x.quote_token_symbol
+                , x.prev_collateral
+                , x.prev_debt
+                , CASE
+                    WHEN NULLIF(x.collateral_usd, 0) IS NULL
+                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    THEN NULL
+                    ELSE
+                        CASE
+                            WHEN x.collateral_usd / x.debt_usd > 1000
+                            THEN 1000
+                            ELSE x.collateral_usd / x.debt_usd
+                        END
+                  END AS health_rate
+                , CASE
+                    WHEN x.pool_debt_usd = 0 OR x.debt_usd = 0
+                    THEN NULL
+                    ELSE x.debt_usd / x.pool_debt_usd
+                  END AS debt_share
+            FROM (
+                SELECT
+                      cwp.wallet_address
+                    , cwp.collateral
+                    , cwp.collateral * ct.underlying_price AS collateral_usd
+                    , cwp.t0debt * p.pending_inflator AS debt
+                    , cwp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
+                    , ct.symbol AS collateral_token_symbol
+                    , qt.symbol AS quote_token_symbol
+                    , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
+                    , prev.collateral AS prev_collateral
+                    , prev.t0debt * p.pending_inflator AS prev_debt
+                FROM {current_wallet_position_table} cwp
+                JOIN {pool_table} p
+                    ON cwp.pool_address = p.address
+                JOIN {token_table} AS ct
+                    ON p.collateral_token_address = ct.underlying_address
+                JOIN {token_table} AS qt
+                    ON p.quote_token_address = qt.underlying_address
+                LEFT JOIN previous AS prev
+                    ON cwp.wallet_address = prev.wallet_address
+                WHERE (cwp.t0debt > 0 OR cwp.collateral > 0)
+                    AND cwp.pool_address = %s
+            ) x
+        """.format(
+            current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+            wallet_position=self.models.wallet_position._meta.db_table,
+        )
+
+    # TODO: calculate prev USD amounts
+    def _get_depositor_sql(self):
+        return """
+            WITH previous AS (
+                SELECT DISTINCT ON (wp.wallet_address)
+                      wp.wallet_address
+                    , wp.supply
+                FROM {wallet_position} wp
+                WHERE wp.datetime <= %s AND wp.pool_address = %s
+                ORDER BY wp.wallet_address, wp.datetime DESC
+            )
+
+            SELECT
+                  cwp.wallet_address
+                , cwp.supply
+                , cwp.supply * qt.underlying_price AS supply_usd
+                , qt.symbol AS quote_token_symbol
+                , prev.supply AS prev_supply
+                , CASE
+                    WHEN NULLIF(cwp.supply * qt.underlying_price, 0) IS NULL
+                        OR NULLIF(p.pool_size * qt.underlying_price, 0) IS NULL
+                    THEN NULL
+                    ELSE (cwp.supply * qt.underlying_price)
+                        / (p.pool_size * qt.underlying_price)
+                  END AS supply_share
+            FROM {current_wallet_position_table} cwp
+            JOIN {pool_table} p
+                ON cwp.pool_address = p.address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            LEFT JOIN previous AS prev
+                ON cwp.wallet_address = prev.wallet_address
+            WHERE cwp.supply > 0 AND cwp.pool_address = %s
+        """.format(
+            current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+            wallet_position=self.models.wallet_position._meta.db_table,
+        )
+
+    def get_raw_sql(self, pool_address, query_params, **kwargs):
+        wallet_type = query_params.get("type")
+
+        if wallet_type == "depositor":
+            sql = self._get_depositor_sql()
+            self.ordering_fields = ["supply"]
+        else:
+            sql = self._get_borrower_sql()
+            self.ordering_fields = ["debt", "collateral", "health_rate"]
+
+        sql_vars = [self.days_ago_dt, pool_address, pool_address]
         return sql, sql_vars
