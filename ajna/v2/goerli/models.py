@@ -51,3 +51,7 @@ class V2GoerliPoolBucketState(base.PoolBucketState):
 
 class V2GoerliWalletPoolBucketState(base.WalletPoolBucketState):
     pass
+
+
+class V2GoerliWallet(base.Wallet):
+    pass

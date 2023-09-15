@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import pools
+from .views import pools, wallets
 
 urlpatterns = [
     path(
@@ -19,6 +19,11 @@ urlpatterns = [
         name="pool-buckets",
     ),
     path(
+        "pools/<pool_address>/positions/",
+        pools.PoolPositionsView.as_view(),
+        name="pool-positions",
+    ),
+    path(
         "pools/<pool_address>/buckets/graph/",
         pools.BucketsGraphView.as_view(),
         name="pool-buckets-graph",
@@ -32,5 +37,25 @@ urlpatterns = [
         "pools/<pool_address>/events/",
         pools.PoolEventsView.as_view(),
         name="pool-events",
+    ),
+    path(
+        "wallets/",
+        wallets.WalletsView.as_view(),
+        name="wallets",
+    ),
+    path(
+        "wallets/<address>/",
+        wallets.WalletView.as_view(),
+        name="wallet",
+    ),
+    path(
+        "wallets/<address>/pools/",
+        wallets.WalletPoolsView.as_view(),
+        name="wallet-pools",
+    ),
+    path(
+        "wallets/<address>/events/",
+        wallets.WalletEventsView.as_view(),
+        name="wallet-events",
     ),
 ]
