@@ -491,3 +491,12 @@ class WalletPoolBucketState(models.Model):
             models.Index(fields=["block_number"]),
             models.Index(fields=["block_datetime"]),
         ]
+
+
+class Wallet(models.Model):
+    address = models.CharField(max_length=42, unique=True)
+    first_activity = models.DateTimeField(null=True)
+    last_activity = models.DateTimeField(null=True)
+
+    class Meta:
+        abstract = True

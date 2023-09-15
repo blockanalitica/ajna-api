@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import pools, search, stats, tokens
+from .views import pools, search, stats, tokens, wallets
 
 urlpatterns = [
     path(
@@ -17,6 +17,11 @@ urlpatterns = [
         "pools/<pool_address>/buckets/",
         pools.BucketsView.as_view(),
         name="pool-buckets",
+    ),
+    path(
+        "pools/<pool_address>/positions/",
+        pools.PoolPositionsView.as_view(),
+        name="pool-positions",
     ),
     path(
         "pools/<pool_address>/buckets/graph/",
@@ -67,5 +72,25 @@ urlpatterns = [
         "search/",
         search.SearchView.as_view(),
         name="search",
+    ),
+    path(
+        "wallets/",
+        wallets.WalletsView.as_view(),
+        name="wallets",
+    ),
+    path(
+        "wallets/<address>/",
+        wallets.WalletView.as_view(),
+        name="wallet",
+    ),
+    path(
+        "wallets/<address>/pools/",
+        wallets.WalletPoolsView.as_view(),
+        name="wallet-pools",
+    ),
+    path(
+        "wallets/<address>/events/",
+        wallets.WalletEventsView.as_view(),
+        name="wallet-events",
     ),
 ]

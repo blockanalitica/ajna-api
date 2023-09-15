@@ -204,6 +204,18 @@ class EventProcessor:
                 defaults=wallet_data,
             )
 
+            try:
+                wallet = self._chain.wallet.objects.get(address=wallet_address)
+            except self._chain.wallet.DoesNotExist:
+                self._chain.wallet.objects.create(
+                    address=wallet_address,
+                    first_activity=self._block_datetimes[block_number],
+                    last_activity=self._block_datetimes[block_number],
+                )
+            else:
+                wallet.last_activity = self._block_datetimes[block_number]
+                wallet.save(update_fields=["last_activity"])
+
     def _save_wallets_and_buckets(self, events):
         data_to_update = self._get_data_to_update_from_events(events)
         for block_number, data in data_to_update.items():

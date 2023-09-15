@@ -55,6 +55,8 @@ def _get_wallet_addresses(event):
             wallet_addresses = [event["args"]["borrower"]]
         case "BondWithdrawn":
             wallet_addresses = [event["args"]["kicker"], event["args"]["reciever"]]
+        case "LoanStamped":
+            wallet_addresses = [event["args"]["borrower"]]
         # case _:
         #     print("#TODO: wallet_addresses", event["event"])
         #     pass

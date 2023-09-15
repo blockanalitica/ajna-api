@@ -190,13 +190,6 @@ class RawSQLPaginatedApiView(APIView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.paginator = RawPagination()
-        ordering_fields = getattr(self, "ordering_fields", [])
-        self.ordering_fields = []
-        for field in ordering_fields:
-            self.ordering_fields.append(field)
-            self.ordering_fields.append("-{}".format(field))
-
-        self.default_order = getattr(self, "default_order", None)
 
     def get_queryset(self, **kwargs):
         raise InvalidMethod(
@@ -225,7 +218,12 @@ class RawSQLPaginatedApiView(APIView):
 
     def get_ordering(self, request):
         param = request.query_params.get("order")
-        if param in self.ordering_fields:
+        ordering_fields = []
+        for field in self.ordering_fields:
+            ordering_fields.append(field)
+            ordering_fields.append("-{}".format(field))
+
+        if param in ordering_fields:
             return param
         return self.default_order
 
@@ -247,6 +245,7 @@ class RawSQLPaginatedApiView(APIView):
             assert isinstance(sql_vars, list)
 
         order = self.get_ordering(request)
+
         if order:
             nulls_last = SQL("NULLS LAST" if self.order_nulls_last else "")
             if order.startswith("-"):
