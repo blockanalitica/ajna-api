@@ -20,6 +20,8 @@ from rest_framework.views import APIView
 from ajna.constants import AJNA_DEPLOYMENTS
 from ajna.utils.db import fetch_all
 
+log = logging.getLogger(__name__)
+
 
 class Pagination(PageNumberPagination):
     page_size = 100
@@ -270,9 +272,6 @@ class RawSQLPaginatedApiView(APIView):
             serializer = self.serializer_class(page, many=True)
             page = serializer.data
         return self.paginator.get_paginated_response(page, additional_data)
-
-
-log = logging.getLogger(__name__)
 
 
 def _get_module(version, network):

@@ -691,7 +691,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
         event_type = query_params.get("type")
         sql = """
             SELECT
-                  address
+                  pool.address
                 , collateral_token.symbol AS collateral_token_symbol
                 , quote_token.symbol AS quote_token_symbol
             FROM {pool_table} AS pool
