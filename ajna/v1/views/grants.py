@@ -5,8 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from ajna.utils.db import fetch_all
-
-from . import BaseChainView
+from ajna.utils.views import BaseChainView
 
 
 # Cache for 3 minutes so that we don't need to call the chain on every single request
