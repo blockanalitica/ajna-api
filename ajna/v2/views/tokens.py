@@ -4,8 +4,8 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from ajna.utils.db import fetch_one
+from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
-from . import BaseChainView, RawSQLPaginatedChainView
 from .pools import POOLS_SQL
 
 

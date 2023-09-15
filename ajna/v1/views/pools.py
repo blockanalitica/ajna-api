@@ -1,4 +1,4 @@
-from . import RawSQLPaginatedChainView
+from ajna.utils.views import RawSQLPaginatedChainView
 
 POOLS_SQL = """
     WITH previous AS (
