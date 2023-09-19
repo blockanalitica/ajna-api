@@ -24,6 +24,7 @@ MODEL_MAP = {
     "wallet_bucket_state": models.V2EthereumWalletPoolBucketState,
     "bucket_state": models.V2EthereumPoolBucketState,
     "wallet": models.V2EthereumWallet,
+    "notification": models.V2EthereumNotification,
 }
 
 

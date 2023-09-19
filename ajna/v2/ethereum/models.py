@@ -55,3 +55,7 @@ class V2EthereumWalletPoolBucketState(base.WalletPoolBucketState):
 
 class V2EthereumWallet(base.Wallet):
     pass
+
+
+class V2EthereumNotification(base.Notification):
+    pass

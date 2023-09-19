@@ -500,3 +500,13 @@ class Wallet(models.Model):
 
     class Meta:
         abstract = True
+
+
+class Notification(models.Model):
+    type = models.TextField()
+    key = models.TextField(unique=True)
+    data = models.JSONField()
+    activity = models.JSONField()
+
+    class Meta:
+        abstract = True

@@ -20,6 +20,7 @@ MODEL_MAP = {
     "wallet_bucket_state": models.V2GoerliWalletPoolBucketState,
     "bucket_state": models.V2GoerliPoolBucketState,
     "wallet": models.V2GoerliWallet,
+    "notification": models.V2GoerliNotification,
 }
 
 
