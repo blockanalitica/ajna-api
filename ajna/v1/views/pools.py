@@ -115,11 +115,3 @@ class PoolsView(RawSQLPaginatedChainView):
             sql += " WHERE {}".format(" AND ".join(filters))
 
         return sql, sql_vars
-
-    # def get_count_sql(self, **kwargs):
-    #     sql = """
-    #         SELECT COUNT(*) FROM {pool_table}
-    #     """.format(
-    #         pool_table=self.models.pool._meta.db_table
-    #     )
-    #     return sql, []
