@@ -1,5 +1,4 @@
 from datetime import datetime
-from decimal import Decimal
 
 from django.db import connection
 from django.http import Http404
@@ -8,6 +7,8 @@ from rest_framework.response import Response
 
 from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
+
+from ..modules.events import parse_event_data
 
 POOLS_SQL = """
     WITH previous AS (
@@ -19,11 +20,8 @@ POOLS_SQL = """
             , ps.total_ajna_burned
             , ps.borrow_rate
             , ps.lend_rate
-            , ps.pledged_collateral * ps.collateral_token_price AS pledged_collateral_usd
-            , ps.pool_size * ps.quote_token_price AS pool_size_usd
-            , ps.debt * ps.quote_token_price AS debt_usd
-            , (ps.collateral_token_balance * ps.collateral_token_price) +
-              (ps.quote_token_balance * ps.quote_token_price) AS tvl
+            , ps.collateral_token_balance
+            , ps.quote_token_balance
         FROM {pool_snapshot_table} ps
         WHERE ps.datetime <= %s
         ORDER BY ps.address, ps.datetime DESC
@@ -46,22 +44,20 @@ POOLS_SQL = """
         , collateral_token.name AS collateral_token_name
         , quote_token.symbol AS quote_token_symbol
         , quote_token.name AS quote_token_name
-        , COALESCE(
-            (pool.collateral_token_balance * collateral_token.underlying_price) +
-            (pool.quote_token_balance * quote_token.underlying_price),
-            0
-          ) AS tvl
+        , (pool.collateral_token_balance * collateral_token.underlying_price) +
+            (pool.quote_token_balance * quote_token.underlying_price) AS tvl
 
         , prev.pledged_collateral AS prev_pledged_collateral
-        , prev.pledged_collateral_usd AS prev_pledged_collateral_usd
+        , prev.pledged_collateral * collateral_token.underlying_price AS prev_pledged_collateral_usd
         , prev.pool_size AS prev_pool_size
-        , prev.pool_size_usd AS prev_pool_size_usd
+        , prev.pool_size * quote_token.underlying_price AS prev_pool_size_usd
         , prev.debt AS prev_debt
-        , prev.debt_usd AS prev_debt_usd
+        , prev.debt * quote_token.underlying_price AS prev_debt_usd
         , prev.total_ajna_burned AS prev_total_ajna_burned
         , prev.borrow_rate AS prev_borrow_rate
         , prev.lend_rate AS prev_lend_rate
-        , prev.tvl AS prev_tvl
+        , (prev.collateral_token_balance * collateral_token.underlying_price) +
+            (prev.quote_token_balance * quote_token.underlying_price) AS prev_tvl
     FROM {pool_table} AS pool
     JOIN {token_table} AS collateral_token
         ON pool.collateral_token_address = collateral_token.underlying_address
@@ -69,39 +65,6 @@ POOLS_SQL = """
         ON pool.quote_token_address = quote_token.underlying_address
     LEFT JOIN previous AS prev
         ON pool.address = prev.address
-"""
-
-SQL_TODAYS_VOLUME_FOR_POOL = """
-    SELECT
-        SUM(
-            CASE
-                WHEN name = 'AddCollateral' THEN
-                    CAST(data->>'amount' AS NUMERIC) / 1e18 * collateral_token_price
-                WHEN name = 'RemoveCollateral' THEN
-                    CAST(data->>'amount' AS NUMERIC) / 1e18 * collateral_token_price
-                WHEN name = 'AddQuoteToken' THEN
-                    CAST(data->>'amount' AS NUMERIC) / 1e18 * quote_token_price
-                WHEN name = 'RemoveQuoteToken' THEN
-                    CAST(data->>'amount' AS NUMERIC) / 1e18 * quote_token_price
-                WHEN name = 'DrawDebt' THEN
-                    CAST(data->>'amountBorrowed' AS NUMERIC) / 1e18 * quote_token_price +
-                    CAST(data->>'collateralPledged' AS NUMERIC) / 1e18 * collateral_token_price
-                WHEN name = 'RepayDebt' THEN
-                    CAST(data->>'quoteRepaid' AS NUMERIC) / 1e18 * quote_token_price +
-                    CAST(data->>'collateralPulled' AS NUMERIC) / 1e18 * collateral_token_price
-            END
-        ) AS amount
-    FROM {pool_event_table}
-    WHERE block_datetime >= CURRENT_DATE
-        AND pool_address = %s
-        AND name IN (
-            'AddCollateral',
-            'RemoveCollateral',
-            'AddQuoteToken',
-            'RemoveQuoteToken',
-            'DrawDebt',
-            'RepayDebt'
-        )
 """
 
 
@@ -163,17 +126,17 @@ class PoolView(BaseChainView):
                         ps.address
                         , ps.pledged_collateral
                         , ps.pool_size
+                        , ps.t0debt
                         , ps.t0debt * ps.pending_inflator as debt
                         , ps.lup
                         , ps.htp
                         , ps.hpb
-                        , ps.pledged_collateral * ps.collateral_token_price AS pledged_collateral_usd
-                        , ps.pool_size * ps.quote_token_price AS pool_size_usd
-                        , ps.t0debt * ps.pending_inflator * ps.quote_token_price AS debt_usd
                         , ps.total_ajna_burned
                         , ps.quote_token_price
                         , ps.collateral_token_price
                         , ps.reserves
+                        , ps.quote_token_balance
+                        , ps.collateral_token_balance
                     FROM {pool_snapshot_table} ps
                     WHERE ps.datetime <= %s AND ps.address = %s
                     ORDER BY ps.address, ps.datetime DESC
@@ -201,6 +164,7 @@ class PoolView(BaseChainView):
                 , pool.total_ajna_burned
                 , pool.min_debt_amount
                 , pool.reserves
+                , pool.volume_today AS volume
                 , ((pool.pledged_collateral * collateral_token.underlying_price)
                     / NULLIF(
                         (pool.t0debt * pool.pending_inflator * quote_token.underlying_price), 0)
@@ -218,13 +182,15 @@ class PoolView(BaseChainView):
                 , quote_token.underlying_price AS quote_token_underlying_price
                 , (pool.collateral_token_balance * collateral_token.underlying_price) +
                   (pool.quote_token_balance * quote_token.underlying_price) AS tvl
-                , prev.pledged_collateral_usd + (prev.pool_size_usd - prev.debt_usd) AS prev_tvl
+
+                , (prev.collateral_token_balance * collateral_token.underlying_price) +
+                  (prev.quote_token_balance * quote_token.underlying_price) AS prev_tvl
                 , prev.pledged_collateral AS prev_pledged_collateral
                 , prev.pool_size AS prev_pool_size
                 , prev.debt as prev_debt
-                , prev.pledged_collateral_usd AS prev_pledged_collateral_usd
-                , prev.pool_size_usd AS prev_pool_size_usd
-                , prev.debt_usd as prev_debt_usd
+                , prev.pledged_collateral * collateral_token.underlying_price AS prev_pledged_collateral_usd
+                , prev.pool_size * quote_token.underlying_price AS prev_pool_size_usd
+                , prev.debt * quote_token.underlying_price as prev_debt_usd
                 , prev.lup as prev_lup
                 , prev.htp as prev_htp
                 , prev.hpb as prev_hpb
@@ -251,16 +217,6 @@ class PoolView(BaseChainView):
 
         if not pool_data:
             raise Http404
-
-        # Get todays volume on the fly
-        today_sql = SQL_TODAYS_VOLUME_FOR_POOL.format(
-            pool_event_table=self.models.pool_event._meta.db_table
-        )
-
-        with connection.cursor() as cursor:
-            cursor.execute(today_sql, [pool_address])
-            today_volume = fetch_one(cursor)
-        pool_data["volume"] = today_volume["amount"]
 
         return Response({"results": pool_data}, status.HTTP_200_OK)
 
@@ -492,19 +448,12 @@ class PoolHistoricView(BaseChainView):
             cursor.execute(sql, sql_vars)
             data = fetch_all(cursor)
 
-        # Get todays volume on the fly
-        today_sql = SQL_TODAYS_VOLUME_FOR_POOL.format(
-            pool_event_table=self.models.pool_event._meta.db_table
-        )
-
-        with connection.cursor() as cursor:
-            cursor.execute(today_sql, [pool_address])
-            today_data = fetch_one(cursor)
+        volume = self.models.pool.objects.get(address=pool_address).volume
 
         data.append(
             {
                 "date": datetime.now().date(),
-                "amount": today_data["amount"] or Decimal("0"),
+                "amount": volume,
             }
         )
         return data
@@ -589,9 +538,32 @@ class PoolEventsView(RawSQLPaginatedChainView):
     default_order = "-order_index"
     ordering_fields = ["order_index"]
 
-    def get_raw_sql(self, search_filters, query_params, **kwargs):
-        pool_address = kwargs["pool_address"]
+    def get_raw_sql(self, pool_address, search_filters, query_params, **kwargs):
         event_name = query_params.get("name")
+        sql = """
+            SELECT
+                  wallet_addresses
+                , block_number
+                , block_datetime
+                , order_index
+                , transaction_hash
+                , name
+                , data
+            FROM {pool_event_table}
+            WHERE pool_address = %s
+        """.format(
+            pool_event_table=self.models.pool_event._meta.db_table
+        )
+
+        if event_name:
+            sql = "{} AND name = %s".format(sql)
+            sql_vars = [pool_address, event_name]
+        else:
+            sql_vars = [pool_address]
+
+        return sql, sql_vars
+
+    def get_additional_data(self, data, pool_address, **kwargs):
         sql = """
             SELECT
                   pool.address
@@ -614,28 +586,17 @@ class PoolEventsView(RawSQLPaginatedChainView):
         if not pool_data:
             raise Http404
 
-        sql = """
-            SELECT
-                *
-            FROM {pool_event_table}
-            WHERE pool_address = %s
-        """.format(
-            pool_event_table=self.models.pool_event._meta.db_table
-        )
+        return pool_data
 
-        if event_name:
-            sql = "{} AND name = %s".format(sql)
-            sql_vars = [pool_address, event_name]
-        else:
-            sql_vars = [pool_address]
-
-        return sql, sql_vars
+    def serialize_data(self, data):
+        for row in data:
+            row["data"] = parse_event_data(row)
+        return data
 
 
 class PoolPositionsView(RawSQLPaginatedChainView):
     order_nulls_last = True
 
-    # TODO: calculate prev USD amounts
     def _get_borrower_sql(self):
         return """
             WITH previous AS (
@@ -643,7 +604,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                       wp.wallet_address
                     , wp.t0debt
                     , wp.collateral
-                FROM {wallet_position} wp
+                FROM {wallet_position_table} wp
                 WHERE wp.datetime <= %s AND wp.pool_address = %s
                 ORDER BY wp.wallet_address, wp.datetime DESC
             )
@@ -658,6 +619,8 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 , x.quote_token_symbol
                 , x.prev_collateral
                 , x.prev_debt
+                , x.prev_collateral_usd
+                , x.prev_debt_usd
                 , CASE
                     WHEN NULLIF(x.collateral_usd, 0) IS NULL
                         OR NULLIF(x.debt_usd, 0) IS NULL
@@ -674,6 +637,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                     THEN NULL
                     ELSE x.debt_usd / x.pool_debt_usd
                   END AS debt_share
+                , w.last_activity
             FROM (
                 SELECT
                       cwp.wallet_address
@@ -684,8 +648,11 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                     , ct.symbol AS collateral_token_symbol
                     , qt.symbol AS quote_token_symbol
                     , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
+
                     , prev.collateral AS prev_collateral
                     , prev.t0debt * p.pending_inflator AS prev_debt
+                    , prev.collateral * ct.underlying_price AS prev_collateral_usd
+                    , prev.t0debt * p.pending_inflator * qt.underlying_price AS prev_debt_usd
                 FROM {current_wallet_position_table} cwp
                 JOIN {pool_table} p
                     ON cwp.pool_address = p.address
@@ -698,14 +665,16 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 WHERE (cwp.t0debt > 0 OR cwp.collateral > 0)
                     AND cwp.pool_address = %s
             ) x
+            LEFT JOIN {wallet_table} w
+                ON x.wallet_address = w.address
         """.format(
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
-            wallet_position=self.models.wallet_position._meta.db_table,
+            wallet_position_table=self.models.wallet_position._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
         )
 
-    # TODO: calculate prev USD amounts
     def _get_depositor_sql(self):
         return """
             WITH previous AS (
@@ -723,6 +692,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 , cwp.supply * qt.underlying_price AS supply_usd
                 , qt.symbol AS quote_token_symbol
                 , prev.supply AS prev_supply
+                , prev.supply * qt.underlying_price  AS prev_supply_usd
                 , CASE
                     WHEN NULLIF(cwp.supply * qt.underlying_price, 0) IS NULL
                         OR NULLIF(p.pool_size * qt.underlying_price, 0) IS NULL
@@ -730,6 +700,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                     ELSE (cwp.supply * qt.underlying_price)
                         / (p.pool_size * qt.underlying_price)
                   END AS supply_share
+                , w.last_activity
             FROM {current_wallet_position_table} cwp
             JOIN {pool_table} p
                 ON cwp.pool_address = p.address
@@ -737,17 +708,19 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 ON p.quote_token_address = qt.underlying_address
             LEFT JOIN previous AS prev
                 ON cwp.wallet_address = prev.wallet_address
+            LEFT JOIN {wallet_table} w
+                ON cwp.wallet_address = w.address
             WHERE cwp.supply > 0 AND cwp.pool_address = %s
         """.format(
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
             wallet_position=self.models.wallet_position._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
         )
 
     def get_raw_sql(self, pool_address, query_params, **kwargs):
         wallet_type = query_params.get("type")
-
         if wallet_type == "depositor":
             sql = self._get_depositor_sql()
             self.ordering_fields = ["supply"]

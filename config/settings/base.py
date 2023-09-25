@@ -252,6 +252,12 @@ CACHES = {
     }
 }
 
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "ajna.renderer.JSONRenderer",
+    ]
+}
+
 CACHE_MIDDLEWARE_SECONDS = env.int("CACHE_MIDDLEWARE_SECONDS", default=10)
 
 SUBGRAPH_ENDPOINT_GOERLI = env("SUBGRAPH_ENDPOINT", default="")

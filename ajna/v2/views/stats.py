@@ -19,11 +19,11 @@ class OverviewView(BaseChainView):
                 SELECT DISTINCT ON (ps.address)
                       ps.address
                     , ps.total_ajna_burned
-                    , ps.pledged_collateral * ps.collateral_token_price AS pledged_collateral_usd
-                    , ps.pool_size * ps.quote_token_price AS pool_size_usd
-                    , ps.debt * ps.quote_token_price AS debt_usd
-                    , (ps.collateral_token_balance * ps.collateral_token_price) +
-                      (ps.quote_token_balance * ps.quote_token_price) AS tvl
+                    , ps.pledged_collateral
+                    , ps.pool_size
+                    , ps.t0debt
+                    , ps.collateral_token_balance
+                    , ps.quote_token_balance
                 FROM {pool_snapshot_table} ps
                 WHERE ps.datetime <= %s
                 ORDER BY ps.address, ps.datetime DESC
@@ -47,20 +47,21 @@ class OverviewView(BaseChainView):
                     , pool.pool_size
                     , pool.debt
                     , pool.total_ajna_burned
-                    , collateral_token.underlying_price AS collateral_token_underlying_price
-                    , quote_token.underlying_price AS quote_token_underlying_price
-                    , (pool.collateral_token_balance * collateral_token.underlying_price) +
-                      (pool.quote_token_balance * quote_token.underlying_price) AS tvl
-                    , prev.pledged_collateral_usd AS prev_pledged_collateral_usd
-                    , prev.pool_size_usd AS prev_pool_size_usd
-                    , prev.debt_usd AS prev_debt_usd
+                    , ct.underlying_price AS collateral_token_underlying_price
+                    , qt.underlying_price AS quote_token_underlying_price
+                    , (pool.collateral_token_balance * ct.underlying_price) +
+                      (pool.quote_token_balance * qt.underlying_price) AS tvl
+                    , prev.pledged_collateral * ct.underlying_price AS prev_pledged_collateral_usd
+                    , prev.pool_size * qt.underlying_price AS prev_pool_size_usd
+                    , prev.t0debt * pool.pending_inflator * qt.underlying_price  AS prev_debt_usd
+                    , (prev.collateral_token_balance * ct.underlying_price) +
+                        (prev.quote_token_balance * qt.underlying_price) AS prev_tvl
                     , prev.total_ajna_burned AS prev_total_ajna_burned
-                    , prev.tvl AS prev_tvl
                 FROM {pool_table} AS pool
-                JOIN {token_table} AS collateral_token
-                    ON pool.collateral_token_address = collateral_token.underlying_address
-                JOIN {token_table} AS quote_token
-                    ON pool.quote_token_address = quote_token.underlying_address
+                JOIN {token_table} AS ct
+                    ON pool.collateral_token_address = ct.underlying_address
+                JOIN {token_table} AS qt
+                    ON pool.quote_token_address = qt.underlying_address
                 FULL JOIN previous AS prev
                     ON prev.address = pool.address
             ) AS sub

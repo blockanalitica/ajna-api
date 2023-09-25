@@ -51,6 +51,7 @@ class PoolBase(models.Model):
     )
     collateral_token_address = models.CharField(max_length=42, db_index=True, null=True)
     quote_token_address = models.CharField(max_length=42, db_index=True, null=True)
+    volume_today = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
         abstract = True

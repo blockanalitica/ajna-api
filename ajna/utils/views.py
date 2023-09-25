@@ -219,6 +219,10 @@ class RawSQLPaginatedApiView(APIView):
         count_query = (count_sql, count_sql_vars)
         page = self.paginate_queryset(queryset, count_query)
         additional_data = self.get_additional_data(page, **kwargs)
+
+        if hasattr(self, "serialize_data"):
+            page = self.serialize_data(page)
+
         return self.paginator.get_paginated_response(page, additional_data)
 
 

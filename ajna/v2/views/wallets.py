@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from ajna.utils.db import fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
+from ..modules.events import parse_event_data
+
 
 class WalletsView(RawSQLPaginatedChainView):
     order_nulls_last = True
@@ -216,6 +218,11 @@ class WalletEventsView(RawSQLPaginatedChainView):
             sql_vars.append(event_name)
 
         return sql, sql_vars
+
+    def serialize_data(self, data):
+        for row in data:
+            row["data"] = parse_event_data(row)
+        return data
 
 
 class WalletPoolsView(RawSQLPaginatedChainView):

@@ -5,13 +5,14 @@ from ajna.chain import AjnaChainMixin
 
 from . import models
 
-# from ajna.v1.ethereum.models import V1EthereumPriceFeed
+# from ajna.v1.ethereum.models import V1EthereumPoolSnapshot, V1EthereumPriceFeed
 
 
 MODEL_MAP = {
     "pool": models.V2EthereumPool,
     "token": models.V2EthereumToken,
     "pool_snapshot": models.V2EthereumPoolSnapshot,
+    # "pool_snapshot": V1EthereumPoolSnapshot,
     "bucket": models.V2EthereumBucket,
     "price_feed": models.V2EthereumPriceFeed,
     # "price_feed": V1EthereumPriceFeed,
