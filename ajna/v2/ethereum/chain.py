@@ -50,6 +50,7 @@ class Ethereum(AjnaChainMixin, EthereumMainnetChain):
             *args,
             **kwargs,
         )
+        self.unique_key = "v2_ethereum"
 
         # TODO: wrong addresses (these are from v1)
         self.pool_info_address = "0x154FFf344f426F99E328bacf70f4Eb632210ecdc"
