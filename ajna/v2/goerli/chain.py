@@ -45,6 +45,8 @@ class Goerli(AjnaChainMixin, EthereumGoerliChain):
             *args,
             **kwargs,
         )
+        self.unique_key = "v2_goerli"
+
         self.pool_info_address = "0xBB61407715cDf92b2784E9d2F1675c4B8505cBd8"
         self.erc20_pool_abi_contract = "0x6e173d30ccd286577ed7eeedc0cd4a6caeb7a669"
         self.erc20_pool_factory_address = "0x01Da8a85A5B525D476cA2b51e44fe7087fFafaFF"

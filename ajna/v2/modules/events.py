@@ -207,7 +207,9 @@ def _get_pool_info(chain, pool_address):
 
 
 def fetch_and_save_events_for_all_pools(chain):
-    cache_key = "fetch_and_save_events_for_all_pools.last_block_number"
+    cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(
+        chain.unique_key
+    )
 
     pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
 
@@ -228,10 +230,15 @@ def fetch_and_save_events_for_all_pools(chain):
 
     to_block = chain.get_latest_block()
 
+    if not pool_addresses:
+        log.debug("No pool addresses. Skipping fetch_and_save_events_for_all_pools")
+        return
+
     pool_addresses = [Web3.to_checksum_address(address) for address in pool_addresses]
     events = chain.get_events_for_contracts(
         pool_addresses, from_block=from_block, to_block=to_block
     )
+
     pool_events = []
     for event in events:
         pool_address = event["address"].lower()
