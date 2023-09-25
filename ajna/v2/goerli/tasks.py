@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime, timedelta
 
+from celery.schedules import crontab
+
 from ajna.celery import app
 
 from ..modules.events import fetch_and_save_events_for_all_pools
@@ -13,23 +15,21 @@ from ..modules.positions import EventProcessor
 from ..modules.prices import update_token_prices
 from .chain import Goerli, GoerliModels
 
-# from ..modules.positions import EventProcessor
-
 log = logging.getLogger(__name__)
 
 SCHEDULE = {
-    # "fetch_market_price_task": {
-    #     "schedule": crontab(minute="*/1"),
-    # },
+    "fetch_market_price_task": {
+        "schedule": crontab(minute="*/1"),
+    },
     # "fetch_and_save_events_for_all_pools_task": {
     #     "schedule": crontab(minute="*/2"),
     # },
-    # "fetch_new_pools_task": {
-    #     "schedule": crontab(minute="*/5"),
-    # },
-    # "fetch_and_save_pools_data_task": {
-    #         "schedule": crontab(minute="*/5"),
-    #     },
+    "fetch_new_pools_task": {
+        "schedule": crontab(minute="*/5"),
+    },
+    "fetch_and_save_pools_data_task": {
+        "schedule": crontab(minute="*/5"),
+    },
     # "process_events_for_all_pools_task": {
     #         "schedule": crontab(minute="*/5"),
     #     },
