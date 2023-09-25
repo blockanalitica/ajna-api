@@ -1,14 +1,125 @@
+import json
 import logging
 
 from django.core.cache import cache
 from web3 import Web3
 
 from ajna.utils.utils import compute_order_index
+from ajna.utils.wad import wad_to_decimal
 
 log = logging.getLogger(__name__)
 
 
 POOL_INFO = {}
+
+
+def parse_event_data(event):
+    data = None
+
+    event_data = None
+    if event["data"]:
+        event_data = json.loads(event["data"])
+
+    match event["name"]:
+        case "UpdateInterestRate":
+            data = {
+                "newRate": wad_to_decimal(event_data["newRate"]),
+                "oldRate": wad_to_decimal(event_data["oldRate"]),
+            }
+        case "DrawDebt":
+            data = {
+                "lup": wad_to_decimal(event_data["lup"]),
+                "amountBorrowed": wad_to_decimal(event_data["amountBorrowed"]),
+                "borrower": event_data["borrower"],
+                "collateralPledged": wad_to_decimal(event_data["collateralPledged"]),
+            }
+        case "RepayDebt":
+            data = {
+                "lup": wad_to_decimal(event_data["lup"]),
+                "quoteRepaid": wad_to_decimal(event_data["quoteRepaid"]),
+                "borrower": event_data["borrower"],
+                "collateralPulled": wad_to_decimal(event_data["collateralPulled"]),
+            }
+        case "AddQuoteToken":
+            data = {
+                "lup": wad_to_decimal(event_data["lup"]),
+                "index": event_data["index"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "lender": event_data["lender"],
+                "lpAwarded": wad_to_decimal(event_data["lpAwarded"]),
+            }
+        case "RemoveQuoteToken":
+            data = {
+                "lup": wad_to_decimal(event_data["lup"]),
+                "index": event_data["index"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "lender": event_data["lender"],
+                "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),
+            }
+        case "MoveQuoteToken":
+            data = {
+                "lup": wad_to_decimal(event_data["lup"]),
+                "to": event_data["to"],
+                "from": event_data["from"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "lender": event_data["lender"],
+                "lpAwardedTo": wad_to_decimal(event_data["lpAwardedTo"]),
+                "lpRedeemedFrom": wad_to_decimal(event_data["lpRedeemedFrom"]),
+            }
+        case "AddCollateral":
+            data = {
+                "index": event_data["index"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "actor": event_data["actor"],
+                "lpAwarded": wad_to_decimal(event_data["lpAwarded"]),
+            }
+        case "RemoveCollateral":
+            data = {
+                "index": event_data["index"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "claimer": event_data["claimer"],
+                "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),
+            }
+        case "Kick":
+            data = {
+                "bond": wad_to_decimal(event_data["bond"]),
+                "debt": wad_to_decimal(event_data["debt"]),
+                "borrower": event_data["borrower"],
+                "collateral": wad_to_decimal(event_data["collateral"]),
+            }
+        case "KickReserveAuction":
+            data = {
+                "auctionPrice": wad_to_decimal(event_data["auctionPrice"]),
+                "claimableReservesRemaining": wad_to_decimal(
+                    event_data["claimableReservesRemaining"]
+                ),
+                "currentBurnEpoch": event_data["currentBurnEpoch"],
+            }
+        case "Settle":
+            data = {
+                "borrower": event_data["borrower"],
+                "settledDebt": wad_to_decimal(event_data["settledDebt"]),
+            }
+        case "AuctionSettle":
+            data = {
+                "borrower": event_data["borrower"],
+                "collateral": wad_to_decimal(event_data["collateral"]),
+            }
+        case "Take":
+            data = {
+                "borrower": event_data["borrower"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "isReward": event_data["isReward"],
+                "bondChange": wad_to_decimal(event_data["bondChange"]),
+                "collateral": wad_to_decimal(event_data["collateral"]),
+            }
+        case "BondWithdrawn":
+            data = {
+                "kicker": event_data["kicker"],
+                "reciever": event_data["reciever"],
+                "amount": wad_to_decimal(event_data["amount"]),
+            }
+    return data
 
 
 def _get_wallet_addresses(event):

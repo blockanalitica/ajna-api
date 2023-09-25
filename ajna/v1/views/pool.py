@@ -44,20 +44,6 @@ SQL_TODAYS_VOLUME_FOR_POOL = """
 
 
 class PoolView(BaseChainView):
-    """
-    A view for retrieving information about a specific pool.
-
-    This view accepts a pool address as a parameter and returns pool data along with related
-    collateral and quote token information. It uses raw SQL to efficiently fetch the data from
-    the database.
-
-    Attributes:
-        days_ago_required (bool): Flag indicating if the `days_ago` parameter is required.
-        days_ago_default (int): Default value for the `days_ago` parameter.
-        days_ago_options (list): List of allowed values for the `days_ago` parameter.
-
-    """
-
     days_ago_required = False
     days_ago_default = 7
     days_ago_options = [1, 7, 30, 365]

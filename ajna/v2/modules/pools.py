@@ -1,10 +1,47 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
+from django.db import connection
 from web3 import Web3
 
+from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.utils import chunks, compute_order_index, datetime_to_next_full_hour
 from ajna.utils.wad import wad_to_decimal
+
+VOLUME_SQL = """
+    SELECT
+          pool_address
+        , SUM(
+            CASE
+                WHEN name = 'AddCollateral' THEN
+                    CAST(data->>'amount' AS NUMERIC) / 1e18 * collateral_token_price
+                WHEN name = 'RemoveCollateral' THEN
+                    CAST(data->>'amount' AS NUMERIC) / 1e18 * collateral_token_price
+                WHEN name = 'AddQuoteToken' THEN
+                    CAST(data->>'amount' AS NUMERIC) / 1e18 * quote_token_price
+                WHEN name = 'RemoveQuoteToken' THEN
+                    CAST(data->>'amount' AS NUMERIC) / 1e18 * quote_token_price
+                WHEN name = 'DrawDebt' THEN
+                    CAST(data->>'amountBorrowed' AS NUMERIC) / 1e18 * quote_token_price +
+                    CAST(data->>'collateralPledged' AS NUMERIC) / 1e18 * collateral_token_price
+                WHEN name = 'RepayDebt' THEN
+                    CAST(data->>'quoteRepaid' AS NUMERIC) / 1e18 * quote_token_price +
+                    CAST(data->>'collateralPulled' AS NUMERIC) / 1e18 * collateral_token_price
+            END
+          ) AS amount
+    FROM {pool_event_table}
+    WHERE block_datetime::DATE = %s
+        AND name IN (
+            'AddCollateral',
+            'RemoveCollateral',
+            'AddQuoteToken',
+            'RemoveQuoteToken',
+            'DrawDebt',
+            'RepayDebt'
+        )
+        {filters}
+    GROUP BY 1
+"""
 
 
 def fetch_new_pools(chain):
@@ -367,6 +404,21 @@ def _fetch_token_data(chain, token_address):
     }
 
 
+def _calculate_volume_for_pool_for_date(chain, pool_address, dt):
+    assert type(dt) == date
+    sql = VOLUME_SQL.format(
+        pool_event_table=chain.pool_event._meta.db_table,
+        filters="AND pool_address = %s",
+    )
+
+    sql_vars = [dt, pool_address]
+    with connection.cursor() as cursor:
+        cursor.execute(sql, sql_vars)
+        volume = fetch_one(cursor)
+
+    return volume["amount"] if volume and volume["amount"] else Decimal("0")
+
+
 def _fetch_and_save_pool_data(chain, pool_addresses):
     dt = datetime.now()
 
@@ -381,6 +433,10 @@ def _fetch_and_save_pool_data(chain, pool_addresses):
             pool_data = pools_data[address]
             # Force address to be lowercase just in case it wasn't already
             address = address.lower()
+
+            pool_data["volume_today"] = _calculate_volume_for_pool_for_date(
+                chain, address, dt.date()
+            )
 
             try:
                 pool = chain.pool.objects.get(address=address)
@@ -476,3 +532,24 @@ def fetch_and_save_pools_data(chain):
     )
 
     _fetch_and_save_pool_data(chain, pool_addresses)
+
+
+def save_all_pools_volume_for_date(chain, dt):
+    assert type(dt) == date
+    sql = VOLUME_SQL.format(
+        pool_event_table=chain.pool_event._meta.db_table, filters=""
+    )
+
+    sql_vars = [dt]
+    with connection.cursor() as cursor:
+        cursor.execute(sql, sql_vars)
+        volumes = fetch_all(cursor)
+
+    for volume in volumes:
+        chain.pool_volume_snapshot.objects.update_or_create(
+            pool_address=volume["pool_address"],
+            date=dt,
+            defaults={
+                "amount": volume["amount"],
+            },
+        )
