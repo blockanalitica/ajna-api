@@ -27,12 +27,12 @@ SCHEDULE = {
     "fetch_new_pools_task": {
         "schedule": crontab(minute="*/5"),
     },
-    "fetch_and_save_pools_data_task": {
-        "schedule": crontab(minute="*/5"),
-    },
-    "process_events_for_all_pools_task": {
-        "schedule": crontab(minute="*/5"),
-    },
+    # "fetch_and_save_pools_data_task": {
+    #     "schedule": crontab(minute="*/5"),
+    # },
+    # "process_events_for_all_pools_task": {
+    #     "schedule": crontab(minute="*/5"),
+    # },
     "save_all_pools_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
         # the snapshot
