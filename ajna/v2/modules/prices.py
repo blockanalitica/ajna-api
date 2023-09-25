@@ -100,6 +100,8 @@ def update_token_prices(models, network="ethereum"):
         addresses = []
         for a in underlying_addresses:
             addresses.append(MAPPING_TO_ETHEREUM.get(a, a))
+        if not addresses:
+            return
         prices_mapping = get_current_prices(addresses)
         for key, values in prices_mapping.items():
             _, underlying_address = key.split(":")
@@ -114,6 +116,8 @@ def update_token_prices(models, network="ethereum"):
         underlying_addresses = models.token.objects.all().values_list(
             "underlying_address", flat=True
         )
+        if not underlying_addresses:
+            return
         prices_mapping = get_current_prices(underlying_addresses)
 
         done_addresses = set()
