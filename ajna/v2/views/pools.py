@@ -448,7 +448,7 @@ class PoolHistoricView(BaseChainView):
             cursor.execute(sql, sql_vars)
             data = fetch_all(cursor)
 
-        volume = self.models.pool.objects.get(address=pool_address).volume
+        volume = self.models.pool.objects.get(address=pool_address).volume_today
 
         data.append(
             {
