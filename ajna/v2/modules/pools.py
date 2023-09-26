@@ -550,6 +550,6 @@ def save_all_pools_volume_for_date(chain, dt):
             pool_address=volume["pool_address"],
             date=dt,
             defaults={
-                "amount": volume["amount"],
+                "amount": volume["amount"] or Decimal("0"),
             },
         )

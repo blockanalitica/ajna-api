@@ -30,9 +30,9 @@ SCHEDULE = {
     "fetch_and_save_pools_data_task": {
         "schedule": crontab(minute="*/5"),
     },
-    # "process_events_for_all_pools_task": {
-    #     "schedule": crontab(minute="*/5"),
-    # },
+    "process_events_for_all_pools_task": {
+        "schedule": crontab(minute="*/5"),
+    },
     "save_all_pools_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
         # the snapshot
@@ -68,11 +68,8 @@ def fetch_and_save_events_for_all_pools_task():
 @app.task
 def process_events_for_all_pools_task():
     chain = Goerli()
-    pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
-
-    for pool_address in pool_addresses:
-        processor = EventProcessor(chain, pool_address)
-        processor.process_events()
+    processor = EventProcessor(chain)
+    processor.process_all_events()
 
 
 @app.task
