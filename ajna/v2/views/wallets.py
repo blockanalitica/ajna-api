@@ -3,7 +3,7 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 
-from ajna.utils.db import fetch_one
+from ajna.utils.db import fetch_one, fetch_all
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
 from ..modules.events import parse_event_data
@@ -120,7 +120,7 @@ class WalletView(BaseChainView):
     days_ago_default = 7
     days_ago_options = [1, 7, 30, 365]
 
-    def get(self, request, address):
+    def _get_current(self, address):
         sql = """
             SELECT
               x.address
@@ -171,6 +171,76 @@ class WalletView(BaseChainView):
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_vars)
             wallet = fetch_one(cursor)
+        return wallet
+
+    def _get_for_block(self, address, block_number):
+        sql = """
+            WITH positions AS (
+                SELECT DISTINCT ON (wp.pool_address)
+                    *
+                FROM {wallet_position_table} wp
+                WHERE wp.wallet_address = %s
+                    AND wp.block_number <= %s
+                ORDER BY wp.pool_address, wp.block_number DESC
+            )
+            
+            SELECT
+              x.address
+            , x.last_activity
+            , x.first_activity
+            , x.supply_usd
+            , x.collateral_usd
+            , x.debt_usd
+            , CASE
+                WHEN NULLIF(x.collateral_usd, 0) IS NULL
+                    OR NULLIF(x.debt_usd, 0) IS NULL
+                THEN NULL
+                ELSE
+                    CASE
+                        WHEN x.collateral_usd / x.debt_usd > 1000
+                        THEN 1000
+                        ELSE x.collateral_usd / x.debt_usd
+                    END
+              END AS health_rate
+            FROM (
+                SELECT
+                      w.address
+                    , w.last_activity
+                    , w.first_activity
+                    , SUM(wp.supply * qt.underlying_price) AS supply_usd
+                    , SUM(wp.collateral * ct.underlying_price) AS collateral_usd
+                    , SUM(wp.t0debt * p.pending_inflator * qt.underlying_price) AS debt_usd
+                FROM {wallet_table} w
+                LEFT JOIN positions AS wp
+                    ON w.address = wp.wallet_address
+                JOIN {pool_table} p
+                    ON wp.pool_address = p.address
+                JOIN {token_table} AS ct
+                    ON p.collateral_token_address = ct.underlying_address
+                JOIN {token_table} AS qt
+                    ON p.quote_token_address = qt.underlying_address
+                WHERE w.address = %s
+                GROUP BY 1,2,3
+            ) x
+        """.format(
+            wallet_table=self.models.wallet._meta.db_table,
+            wallet_position_table=self.models.wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+
+        sql_vars = [address, block_number, address]
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            wallet = fetch_one(cursor)
+        return wallet
+
+    def get(self, request, address):
+        block = request.GET.get("block")
+        if block:
+            wallet = self._get_for_block(address, block)
+        else:
+            wallet = self._get_current(address)
 
         if not wallet:
             raise Http404
@@ -236,7 +306,7 @@ class WalletPoolsView(RawSQLPaginatedChainView):
         "supply_share",
     ]
 
-    def get_raw_sql(self, address, **kwargs):
+    def _get_current(self, address):
         sql = """
             SELECT
                   x.wallet_address
@@ -302,4 +372,209 @@ class WalletPoolsView(RawSQLPaginatedChainView):
         )
 
         sql_vars = [address]
+        return sql, sql_vars
+
+
+    def _get_for_block(self, address, block):
+        sql = """
+            WITH positions AS (
+                SELECT DISTINCT ON (wp.pool_address)
+                    *
+                FROM {wallet_position_table} wp
+                WHERE wp.wallet_address = %s
+                    AND wp.block_number <= %s
+                ORDER BY wp.pool_address, wp.block_number DESC
+            )
+
+            SELECT
+                  x.wallet_address
+                , x.pool_address
+                , x.supply
+                , x.supply_usd
+                , x.collateral
+                , x.collateral_usd
+                , x.debt
+                , x.debt_usd
+                , x.collateral_token_symbol
+                , x.quote_token_symbol
+                , CASE
+                    WHEN NULLIF(x.collateral_usd, 0) IS NULL
+                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    THEN NULL
+                    ELSE
+                        CASE
+                            WHEN x.collateral_usd / x.debt_usd > 1000
+                            THEN 1000
+                            ELSE x.collateral_usd / x.debt_usd
+                        END
+                  END AS health_rate
+                , CASE
+                    WHEN NULLIF(x.pool_debt_usd, 0) IS NULL
+                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    THEN NULL
+                    ELSE x.debt_usd / x.pool_debt_usd
+                  END AS debt_share
+                , CASE
+                    WHEN NULLIF(x.supply_usd, 0) IS NULL
+                        OR NULLIF(x.pool_supply_usd, 0) IS NULL
+                    THEN NULL
+                    ELSE x.supply_usd / x.pool_supply_usd
+                  END AS supply_share
+            FROM (
+                SELECT
+                      wp.wallet_address
+                    , wp.pool_address
+                    , wp.supply
+                    , wp.supply * qt.underlying_price AS supply_usd
+                    , wp.collateral
+                    , wp.collateral * ct.underlying_price as collateral_usd
+                    , wp.t0debt * p.pending_inflator AS debt
+                    , wp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
+                    , ct.symbol AS collateral_token_symbol
+                    , qt.symbol AS quote_token_symbol
+                    , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
+                    , p.pool_size * qt.underlying_price AS pool_supply_usd
+                FROM positions wp
+                JOIN {pool_table} p
+                    ON wp.pool_address = p.address
+                JOIN {token_table} AS ct
+                    ON p.collateral_token_address = ct.underlying_address
+                JOIN {token_table} AS qt
+                    ON p.quote_token_address = qt.underlying_address
+                WHERE wp.wallet_address = %s
+            ) x
+        """.format(
+            wallet_position_table=self.models.wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+
+        sql_vars = [address, block, address]
+        return sql, sql_vars
+
+    def get_raw_sql(self, address, **kwargs):
+        block = self.request.GET.get("block")
+        if block:
+            return self._get_for_block(address, block)
+        else:
+            return self._get_current(address)
+
+
+
+class WalletPoolView(BaseChainView):
+    days_ago_required = False
+    days_ago_default = 7
+    days_ago_options = [1, 7, 30, 365]
+
+    def get(self, request, address, pool_address):
+        sql = """
+            SELECT
+                  x.wallet_address
+                , x.pool_address
+                , x.supply
+                , x.supply_usd
+                , x.collateral
+                , x.collateral_usd
+                , x.debt
+                , x.debt_usd
+                , x.collateral_token_symbol
+                , x.quote_token_symbol
+                , CASE
+                    WHEN NULLIF(x.collateral_usd, 0) IS NULL
+                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    THEN NULL
+                    ELSE
+                        CASE
+                            WHEN x.collateral_usd / x.debt_usd > 1000
+                            THEN 1000
+                            ELSE x.collateral_usd / x.debt_usd
+                        END
+                  END AS health_rate
+                , CASE
+                    WHEN NULLIF(x.pool_debt_usd, 0) IS NULL
+                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    THEN NULL
+                    ELSE x.debt_usd / x.pool_debt_usd
+                  END AS debt_share
+                , CASE
+                    WHEN NULLIF(x.supply_usd, 0) IS NULL
+                        OR NULLIF(x.pool_supply_usd, 0) IS NULL
+                    THEN NULL
+                    ELSE x.supply_usd / x.pool_supply_usd
+                  END AS supply_share
+            FROM (
+                SELECT
+                      cwp.wallet_address
+                    , cwp.pool_address
+                    , cwp.supply
+                    , cwp.supply * qt.underlying_price AS supply_usd
+                    , cwp.collateral
+                    , cwp.collateral * ct.underlying_price as collateral_usd
+                    , cwp.t0debt * p.pending_inflator AS debt
+                    , cwp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
+                    , ct.symbol AS collateral_token_symbol
+                    , qt.symbol AS quote_token_symbol
+                    , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
+                    , p.pool_size * qt.underlying_price AS pool_supply_usd
+                FROM {current_wallet_position_table} cwp
+                JOIN {pool_table} p
+                    ON cwp.pool_address = p.address
+                JOIN {token_table} AS ct
+                    ON p.collateral_token_address = ct.underlying_address
+                JOIN {token_table} AS qt
+                    ON p.quote_token_address = qt.underlying_address
+                WHERE cwp.wallet_address = %s
+                    AND cwp.pool_address = %s
+            ) x
+        """.format(
+            current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+
+        sql_vars = [address, pool_address]
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            wallet = fetch_one(cursor)
+
+        if not wallet:
+            raise Http404
+
+        return Response(wallet, status.HTTP_200_OK)
+
+
+class WalletPoolHistoricView(RawSQLPaginatedChainView):
+    default_order = "-datetime"
+    ordering_fields = ["datetime"]
+
+    def get_raw_sql(self, address, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  wp.supply
+                , wp.supply * qt.underlying_price AS supply_usd
+                , wp.collateral
+                , wp.collateral * ct.underlying_price as collateral_usd
+                , wp.t0debt * p.pending_inflator AS debt
+                , wp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
+                , wp.datetime
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+                , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
+                , p.pool_size * qt.underlying_price AS pool_supply_usd
+            FROM {wallet_position_table} wp
+            JOIN {pool_table} p
+                ON wp.pool_address = p.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            WHERE wp.wallet_address = %s
+                AND wp.pool_address = %s
+        """.format(
+            wallet_position_table=self.models.wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+
+        sql_vars = [address, pool_address]
         return sql, sql_vars

@@ -34,6 +34,7 @@ class EventProcessor:
 
             if event.wallet_addresses:
                 pool_data["wallets"].update(event.wallet_addresses)
+
             match event.name:
                 case "AddQuoteToken" | "RemoveQuoteToken":
                     pool_data["buckets"][event.data["index"]].add(
@@ -100,7 +101,7 @@ class EventProcessor:
                         pool_address=pool_address,
                         bucket_index=bucket_index,
                         bucket_price=wad_to_decimal(bucket_info[0]),
-                        exchange_rate=wad_to_decimal(bucket_info[4]),
+                        exchange_rate=wad_to_decimal(bucket_info[5]),
                         collateral=wad_to_decimal(bucket_info[2]),
                         deposit=wad_to_decimal(bucket_info[1]),
                         lpb=wad_to_decimal(bucket_info[3]),
@@ -116,9 +117,9 @@ class EventProcessor:
                     bucket_index=bucket_index,
                     defaults={
                         "bucket_price": wad_to_decimal(bucket_info[0]),
-                        "exchange_rate": wad_to_decimal(bucket_info[4]),
-                        "collateral": wad_to_decimal(bucket_info[1]),
-                        "deposit": wad_to_decimal(bucket_info[0]),
+                        "exchange_rate": wad_to_decimal(bucket_info[5]),
+                        "collateral": wad_to_decimal(bucket_info[2]),
+                        "deposit": wad_to_decimal(bucket_info[1]),
                         "lpb": wad_to_decimal(bucket_info[3]),
                     },
                 )
@@ -235,9 +236,11 @@ class EventProcessor:
                 for bucket_index, bucket_wallets in data["buckets"].items():
                     calls.append(
                         (
-                            pool_address,
+                            self._chain.pool_info_address,
                             [
-                                "bucketInfo(uint256)((uint256,uint256,uint256,uint256,uint256))",
+                                "bucketInfo(address,uint256)"
+                                "((uint256,uint256,uint256,uint256,uint256,uint256))",
+                                pool_address,
                                 bucket_index,
                             ],
                             [f"{pool_address}:{bucket_index}", None],
