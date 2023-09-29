@@ -19,11 +19,6 @@ urlpatterns = [
         name="pool-positions",
     ),
     path(
-        "pools/<pool_address>/buckets/",
-        pools.BucketsView.as_view(),
-        name="pool-buckets",
-    ),
-    path(
         "pools/<pool_address>/buckets/graph/",
         pools.BucketsGraphView.as_view(),
         name="pool-buckets-graph",
@@ -122,6 +117,16 @@ urlpatterns = [
         "wallets/<address>/pools/<pool_address>/historic/",
         wallets.WalletPoolHistoricView.as_view(),
         name="wallet-pool-historic",
+    ),
+    path(
+        "wallets/<address>/pools/<pool_address>/events/",
+        wallets.WalletPoolEventsView.as_view(),
+        name="wallet-pool-events",
+    ),
+    path(
+        "wallets/<address>/pools/<pool_address>/buckets/",
+        wallets.WalletPoolBucketsView.as_view(),
+        name="wallet-pool-buckets",
     ),
     path(
         "wallets/<address>/events/",
