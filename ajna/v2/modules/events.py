@@ -260,10 +260,9 @@ def _get_pool_info(chain, pool_address):
 
 
 def fetch_and_save_events_for_all_pools(chain):
-    # cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(
-    #     chain.unique_key
-    # )
-    cache_key = "burek{}".format(chain.unique_key)
+    cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(
+        chain.unique_key
+    )
 
     pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
 

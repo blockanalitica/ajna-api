@@ -21,9 +21,9 @@ SCHEDULE = {
     "fetch_market_price_task": {
         "schedule": crontab(minute="*/1"),
     },
-    "fetch_and_save_events_for_all_pools_task": {
-        "schedule": crontab(minute="*/2"),
-    },
+    # "fetch_and_save_events_for_all_pools_task": {
+    #     "schedule": crontab(minute="*/2"),
+    # },
     "fetch_new_pools_task": {
         "schedule": crontab(minute="*/5"),
     },
