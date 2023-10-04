@@ -207,7 +207,7 @@ def _get_pool_info(chain, pool_address):
     return POOL_INFO[pool_address]
 
 
-def _create_notification(chain, event, quote_token_price, order_index):
+def _create_notification(chain, event, quote_token_price, order_index, block_datetime):
     match event["event"]:
         case "AddQuoteToken":
             if quote_token_price:
@@ -225,6 +225,7 @@ def _create_notification(chain, event, quote_token_price, order_index):
                             "pool_address": event["address"].lower(),
                             "wallet_address": event["args"]["lender"].lower(),
                         },
+                        datetime=block_datetime,
                     )
         case "DrawDebt":
             if quote_token_price:
@@ -244,6 +245,7 @@ def _create_notification(chain, event, quote_token_price, order_index):
                             "pool_address": event["address"].lower(),
                             "wallet_address": event["args"]["borrower"].lower(),
                         },
+                        datetime=block_datetime,
                     )
 
 
@@ -310,7 +312,9 @@ def fetch_and_save_events_for_all_pools(chain):
                     chain, pool_info["collateral_token_address"], block_datetime
                 )
 
-        _create_notification(chain, event, quote_token_price, order_index)
+        _create_notification(
+            chain, event, quote_token_price, order_index, block_datetime
+        )
 
         pool_events.append(
             chain.pool_event(
