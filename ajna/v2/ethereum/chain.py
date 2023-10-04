@@ -5,7 +5,6 @@ from ajna.chain import AjnaChainMixin
 
 from . import models
 
-
 MODEL_MAP = {
     "pool": models.V2EthereumPool,
     "token": models.V2EthereumToken,

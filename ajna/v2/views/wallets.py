@@ -3,7 +3,7 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 
-from ajna.utils.db import fetch_one, fetch_all
+from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
 from ..modules.events import parse_event_data
@@ -110,6 +110,33 @@ class WalletView(BaseChainView):
 
     def _get_current(self, address):
         sql = """
+            WITH previous AS (
+                SELECT
+                      wpx.wallet_address
+                    , SUM(wpx.supply * qt.underlying_price) AS supply_usd
+                    , SUM(wpx.collateral * ct.underlying_price) AS collateral_usd
+                    , SUM(wpx.debt * qt.underlying_price) AS debt_usd
+                FROM (
+                    SELECT DISTINCT ON (wp.pool_address)
+                          wp.pool_address
+                        , wp.wallet_address
+                        , wp.supply
+                        , wp.collateral
+                        , wp.debt
+                    FROM {wallet_position_table} wp
+                    WHERE wp.wallet_address = %s
+                        AND wp.datetime <= %s
+                    ORDER BY wp.pool_address, wp.datetime DESC
+                ) wpx
+                JOIN {pool_table} p
+                    ON wpx.pool_address = p.address
+                JOIN {token_table} AS ct
+                    ON p.collateral_token_address = ct.underlying_address
+                JOIN {token_table} AS qt
+                    ON p.quote_token_address = qt.underlying_address
+                GROUP BY 1
+            )
+
             SELECT
               x.address
             , x.last_activity
@@ -128,6 +155,9 @@ class WalletView(BaseChainView):
                         ELSE x.collateral_usd / x.debt_usd
                     END
               END AS health_rate
+            , prev.supply_usd AS prev_supply_usd
+            , prev.collateral_usd AS prev_collateral_usd
+            , prev.debt_usd AS prev_debt_usd
             FROM (
                 SELECT
                       w.address
@@ -148,14 +178,17 @@ class WalletView(BaseChainView):
                 WHERE w.address = %s
                 GROUP BY 1,2,3
             ) x
+            LEFT JOIN previous AS prev
+                ON x.address = prev.wallet_address
         """.format(
             wallet_table=self.models.wallet._meta.db_table,
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
+            wallet_position_table=self.models.wallet_position._meta.db_table,
         )
 
-        sql_vars = [address]
+        sql_vars = [address, self.days_ago_dt, address]
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_vars)
             wallet = fetch_one(cursor)
@@ -171,7 +204,7 @@ class WalletView(BaseChainView):
                     AND wp.block_number <= %s
                 ORDER BY wp.pool_address, wp.block_number DESC
             )
-            
+
             SELECT
               x.address
             , x.last_activity
@@ -226,6 +259,10 @@ class WalletView(BaseChainView):
     def get(self, request, address):
         block = request.GET.get("block")
         if block:
+            try:
+                block = int(block)
+            except ValueError:
+                raise Http404
             wallet = self._get_for_block(address, block)
         else:
             wallet = self._get_current(address)
@@ -242,6 +279,7 @@ class WalletEventsView(RawSQLPaginatedChainView):
 
     def get_raw_sql(self, address, query_params, **kwargs):
         event_name = query_params.get("name")
+        block = self.request.GET.get("block")
         sql = """
             SELECT
                   pe.pool_address
@@ -275,6 +313,10 @@ class WalletEventsView(RawSQLPaginatedChainView):
             sql = "{} AND pe.name = %s".format(sql)
             sql_vars.append(event_name)
 
+        if block:
+            sql = "{} AND pe.block_number <= %s".format(sql)
+            sql_vars.append(block)
+
         return sql, sql_vars
 
     def serialize_data(self, data):
@@ -296,6 +338,19 @@ class WalletPoolsView(RawSQLPaginatedChainView):
 
     def _get_current(self, address):
         sql = """
+            WITH previous AS (
+                SELECT DISTINCT ON (wp.pool_address)
+                      wp.pool_address
+                    , wp.wallet_address
+                    , wp.supply
+                    , wp.collateral
+                    , wp.debt
+                FROM {wallet_position_table} wp
+                WHERE wp.wallet_address = %s
+                    AND wp.datetime <= %s
+                ORDER BY wp.pool_address, wp.datetime DESC
+            )
+
             SELECT
                   x.wallet_address
                 , x.pool_address
@@ -330,6 +385,14 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     THEN NULL
                     ELSE x.supply_usd / x.pool_supply_usd
                   END AS supply_share
+
+                , prev.supply AS prev_supply
+                , prev.supply * x.quote_token_price AS prev_supply_usd
+                , prev.collateral AS prev_collateral
+                , prev.collateral * x.collateral_token_price AS prev_collateral_usd
+                , prev.debt AS prev_debt
+                , prev.debt * x.quote_token_price AS prev_debt_uas
+
             FROM (
                 SELECT
                       cwp.wallet_address
@@ -344,6 +407,8 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     , qt.symbol AS quote_token_symbol
                     , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
                     , p.pool_size * qt.underlying_price AS pool_supply_usd
+                    , qt.underlying_price AS quote_token_price
+                    , ct.underlying_price AS collateral_token_price
                 FROM {current_wallet_position_table} cwp
                 JOIN {pool_table} p
                     ON cwp.pool_address = p.address
@@ -353,13 +418,17 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     ON p.quote_token_address = qt.underlying_address
                 WHERE cwp.wallet_address = %s
             ) x
+            LEFT JOIN previous AS prev
+                ON x.wallet_address = prev.wallet_address
+                    AND x.pool_address = prev.pool_address
         """.format(
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
+            wallet_position_table=self.models.wallet_position._meta.db_table,
         )
 
-        sql_vars = [address]
+        sql_vars = [address, self.days_ago_dt, address]
         return sql, sql_vars
 
     def _get_for_block(self, address, block):
