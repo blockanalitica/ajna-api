@@ -1,4 +1,5 @@
 from django.contrib.postgres.fields import ArrayField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
 
@@ -507,8 +508,11 @@ class Wallet(models.Model):
 class Notification(models.Model):
     type = models.TextField()
     key = models.TextField(unique=True)
-    data = models.JSONField()
-    activity = models.JSONField()
+    data = models.JSONField(encoder=DjangoJSONEncoder)
+    activity = models.JSONField(null=True, encoder=DjangoJSONEncoder)
+    datetime = models.DateTimeField(db_index=True)
 
     class Meta:
         abstract = True
+        get_latest_by = "datetime"
+        ordering = ("-datetime",)

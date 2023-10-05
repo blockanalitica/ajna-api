@@ -1,5 +1,6 @@
 import json
 import logging
+from decimal import Decimal
 
 from django.core.cache import cache
 from web3 import Web3
@@ -259,6 +260,48 @@ def _get_pool_info(chain, pool_address):
     return POOL_INFO[pool_address]
 
 
+def _create_notification(chain, event, quote_token_price, order_index, block_datetime):
+    match event["event"]:
+        case "AddQuoteToken":
+            if quote_token_price:
+                amount = wad_to_decimal(event["args"]["amount"])
+                amount_usd = amount * quote_token_price
+                if amount_usd >= Decimal("1000000"):
+                    chain.notification.objects.create(
+                        type=event["event"],
+                        key=order_index,
+                        data={
+                            "amount": amount,
+                            "quote_token_price": quote_token_price,
+                            "amount_usd": amount_usd,
+                            "lp_awarded": wad_to_decimal(event["args"]["lpAwarded"]),
+                            "pool_address": event["address"].lower(),
+                            "wallet_address": event["args"]["lender"].lower(),
+                        },
+                        datetime=block_datetime,
+                    )
+        case "DrawDebt":
+            if quote_token_price:
+                amount = wad_to_decimal(event["args"]["amountBorrowed"])
+                amount_usd = amount * quote_token_price
+                if amount_usd >= Decimal("1000000"):
+                    chain.notification.objects.create(
+                        type=event["event"],
+                        key=order_index,
+                        data={
+                            "amount": amount,
+                            "quote_token_price": quote_token_price,
+                            "amount_usd": amount_usd,
+                            "collateral": wad_to_decimal(
+                                event["args"]["collateralPledged"]
+                            ),
+                            "pool_address": event["address"].lower(),
+                            "wallet_address": event["args"]["borrower"].lower(),
+                        },
+                        datetime=block_datetime,
+                    )
+
+
 def fetch_and_save_events_for_all_pools(chain):
     cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(
         chain.unique_key
@@ -266,13 +309,17 @@ def fetch_and_save_events_for_all_pools(chain):
 
     pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
 
+    if not pool_addresses:
+        log.debug("No pool addresses. Skipping fetch_and_save_events_for_all_pools")
+        return
+
     from_block = cache.get(cache_key)
     if not from_block:
         # PoolCreated event is not created by this process, so we need to exclude
-        # it in oreder to get the correct last block number
+        # it in order to get the correct last block number
         last_event = (
             chain.pool_event.objects.exclude(name="PoolCreated")
-            .order_by("-block_number")
+            .order_by("-order_index")
             .first()
         )
 
@@ -282,10 +329,6 @@ def fetch_and_save_events_for_all_pools(chain):
             from_block = chain.erc20_pool_factory_start_block
 
     to_block = chain.get_latest_block()
-
-    if not pool_addresses:
-        log.debug("No pool addresses. Skipping fetch_and_save_events_for_all_pools")
-        return
 
     pool_addresses = [Web3.to_checksum_address(address) for address in pool_addresses]
     events = chain.get_events_for_contracts(
@@ -301,6 +344,7 @@ def fetch_and_save_events_for_all_pools(chain):
         block_datetime = chain.get_block_datetime(event["blockNumber"])
         collateral_token_price = None
         quote_token_price = None
+
         match event["event"]:
             case "DrawDebt" | "RepayDebt":
                 pool_info = _get_pool_info(chain, pool_address)
@@ -320,6 +364,10 @@ def fetch_and_save_events_for_all_pools(chain):
                 collateral_token_price = _get_token_price(
                     chain, pool_info["collateral_token_address"], block_datetime
                 )
+
+        _create_notification(
+            chain, event, quote_token_price, order_index, block_datetime
+        )
 
         pool_events.append(
             chain.pool_event(
