@@ -385,7 +385,7 @@ def fetch_and_save_events_for_all_pools(chain):
             )
         )
 
-        if len(pool_events) > 500:
+        if len(pool_events) > 100:
             log.debug("Saving pool events chunk")
             chain.pool_event.objects.bulk_create(pool_events, ignore_conflicts=True)
             pool_events = []
