@@ -169,13 +169,66 @@ def _get_wallet_addresses(event):
             wallet_addresses = [event["args"]["kicker"], event["args"]["reciever"]]
         case "LoanStamped":
             wallet_addresses = [event["args"]["borrower"]]
-        # case _:
-        #     print("#TODO: wallet_addresses", event["event"])
-        #     pass
+        case (
+            "UpdateInterestRate"
+            | "KickReserveAuction"
+            | "ReserveAuction"
+            | "BucketBankruptcy"
+        ):
+            # Skip these events as they don't touch any wallets
+            pass
+        case _:
+            log.error(
+                "Missing _get_wallet_addresses case for event: %s", event["event"]
+            )
 
     if wallet_addresses:
         wallet_addresses = [w.lower() for w in wallet_addresses]
     return wallet_addresses
+
+
+def _get_bucket_indexes(event):
+    bucket_indexes = None
+    match event["event"]:
+        case "AddQuoteToken":
+            bucket_indexes = [event["args"]["index"]]
+        case "RemoveQuoteToken":
+            bucket_indexes = [event["args"]["index"]]
+        case "MoveQuoteToken":
+            bucket_indexes = [event["args"]["from"], event["args"]["to"]]
+        case "AddCollateral":
+            bucket_indexes = [event["args"]["index"]]
+        case "RemoveCollateral":
+            bucket_indexes = [event["args"]["index"]]
+        case "BucketTake":
+            bucket_indexes = [event["args"]["index"]]
+        case "IncreaseLPAllowance":
+            bucket_indexes = event["args"]["indexes"]
+        case "TransferLP":
+            bucket_indexes = event["args"]["indexes"]
+        case "BucketBankruptcy":
+            bucket_indexes = [event["args"]["index"]]
+        case (
+            "DrawDebt"
+            | "RepayDebt"
+            | "UpdateInterestRate"
+            | "Kick"
+            | "AuctionSettle"
+            | "BondWithdrawn"
+            | "Take"
+            | "Settle"
+            | "LoanStamped"
+            | "KickReserveAuction"
+            | "BucketTakeLPAwarded"
+            | "ReserveAuction"
+            | "ApproveLPTransferors"
+        ):
+            # Skip these events as they don't touch any buckets
+            pass
+        case _:
+            log.error("Missing _get_bucket_indexes case for event: %s", event["event"])
+
+    return bucket_indexes
 
 
 def _get_token_price(chain, token_address, dt):
@@ -320,6 +373,7 @@ def fetch_and_save_events_for_all_pools(chain):
             chain.pool_event(
                 pool_address=pool_address,
                 wallet_addresses=_get_wallet_addresses(event),
+                bucket_indexes=_get_bucket_indexes(event),
                 block_number=event["blockNumber"],
                 block_datetime=block_datetime,
                 order_index=order_index,

@@ -221,139 +221,6 @@ class PoolView(BaseChainView):
         return Response({"results": pool_data}, status.HTTP_200_OK)
 
 
-class BucketsView(RawSQLPaginatedChainView):
-    order_nulls_last = True
-    default_order = "-bucket_price"
-    ordering_fields = [
-        "bucket_price",
-        "collateral",
-        "deposit",
-        "is_utilized",
-        "bucket_index",
-    ]
-
-    def get_raw_sql(self, pool_address, search_filters, query_params, **kwargs):
-        sql_vars = [pool_address]
-        sql = """
-                SELECT
-                      bucket.bucket_index
-                    , bucket.bucket_price
-                    , bucket.exchange_rate
-                    , bucket.pool_address
-                    , bucket.collateral
-                    , bucket.deposit
-                    , bucket.lpb
-                    , pool.lup
-                    , bucket.bucket_price >= pool.lup AS is_utilized
-                    , collateral_token.underlying_price AS collateral_token_underlying_price
-                    , collateral_token.symbol AS collateral_token_symbol
-                    , quote_token.symbol AS quote_token_symbol
-                    , quote_token.underlying_price AS quote_token_underlying_price
-                FROM {bucket_table} AS bucket
-                JOIN {pool_table} AS pool
-                    ON bucket.pool_address = pool.address
-                JOIN {token_table} AS collateral_token
-                    ON pool.collateral_token_address = collateral_token.underlying_address
-                JOIN {token_table} AS quote_token
-                    ON pool.quote_token_address = quote_token.underlying_address
-                WHERE pool_address = %s
-                    AND (collateral > 0 OR deposit > 0)
-
-        """.format(
-            bucket_table=self.models.bucket._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            token_table=self.models.token._meta.db_table,
-        )
-        return sql, sql_vars
-
-
-class BucketsGraphView(BaseChainView):
-    def get(self, request, pool_address):
-        sql_vars = [pool_address]
-        sql = """
-            SELECT
-                  bucket.bucket_index
-                , bucket.bucket_price
-                , bucket.deposit
-                , pool.debt AS total_pool_debt
-            FROM {bucket_table} AS bucket
-            JOIN {pool_table} AS pool
-                ON bucket.pool_address = pool.address
-            JOIN {token_table} AS collateral_token
-                ON pool.collateral_token_address = collateral_token.underlying_address
-            JOIN {token_table} AS quote_token
-                ON pool.quote_token_address = quote_token.underlying_address
-            WHERE bucket.pool_address = %s
-                AND bucket.deposit > 0
-                AND (bucket.bucket_price > pool.hpb - pool.hpb * 0.3
-                    OR bucket.bucket_price > pool.htp - pool.htp * 0.05)
-            ORDER BY bucket.bucket_price DESC
-        """.format(
-            bucket_table=self.models.bucket._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            token_table=self.models.token._meta.db_table,
-        )
-
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            buckets = fetch_all(cursor)
-
-        data = []
-        if not buckets:
-            return Response(data, status.HTTP_200_OK)
-
-        remaining_debt = buckets[0]["total_pool_debt"]
-        for bucket in buckets:
-            deposit = bucket["deposit"]
-
-            if remaining_debt > 0:
-                if remaining_debt >= deposit:
-                    amount = deposit
-                    remaining_debt -= deposit
-                    data.append(
-                        {
-                            "bucket_index": bucket["bucket_index"],
-                            "bucket_price": bucket["bucket_price"],
-                            "amount": amount,
-                            "type": "utilized",
-                            "deposit": bucket["deposit"],
-                        }
-                    )
-                else:
-                    amount = deposit - remaining_debt
-                    data.append(
-                        {
-                            "bucket_index": bucket["bucket_index"],
-                            "bucket_price": bucket["bucket_price"],
-                            "amount": remaining_debt,
-                            "type": "utilized",
-                            "deposit": bucket["deposit"],
-                        }
-                    )
-                    data.append(
-                        {
-                            "bucket_index": bucket["bucket_index"],
-                            "bucket_price": bucket["bucket_price"],
-                            "amount": amount,
-                            "type": "not_utilized",
-                            "deposit": bucket["deposit"],
-                        }
-                    )
-                    remaining_debt = 0
-            else:
-                data.append(
-                    {
-                        "bucket_index": bucket["bucket_index"],
-                        "bucket_price": bucket["bucket_price"],
-                        "amount": deposit,
-                        "type": "not_utilized",
-                        "deposit": bucket["deposit"],
-                    }
-                )
-
-        return Response(data, status.HTTP_200_OK)
-
-
 class PoolHistoricView(BaseChainView):
     """
     A view for retrieving historic information about a specific pool.
@@ -448,7 +315,7 @@ class PoolHistoricView(BaseChainView):
             cursor.execute(sql, sql_vars)
             data = fetch_all(cursor)
 
-        volume = self.models.pool.objects.get(address=pool_address).volume
+        volume = self.models.pool.objects.get(address=pool_address).volume_today
 
         data.append(
             {
@@ -538,7 +405,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
     default_order = "-order_index"
     ordering_fields = ["order_index"]
 
-    def get_raw_sql(self, pool_address, search_filters, query_params, **kwargs):
+    def get_raw_sql(self, pool_address, query_params, **kwargs):
         event_name = query_params.get("name")
         sql = """
             SELECT
@@ -596,6 +463,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
 
 class PoolPositionsView(RawSQLPaginatedChainView):
     order_nulls_last = True
+    search_fields = ["wallet_address"]
 
     def _get_borrower_sql(self):
         return """
@@ -628,7 +496,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                     ELSE
                         CASE
                             WHEN x.collateral_usd / x.debt_usd > 1000
-                            THEN 1000
+                            THEN 999
                             ELSE x.collateral_usd / x.debt_usd
                         END
                   END AS health_rate
@@ -638,6 +506,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                     ELSE x.debt_usd / x.pool_debt_usd
                   END AS debt_share
                 , w.last_activity
+                , w.first_activity
             FROM (
                 SELECT
                       cwp.wallet_address
@@ -694,13 +563,13 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 , prev.supply AS prev_supply
                 , prev.supply * qt.underlying_price  AS prev_supply_usd
                 , CASE
-                    WHEN NULLIF(cwp.supply * qt.underlying_price, 0) IS NULL
-                        OR NULLIF(p.pool_size * qt.underlying_price, 0) IS NULL
+                    WHEN NULLIF(cwp.supply, 0) IS NULL
+                        OR NULLIF(p.pool_size, 0) IS NULL
                     THEN NULL
-                    ELSE (cwp.supply * qt.underlying_price)
-                        / (p.pool_size * qt.underlying_price)
+                    ELSE cwp.supply / p.pool_size
                   END AS supply_share
                 , w.last_activity
+                , w.first_activity
             FROM {current_wallet_position_table} cwp
             JOIN {pool_table} p
                 ON cwp.pool_address = p.address
@@ -719,14 +588,379 @@ class PoolPositionsView(RawSQLPaginatedChainView):
             wallet_table=self.models.wallet._meta.db_table,
         )
 
-    def get_raw_sql(self, pool_address, query_params, **kwargs):
+    def get_raw_sql(self, pool_address, query_params, search_filters, **kwargs):
         wallet_type = query_params.get("type")
         if wallet_type == "depositor":
             sql = self._get_depositor_sql()
-            self.ordering_fields = ["supply"]
+            self.ordering_fields = [
+                "supply",
+                "last_activity",
+                "first_activity",
+                "supply_share",
+            ]
         else:
             sql = self._get_borrower_sql()
-            self.ordering_fields = ["debt", "collateral", "health_rate"]
+            self.ordering_fields = [
+                "debt",
+                "collateral",
+                "health_rate",
+                "debt_share",
+                "first_activity",
+                "last_activity",
+            ]
 
         sql_vars = [self.days_ago_dt, pool_address, pool_address]
+
+        filters = []
+        if search_filters:
+            search_sql, search_vars = search_filters
+
+            filter_op = "WHERE"
+            if wallet_type == "depositor":
+                filter_op = "AND"
+                search_sql = search_sql.replace("wallet_address", "cwp.wallet_address")
+
+            filters.append(search_sql)
+            sql_vars.extend(search_vars)
+
+        if filters:
+            sql += " {} {}".format(filter_op, " AND ".join(filters))
+
         return sql, sql_vars
+
+    def get_additional_data(self, data, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  pool.address
+                , collateral_token.symbol AS collateral_token_symbol
+                , quote_token.symbol AS quote_token_symbol
+            FROM {pool_table} AS pool
+            JOIN {token_table} AS collateral_token
+                ON pool.collateral_token_address = collateral_token.underlying_address
+            JOIN {token_table} AS quote_token
+                ON pool.quote_token_address = quote_token.underlying_address
+            WHERE pool.address = %s
+        """.format(
+            token_table=self.models.token._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [pool_address])
+            pool_data = fetch_one(cursor)
+
+        if not pool_data:
+            raise Http404
+
+        return pool_data
+
+
+class BucketsListView(RawSQLPaginatedChainView):
+    order_nulls_last = True
+    default_order = "-bucket_price"
+    ordering_fields = [
+        "bucket_price",
+        "collateral",
+        "deposit",
+        "is_utilized",
+        "bucket_index",
+    ]
+    search_fields = ["bucket_index::text"]
+
+    def get_raw_sql(self, pool_address, search_filters, **kwargs):
+        sql_vars = [pool_address]
+        sql = """
+            SELECT
+                  bucket.bucket_index
+                , bucket.bucket_price
+                , bucket.exchange_rate
+                , bucket.pool_address
+                , bucket.collateral
+                , bucket.deposit
+                , bucket.lpb
+                , pool.lup
+                , bucket.bucket_price >= pool.lup AS is_utilized
+                , collateral_token.underlying_price AS collateral_token_underlying_price
+                , collateral_token.symbol AS collateral_token_symbol
+                , quote_token.symbol AS quote_token_symbol
+                , quote_token.underlying_price AS quote_token_underlying_price
+            FROM {bucket_table} AS bucket
+            JOIN {pool_table} AS pool
+                ON bucket.pool_address = pool.address
+            JOIN {token_table} AS collateral_token
+                ON pool.collateral_token_address = collateral_token.underlying_address
+            JOIN {token_table} AS quote_token
+                ON pool.quote_token_address = quote_token.underlying_address
+            WHERE pool_address = %s
+                AND (collateral > 0 OR deposit > 0)
+        """.format(
+            bucket_table=self.models.bucket._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+
+        filters = []
+        if search_filters:
+            search_sql, search_vars = search_filters
+            filters.append(search_sql)
+            sql_vars.extend(search_vars)
+
+        if filters:
+            sql += " AND {}".format(" AND ".join(filters))
+        return sql, sql_vars
+
+    def get_additional_data(self, data, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  pool.address
+                , collateral_token.symbol AS collateral_token_symbol
+                , quote_token.symbol AS quote_token_symbol
+            FROM {pool_table} AS pool
+            JOIN {token_table} AS collateral_token
+                ON pool.collateral_token_address = collateral_token.underlying_address
+            JOIN {token_table} AS quote_token
+                ON pool.quote_token_address = quote_token.underlying_address
+            WHERE pool.address = %s
+        """.format(
+            token_table=self.models.token._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [pool_address])
+            pool_data = fetch_one(cursor)
+
+        if not pool_data:
+            raise Http404
+
+        return pool_data
+
+
+class BucketsGraphView(BaseChainView):
+    def get(self, request, pool_address):
+        sql_vars = [pool_address]
+        sql = """
+            SELECT
+                  bucket.bucket_index
+                , bucket.bucket_price
+                , bucket.deposit
+                , pool.debt AS total_pool_debt
+            FROM {bucket_table} AS bucket
+            JOIN {pool_table} AS pool
+                ON bucket.pool_address = pool.address
+            WHERE bucket.pool_address = %s
+                AND bucket.deposit > 0
+                AND (bucket.bucket_price > pool.hpb - pool.hpb * 0.3
+                    OR bucket.bucket_price > pool.htp - pool.htp * 0.05)
+            ORDER BY bucket.bucket_price DESC
+        """.format(
+            bucket_table=self.models.bucket._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+        )
+
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            buckets = fetch_all(cursor)
+
+        data = []
+        if not buckets:
+            return Response(data, status.HTTP_200_OK)
+
+        remaining_debt = buckets[0]["total_pool_debt"]
+        for bucket in buckets:
+            deposit = bucket["deposit"]
+            if remaining_debt > 0:
+                if remaining_debt >= deposit:
+                    amount = deposit
+                    remaining_debt -= deposit
+                    data.append(
+                        {
+                            "bucket_index": bucket["bucket_index"],
+                            "bucket_price": bucket["bucket_price"],
+                            "amount": amount,
+                            "type": "utilized",
+                            "deposit": bucket["deposit"],
+                        }
+                    )
+                else:
+                    amount = deposit - remaining_debt
+                    data.append(
+                        {
+                            "bucket_index": bucket["bucket_index"],
+                            "bucket_price": bucket["bucket_price"],
+                            "amount": remaining_debt,
+                            "type": "utilized",
+                            "deposit": bucket["deposit"],
+                        }
+                    )
+                    data.append(
+                        {
+                            "bucket_index": bucket["bucket_index"],
+                            "bucket_price": bucket["bucket_price"],
+                            "amount": amount,
+                            "type": "not_utilized",
+                            "deposit": bucket["deposit"],
+                        }
+                    )
+                    remaining_debt = 0
+            else:
+                data.append(
+                    {
+                        "bucket_index": bucket["bucket_index"],
+                        "bucket_price": bucket["bucket_price"],
+                        "amount": deposit,
+                        "type": "not_utilized",
+                        "deposit": bucket["deposit"],
+                    }
+                )
+
+        return Response(data, status.HTTP_200_OK)
+
+
+class BucketView(BaseChainView):
+    def get(self, request, pool_address, bucket_index):
+        sql = """
+            SELECT
+                  b.bucket_index
+                , b.bucket_price
+                , b.exchange_rate
+                , b.pool_address
+                , b.collateral
+                , b.deposit
+                , b.lpb
+                , pool.lup
+                , b.bucket_price >= pool.lup AS is_utilized
+                , ct.underlying_price AS collateral_token_underlying_price
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+                , qt.underlying_price AS quote_token_underlying_price
+            FROM {bucket_table} AS b
+            JOIN {pool_table} AS pool
+                ON b.pool_address = pool.address
+            JOIN {token_table} AS ct
+                ON pool.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON pool.quote_token_address = qt.underlying_address
+            WHERE b.pool_address = %s
+                AND b.bucket_index = %s
+        """.format(
+            bucket_table=self.models.bucket._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [pool_address, bucket_index])
+            data = fetch_one(cursor)
+
+        if not data:
+            raise Http404
+
+        return Response(data, status.HTTP_200_OK)
+
+
+class BucketHistoricView(BaseChainView):
+    def get(self, request, pool_address, bucket_index):
+        sql = """
+            SELECT
+                  bs.bucket_index
+                , bs.bucket_price
+                , bs.exchange_rate
+                , bs.pool_address
+                , bs.collateral
+                , bs.deposit
+                , bs.lpb
+                , bs.block_datetime
+                , ct.underlying_price AS collateral_token_underlying_price
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+                , qt.underlying_price AS quote_token_underlying_price
+            FROM {bucket_state_table} AS bs
+            JOIN {pool_table} AS pool
+                ON bs.pool_address = pool.address
+            JOIN {token_table} AS ct
+                ON pool.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON pool.quote_token_address = qt.underlying_address
+            WHERE bs.pool_address = %s
+                AND bs.bucket_index = %s
+        """.format(
+            bucket_state_table=self.models.bucket_state._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [pool_address, bucket_index])
+            data = fetch_all(cursor)
+
+        if not data:
+            raise Http404
+
+        return Response(data, status.HTTP_200_OK)
+
+
+class BucketDepositorsView(RawSQLPaginatedChainView):
+    default_order = "-deposit"
+    ordering_fields = [
+        "wallet_address",
+        "deposit",
+    ]
+
+    def get_raw_sql(self, pool_address, bucket_index, **kwargs):
+        sql_vars = [pool_address, bucket_index]
+        sql = """
+            SELECT
+                  wallet_address
+                , deposit
+            FROM (
+                SELECT DISTINCT ON (wbs.wallet_address)
+                      wbs.wallet_address
+                    , wbs.deposit
+                FROM {wallet_bucket_state_table} AS wbs
+                WHERE wbs.pool_address = %s
+                    AND wbs.bucket_index = %s
+                ORDER BY 1, wbs.block_number DESC
+            ) x
+            WHERE deposit > 0
+        """.format(
+            wallet_bucket_state_table=self.models.wallet_bucket_state._meta.db_table,
+        )
+        return sql, sql_vars
+
+
+class BucketEventsView(RawSQLPaginatedChainView):
+    default_order = "-order_index"
+    ordering_fields = ["order_index"]
+
+    def get_raw_sql(self, pool_address, bucket_index, query_params, **kwargs):
+        try:
+            bucket_index = int(bucket_index)
+        except ValueError:
+            raise Http404
+
+        event_name = query_params.get("name")
+        sql = """
+            SELECT
+                  wallet_addresses
+                , block_number
+                , block_datetime
+                , order_index
+                , transaction_hash
+                , name
+                , data
+            FROM {pool_event_table}
+            WHERE pool_address = %s
+                AND bucket_indexes @> %s
+        """.format(
+            pool_event_table=self.models.pool_event._meta.db_table
+        )
+
+        if event_name:
+            sql = "{} AND name = %s".format(sql)
+            sql_vars = [pool_address, [bucket_index], event_name]
+        else:
+            sql_vars = [pool_address, [bucket_index]]
+
+        return sql, sql_vars
+
+    def serialize_data(self, data):
+        for row in data:
+            row["data"] = parse_event_data(row)
+        return data
