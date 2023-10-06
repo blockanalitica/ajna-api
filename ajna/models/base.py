@@ -506,12 +506,14 @@ class Wallet(models.Model):
 
 class Notification(models.Model):
     type = models.TextField()
-    key = models.TextField(unique=True)
+    key = models.TextField()
     data = models.JSONField(encoder=DjangoJSONEncoder)
     activity = models.JSONField(null=True, encoder=DjangoJSONEncoder)
     datetime = models.DateTimeField(db_index=True)
+    pool_address = models.CharField(max_length=42, null=True)
 
     class Meta:
         abstract = True
         get_latest_by = "datetime"
         ordering = ("-datetime",)
+        unique_together = ("pool_address", "key")

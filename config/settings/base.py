@@ -257,6 +257,7 @@ CACHES = {
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "ajna.renderer.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
     ]
 }
 
