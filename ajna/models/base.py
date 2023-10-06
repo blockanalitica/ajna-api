@@ -368,6 +368,7 @@ class GrantProposal(models.Model):
 class PoolEvent(models.Model):
     pool_address = models.CharField(max_length=42)
     wallet_addresses = ArrayField(models.CharField(max_length=42), null=True)
+    bucket_indexes = ArrayField(models.IntegerField(), null=True)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
     order_index = models.CharField(max_length=26)

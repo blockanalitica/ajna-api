@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("ajna", "0039_alter_v2ethereumnotification_datetime_and_more"),
+        ("ajna", "0041_alter_v2ethereumnotification_key_and_more"),
     ]
 
     operations = [
