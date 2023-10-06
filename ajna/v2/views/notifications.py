@@ -1,12 +1,6 @@
-from django.db import connection
-from django.http import Http404
-from rest_framework import status
-from rest_framework.response import Response
 import json
 
-from ajna.utils.db import fetch_one
 from ajna.utils.views import RawSQLPaginatedChainView
-from ajna.v2.modules.events import parse_event_data
 
 
 class NotificationsView(RawSQLPaginatedChainView):

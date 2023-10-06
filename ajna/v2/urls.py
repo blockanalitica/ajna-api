@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import pools, search, stats, tokens, wallets, notifications
+from .views import notifications, pools, search, stats, tokens, wallets
 
 urlpatterns = [
     path(
