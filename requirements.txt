@@ -110,8 +110,9 @@ django-timezone-field==6.0
     # via django-celery-beat
 djangorestframework==3.14.0
     # via -r requirements.in
-eth-abi==4.1.0
+eth-abi==4.2.1
     # via
+    #   -r requirements.in
     #   chain-harvester
     #   eth-account
     #   web3

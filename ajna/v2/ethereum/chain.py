@@ -13,7 +13,6 @@ MODEL_MAP = {
     "price_feed": models.V2EthereumPriceFeed,
     "liqudation_auction": models.V2EthereumLiquidationAuction,
     "pool_volume_snapshot": models.V2EthereumPoolVolumeSnapshot,
-    "grant_proposal": models.V2EthereumGrantProposal,
     "pool_event": models.V2EthereumPoolEvent,
     "current_wallet_position": models.V2EthereumCurrentWalletPoolPosition,
     "wallet_position": models.V2EthereumWalletPoolPosition,
@@ -27,6 +26,9 @@ MODEL_MAP = {
     "auction_bucket_take": models.V2EthereumAuctionBucketTake,
     "auction_settle": models.V2EthereumAuctionSettle,
     "auction_auction_settle": models.V2EthereumAuctionAuctionSettle,
+    "grant_distribution_period": models.V2EthereumGrantDistributionPeriod,
+    "grant_proposal": models.V2EthereumGrantProposal,
+    "grant_event": models.V2EthereumGrantEvent,
 }
 
 
@@ -58,6 +60,8 @@ class Ethereum(AjnaChainMixin, EthereumMainnetChain):
         self.erc20_pool_abi_contract = "0x05bB4F6362B02F17C1A3F2B047A8b23368269A21"
         self.erc20_pool_factory_address = "0xe6F4d9711121e5304b30aC2Aae57E3b085ad3c4d"
         self.erc20_pool_factory_start_block = 17622995
+        self.grant_fund_address = ""  # TODO
+        self.grant_fund_start_block = 0  # TODO
 
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)

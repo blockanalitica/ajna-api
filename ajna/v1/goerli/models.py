@@ -57,10 +57,6 @@ class V1GoerliPoolVolumeSnapshot(base.PoolVolumeSnapshot):
     pass
 
 
-class V1GoerliGrantProposal(base.GrantProposal):
-    pass
-
-
 class V1GoerliPoolEvent(base.PoolEvent):
     pass
 

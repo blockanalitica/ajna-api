@@ -57,10 +57,6 @@ class V1EthereumPoolVolumeSnapshot(base.PoolVolumeSnapshot):
     pass
 
 
-class V1EthereumGrantProposal(base.GrantProposal):
-    pass
-
-
 class V1EthereumPoolEvent(base.PoolEvent):
     pass
 

@@ -13,7 +13,6 @@ MODEL_MAP = {
     "price_feed": models.V2GoerliPriceFeed,
     "liqudation_auction": models.V2GoerliLiquidationAuction,
     "pool_volume_snapshot": models.V2GoerliPoolVolumeSnapshot,
-    "grant_proposal": models.V2GoerliGrantProposal,
     "pool_event": models.V2GoerliPoolEvent,
     "current_wallet_position": models.V2GoerliCurrentWalletPoolPosition,
     "wallet_position": models.V2GoerliWalletPoolPosition,
@@ -27,6 +26,9 @@ MODEL_MAP = {
     "auction_bucket_take": models.V2GoerliAuctionBucketTake,
     "auction_settle": models.V2GoerliAuctionSettle,
     "auction_auction_settle": models.V2GoerliAuctionAuctionSettle,
+    "grant_distribution_period": models.V2GoerliGrantDistributionPeriod,
+    "grant_proposal": models.V2GoerliGrantProposal,
+    "grant_event": models.V2GoerliGrantEvent,
 }
 
 
@@ -57,6 +59,8 @@ class Goerli(AjnaChainMixin, EthereumGoerliChain):
         self.erc20_pool_abi_contract = "0x6e173d30ccd286577ed7eeedc0cd4a6caeb7a669"
         self.erc20_pool_factory_address = "0x01Da8a85A5B525D476cA2b51e44fe7087fFafaFF"
         self.erc20_pool_factory_start_block = 9289397
+        self.grant_fund_address = "0x881b4dFF6C72babA6f5eA60f34A61410c1EA1ec2"
+        self.grant_fund_start_block = 9297080
 
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)

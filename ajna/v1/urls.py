@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import auctions, grants, pool, pools, search, stats, token, tokens
+from .views import auctions, pool, pools, search, stats, token, tokens
 
 urlpatterns = [
     path(
@@ -97,16 +97,6 @@ urlpatterns = [
         "auctions/active/",
         auctions.AuctionsActiveView.as_view(),
         name="auctions-active",
-    ),
-    path(
-        "grants/funding-proposals/",
-        grants.FundingProposalsView.as_view(),
-        name="grands-funding-proposals",
-    ),
-    path(
-        "grants/finalize-proposals/",
-        grants.FinalizeProposalsView.as_view(),
-        name="grands-finalize-proposals",
     ),
     # URLS that we use internally
     path(

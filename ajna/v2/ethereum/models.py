@@ -29,10 +29,6 @@ class V2EthereumPoolVolumeSnapshot(base.PoolVolumeSnapshot):
     pass
 
 
-class V2EthereumGrantProposal(base.GrantProposal):
-    pass
-
-
 class V2EthereumPoolEvent(base.PoolEvent):
     pass
 
@@ -82,4 +78,16 @@ class V2EthereumAuctionSettle(base.AuctionSettle):
 
 
 class V2EthereumAuctionAuctionSettle(base.AuctionAuctionSettle):
+    pass
+
+
+class V2EthereumGrantDistributionPeriod(base.GrantDistributionPeriod):
+    pass
+
+
+class V2EthereumGrantProposal(base.GrantProposal):
+    pass
+
+
+class V2EthereumGrantEvent(base.GrantEvent):
     pass
