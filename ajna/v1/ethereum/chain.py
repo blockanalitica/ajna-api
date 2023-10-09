@@ -20,7 +20,6 @@ MODEL_MAP = {
     "repay_debt": models.V1EthereumRepayDebt,
     "liqudation_auction": models.V1EthereumLiquidationAuction,
     "pool_volume_snapshot": models.V1EthereumPoolVolumeSnapshot,
-    "grant_proposal": models.V1EthereumGrantProposal,
     "pool_event": models.V1EthereumPoolEvent,
     "current_wallet_position": models.V1EthereumCurrentWalletPoolPosition,
     "wallet_position": models.V1EthereumWalletPoolPosition,
