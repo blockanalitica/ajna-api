@@ -260,45 +260,45 @@ def _get_pool_info(chain, pool_address):
     return POOL_INFO[pool_address]
 
 
-def _create_notification(chain, event, quote_token_price, order_index, block_datetime):
-    match event["event"]:
+def _create_notification(chain, event):
+    match event.name:
         case "AddQuoteToken":
-            if quote_token_price:
-                amount = wad_to_decimal(event["args"]["amount"])
-                amount_usd = amount * quote_token_price
+            if event.quote_token_price:
+                amount = wad_to_decimal(event.data["amount"])
+                amount_usd = amount * event.quote_token_price
                 if amount_usd >= Decimal("1000000"):
                     chain.notification.objects.create(
-                        type=event["event"],
-                        key=order_index,
+                        type=event.name,
+                        key=event.order_index,
                         data={
                             "amount": amount,
-                            "quote_token_price": quote_token_price,
+                            "quote_token_price": event.quote_token_price,
                             "amount_usd": amount_usd,
-                            "lp_awarded": wad_to_decimal(event["args"]["lpAwarded"]),
-                            "pool_address": event["address"].lower(),
-                            "wallet_address": event["args"]["lender"].lower(),
+                            "lp_awarded": wad_to_decimal(event.data["lpAwarded"]),
+                            "wallet_address": event.data["lender"].lower(),
                         },
-                        datetime=block_datetime,
+                        datetime=event.block_datetime,
+                        pool_address=event.pool_address,
                     )
         case "DrawDebt":
-            if quote_token_price:
-                amount = wad_to_decimal(event["args"]["amountBorrowed"])
-                amount_usd = amount * quote_token_price
+            if event.quote_token_price:
+                amount = wad_to_decimal(event.data["amountBorrowed"])
+                amount_usd = amount * event.quote_token_price
                 if amount_usd >= Decimal("1000000"):
                     chain.notification.objects.create(
-                        type=event["event"],
-                        key=order_index,
+                        type=event.name,
+                        key=event.order_index,
                         data={
                             "amount": amount,
-                            "quote_token_price": quote_token_price,
+                            "quote_token_price": event.quote_token_price,
                             "amount_usd": amount_usd,
                             "collateral": wad_to_decimal(
-                                event["args"]["collateralPledged"]
+                                event.data["collateralPledged"]
                             ),
-                            "pool_address": event["address"].lower(),
-                            "wallet_address": event["args"]["borrower"].lower(),
+                            "wallet_address": event.data["borrower"].lower(),
                         },
-                        datetime=block_datetime,
+                        datetime=event.block_datetime,
+                        pool_address=event.pool_address,
                     )
 
 
@@ -365,25 +365,21 @@ def fetch_and_save_events_for_all_pools(chain):
                     chain, pool_info["collateral_token_address"], block_datetime
                 )
 
-        _create_notification(
-            chain, event, quote_token_price, order_index, block_datetime
+        pool_event = chain.pool_event(
+            pool_address=pool_address,
+            wallet_addresses=_get_wallet_addresses(event),
+            bucket_indexes=_get_bucket_indexes(event),
+            block_number=event["blockNumber"],
+            block_datetime=block_datetime,
+            order_index=order_index,
+            transaction_hash=event["transactionHash"].hex(),
+            name=event["event"],
+            data=dict(event["args"]),
+            collateral_token_price=collateral_token_price,
+            quote_token_price=quote_token_price,
         )
-
-        pool_events.append(
-            chain.pool_event(
-                pool_address=pool_address,
-                wallet_addresses=_get_wallet_addresses(event),
-                bucket_indexes=_get_bucket_indexes(event),
-                block_number=event["blockNumber"],
-                block_datetime=block_datetime,
-                order_index=order_index,
-                transaction_hash=event["transactionHash"].hex(),
-                name=event["event"],
-                data=dict(event["args"]),
-                collateral_token_price=collateral_token_price,
-                quote_token_price=quote_token_price,
-            )
-        )
+        pool_events.append(pool_event)
+        _create_notification(chain, pool_event)
 
         if len(pool_events) > 100:
             log.debug("Saving pool events chunk")

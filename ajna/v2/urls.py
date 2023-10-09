@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import pools, search, stats, tokens, wallets
+from .views import notifications, pools, search, stats, tokens, wallets
 
 urlpatterns = [
     path(
@@ -132,5 +132,10 @@ urlpatterns = [
         "wallets/<address>/events/",
         wallets.WalletEventsView.as_view(),
         name="wallet-events",
+    ),
+    path(
+        "notifications/",
+        notifications.NotificationsView.as_view(),
+        name="notifications",
     ),
 ]
