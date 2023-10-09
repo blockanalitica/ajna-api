@@ -21,6 +21,12 @@ MODEL_MAP = {
     "bucket_state": models.V2GoerliPoolBucketState,
     "wallet": models.V2GoerliWallet,
     "notification": models.V2GoerliNotification,
+    "auction": models.V2GoerliAuction,
+    "auction_kick": models.V2GoerliAuctionKick,
+    "auction_take": models.V2GoerliAuctionTake,
+    "auction_bucket_take": models.V2GoerliAuctionBucketTake,
+    "auction_settle": models.V2GoerliAuctionSettle,
+    "auction_auction_settle": models.V2GoerliAuctionAuctionSettle,
 }
 
 

@@ -21,6 +21,12 @@ MODEL_MAP = {
     "bucket_state": models.V2EthereumPoolBucketState,
     "wallet": models.V2EthereumWallet,
     "notification": models.V2EthereumNotification,
+    "auction": models.V2EthereumAuction,
+    "auction_kick": models.V2EthereumAuctionKick,
+    "auction_take": models.V2EthereumAuctionTake,
+    "auction_bucket_take": models.V2EthereumAuctionBucketTake,
+    "auction_settle": models.V2EthereumAuctionSettle,
+    "auction_auction_settle": models.V2EthereumAuctionAuctionSettle,
 }
 
 

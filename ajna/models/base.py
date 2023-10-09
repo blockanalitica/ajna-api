@@ -518,3 +518,115 @@ class Notification(models.Model):
         get_latest_by = "datetime"
         ordering = ("-datetime",)
         unique_together = ("pool_address", "key")
+
+
+class Auction(models.Model):
+    uid = models.TextField(unique=True)
+    pool_address = models.CharField(max_length=42)
+    borrower = models.CharField(max_length=42)
+    kicker = models.CharField(max_length=42, null=True)
+    collateral = models.DecimalField(max_digits=32, decimal_places=18)
+    collateral_remaining = models.DecimalField(max_digits=32, decimal_places=18)
+    debt = models.DecimalField(max_digits=32, decimal_places=18)
+    debt_remaining = models.DecimalField(max_digits=32, decimal_places=18)
+    settled = models.BooleanField(default=False)
+    settle_time = models.DateTimeField(null=True)
+    bond_factor = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    bond_size = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    neutral_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    last_take_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+
+    class Meta:
+        abstract = True
+
+
+class AuctionKick(models.Model):
+    order_index = models.CharField(max_length=26, unique=True)
+    auction_uid = models.TextField()
+    pool_address = models.CharField(max_length=42)
+    borrower = models.CharField(max_length=42)
+    kicker = models.CharField(max_length=42)
+    debt = models.DecimalField(max_digits=32, decimal_places=18)
+    collateral = models.DecimalField(max_digits=32, decimal_places=18)
+    bond = models.DecimalField(max_digits=32, decimal_places=18)
+    locked = models.DecimalField(max_digits=32, decimal_places=18)
+    kick_momp = models.DecimalField(max_digits=32, decimal_places=18)
+    starting_price = models.DecimalField(max_digits=32, decimal_places=18)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+        get_latest_by = "block_number"
+        ordering = ("-block_number",)
+
+
+class AuctionTake(models.Model):
+    order_index = models.CharField(max_length=26, unique=True)
+    auction_uid = models.TextField()
+    pool_address = models.CharField(max_length=42)
+    borrower = models.CharField(max_length=42)
+    taker = models.CharField(max_length=42)
+    amount = models.DecimalField(max_digits=32, decimal_places=18)
+    collateral = models.DecimalField(max_digits=32, decimal_places=18)
+    auction_price = models.DecimalField(max_digits=32, decimal_places=18)
+    bond_change = models.DecimalField(max_digits=32, decimal_places=18)
+    is_reward = models.BooleanField(default=False)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+        get_latest_by = "block_number"
+        ordering = ("-block_number",)
+
+
+class AuctionBucketTake(models.Model):
+    order_index = models.CharField(max_length=26, unique=True)
+    auction_uid = models.TextField()
+    pool_address = models.CharField(max_length=42)
+    borrower = models.CharField(max_length=42)
+    taker = models.CharField(max_length=42)
+    index = models.BigIntegerField()
+    amount = models.DecimalField(max_digits=32, decimal_places=18)
+    collateral = models.DecimalField(max_digits=32, decimal_places=18)
+    auction_price = models.DecimalField(max_digits=32, decimal_places=18)
+    bond_change = models.DecimalField(max_digits=32, decimal_places=18)
+    is_reward = models.BooleanField(default=False)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+        get_latest_by = "block_number"
+        ordering = ("-block_number",)
+
+
+class AuctionSettle(models.Model):
+    order_index = models.CharField(max_length=26, unique=True)
+    auction_uid = models.TextField()
+    pool_address = models.CharField(max_length=42)
+    borrower = models.CharField(max_length=42)
+    settled_debt = models.DecimalField(max_digits=32, decimal_places=18)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+        get_latest_by = "block_number"
+        ordering = ("-block_number",)
+
+
+class AuctionAuctionSettle(models.Model):
+    order_index = models.CharField(max_length=26, unique=True)
+    auction_uid = models.TextField()
+    pool_address = models.CharField(max_length=42)
+    borrower = models.CharField(max_length=42)
+    collateral = models.DecimalField(max_digits=32, decimal_places=18)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+        get_latest_by = "block_number"
+        ordering = ("-block_number",)
