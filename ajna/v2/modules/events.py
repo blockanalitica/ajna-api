@@ -7,6 +7,13 @@ from web3 import Web3
 
 from ajna.utils.utils import compute_order_index
 from ajna.utils.wad import wad_to_decimal
+from ajna.v2.modules.auctions import (
+    process_auction_settle_event,
+    process_bucket_take_event,
+    process_kick_event,
+    process_settle_event,
+    process_take_event,
+)
 
 log = logging.getLogger(__name__)
 
@@ -302,6 +309,20 @@ def _create_notification(chain, event):
                     )
 
 
+def _process_auctions(chain, event):
+    match event.name:
+        case "Kick":
+            process_kick_event(chain, event)
+        case "Take":
+            process_take_event(chain, event)
+        case "BucketTake":
+            process_bucket_take_event(chain, event)
+        case "Settle":
+            process_settle_event(chain, event)
+        case "AuctionSettle":
+            process_auction_settle_event(chain, event)
+
+
 def fetch_and_save_events_for_all_pools(chain):
     cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(
         chain.unique_key
@@ -380,6 +401,8 @@ def fetch_and_save_events_for_all_pools(chain):
         )
         pool_events.append(pool_event)
         _create_notification(chain, pool_event)
+
+        _process_auctions(chain, pool_event)
 
         if len(pool_events) > 100:
             log.debug("Saving pool events chunk")

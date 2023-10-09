@@ -59,3 +59,27 @@ class V2EthereumWallet(base.Wallet):
 
 class V2EthereumNotification(base.Notification):
     pass
+
+
+class V2EthereumAuction(base.Auction):
+    pass
+
+
+class V2EthereumAuctionKick(base.AuctionKick):
+    pass
+
+
+class V2EthereumAuctionTake(base.AuctionTake):
+    pass
+
+
+class V2EthereumAuctionBucketTake(base.AuctionBucketTake):
+    pass
+
+
+class V2EthereumAuctionSettle(base.AuctionSettle):
+    pass
+
+
+class V2EthereumAuctionAuctionSettle(base.AuctionAuctionSettle):
+    pass

@@ -59,3 +59,27 @@ class V2GoerliWallet(base.Wallet):
 
 class V2GoerliNotification(base.Notification):
     pass
+
+
+class V2GoerliAuction(base.Auction):
+    pass
+
+
+class V2GoerliAuctionKick(base.AuctionKick):
+    pass
+
+
+class V2GoerliAuctionTake(base.AuctionTake):
+    pass
+
+
+class V2GoerliAuctionBucketTake(base.AuctionBucketTake):
+    pass
+
+
+class V2GoerliAuctionSettle(base.AuctionSettle):
+    pass
+
+
+class V2GoerliAuctionAuctionSettle(base.AuctionAuctionSettle):
+    pass
