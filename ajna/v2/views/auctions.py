@@ -40,7 +40,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 ON at.pool_address = p.address
             JOIN {token_table} AS ct
                 ON p.collateral_token_address = ct.underlying_address
-           JOIN {token_table} AS qt
+            JOIN {token_table} AS qt
                 ON p.quote_token_address = qt.underlying_address
             WHERE at.settled = TRUE
                 AND at.settle_time >= %s
@@ -57,7 +57,7 @@ class AuctionsSettledGraphsView(BaseChainView):
     def _get_collateral_graph_data(self, from_ts, date_trunc):
         sql = """
             SELECT
-                DATE_TRUNC(%s, at.settle_time) AS date
+                  DATE_TRUNC(%s, at.settle_time) AS date
                 , ct.symbol AS symbol
                 , SUM(at.collateral) AS amount
                 , SUM(at.collateral * ct.underlying_price) AS amount_usd
@@ -83,7 +83,7 @@ class AuctionsSettledGraphsView(BaseChainView):
     def _get_debt_graph_data(self, from_ts, date_trunc):
         sql = """
             SELECT
-                DATE_TRUNC(%s, at.settle_time) AS date
+                  DATE_TRUNC(%s, at.settle_time) AS date
                 , qt.symbol AS symbol
                 , SUM(at.debt) AS amount
                 , SUM(at.debt * qt.underlying_price) AS amount_usd
@@ -126,7 +126,7 @@ class AuctionsSettledGraphsView(BaseChainView):
 class AuctionsSettledOverviewView(BaseChainView):
     def get(self, request):
         sql = """
-             SELECT
+            SELECT
                   SUM(at.debt * qt.underlying_price) AS debt_usd
                 , SUM(at.collateral * ct.underlying_price) AS collateral_usd
                 , COUNT(at.uid) AS count
@@ -162,7 +162,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
 
     """
 
-    default_order = "-kick_time"
+    default_order = "-collateral"
     ordering_fields = [
         "collateral",
         "debt",
@@ -191,7 +191,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
             WHERE at.settled = False
         """.format(
             token_table=self.models.token._meta.db_table,
-            auction_table=self.models.liqudation_auction._meta.db_table,
+            auction_table=self.models.auction._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
 
