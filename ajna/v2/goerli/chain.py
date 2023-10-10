@@ -11,7 +11,6 @@ MODEL_MAP = {
     "pool_snapshot": models.V2GoerliPoolSnapshot,
     "bucket": models.V2GoerliBucket,
     "price_feed": models.V2GoerliPriceFeed,
-    "liqudation_auction": models.V2GoerliLiquidationAuction,
     "pool_volume_snapshot": models.V2GoerliPoolVolumeSnapshot,
     "pool_event": models.V2GoerliPoolEvent,
     "current_wallet_position": models.V2GoerliCurrentWalletPoolPosition,

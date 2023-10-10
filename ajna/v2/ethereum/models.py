@@ -21,10 +21,6 @@ class V2EthereumPriceFeed(base.PriceFeed):
     pass
 
 
-class V2EthereumLiquidationAuction(base.LiquidationAuction):
-    pass
-
-
 class V2EthereumPoolVolumeSnapshot(base.PoolVolumeSnapshot):
     pass
 
