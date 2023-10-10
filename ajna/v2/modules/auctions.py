@@ -188,7 +188,7 @@ def process_bucket_take_event(chain, event):
     auction = chain.auction.objects.get(
         pool_address=event.pool_address, borrower=borrower, settled=False
     )
-    take = chain.auction_take.objects.create(
+    take = chain.auction_bucket_take.objects.create(
         order_index=event.order_index,
         auction_uid=auction.uid,
         pool_address=event.pool_address,
