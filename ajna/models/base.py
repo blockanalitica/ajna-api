@@ -349,22 +349,6 @@ class PoolVolumeSnapshot(models.Model):
         unique_together = ("pool_address", "date")
 
 
-class GrantProposal(models.Model):
-    uid = models.CharField(max_length=100, db_index=True, unique=True)
-    description = models.JSONField()
-    executed = models.BooleanField()
-    screening_votes_received = models.DecimalField(max_digits=32, decimal_places=18)
-    funding_votes_received = models.DecimalField(max_digits=32, decimal_places=18)
-    total_tokens_requested = models.DecimalField(max_digits=32, decimal_places=18)
-    start_block = models.BigIntegerField()
-    end_block = models.BigIntegerField(db_index=True)
-    funding_start_block_number = models.BigIntegerField()
-    finalize_start_block_number = models.BigIntegerField()
-
-    class Meta:
-        abstract = True
-
-
 class PoolEvent(models.Model):
     pool_address = models.CharField(max_length=42)
     wallet_addresses = ArrayField(models.CharField(max_length=42), null=True)
@@ -625,6 +609,73 @@ class AuctionAuctionSettle(models.Model):
     collateral = models.DecimalField(max_digits=32, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+        get_latest_by = "block_number"
+        ordering = ("-block_number",)
+
+
+class GrantDistributionPeriod(models.Model):
+    order_index = models.CharField(max_length=26, unique=True)
+    distribution_id = models.IntegerField(unique=True)
+    start_block = models.BigIntegerField()
+    end_block = models.BigIntegerField()
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+        get_latest_by = "block_number"
+        ordering = ("-block_number",)
+
+
+class GrantProposal(models.Model):
+    order_index = models.CharField(max_length=26, unique=True)
+    proposal_id = models.TextField(unique=True)
+    distribution_id = models.IntegerField()
+    proposer = models.CharField(max_length=42)
+    description = models.TextField()
+    total_tokens_requested = models.DecimalField(max_digits=32, decimal_places=18)
+    params = models.JSONField(encoder=DjangoJSONEncoder, null=True)
+    executed = models.BooleanField(default=False)
+    screening_votes_received = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    funding_votes_received = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    funding_votes_positive = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    funding_votes_negative = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    funding_start_block_number = models.BigIntegerField()
+    finalize_start_block_number = models.BigIntegerField()
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+        get_latest_by = "block_number"
+        ordering = ("-block_number",)
+
+
+class _GrantEventDataJSONEncoder(DjangoJSONEncoder):
+    def default(self, o):
+        if isinstance(o, bytes):
+            return o.hex()
+        return super().default(o)
+
+
+class GrantEvent(models.Model):
+    order_index = models.CharField(max_length=26, unique=True)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+    transaction_hash = models.CharField(max_length=66)
+    name = models.CharField(max_length=42)
+    data = models.JSONField(encoder=_GrantEventDataJSONEncoder)
 
     class Meta:
         abstract = True

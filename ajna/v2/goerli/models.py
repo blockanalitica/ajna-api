@@ -21,15 +21,7 @@ class V2GoerliPriceFeed(base.PriceFeed):
     pass
 
 
-class V2GoerliLiquidationAuction(base.LiquidationAuction):
-    pass
-
-
 class V2GoerliPoolVolumeSnapshot(base.PoolVolumeSnapshot):
-    pass
-
-
-class V2GoerliGrantProposal(base.GrantProposal):
     pass
 
 
@@ -82,4 +74,16 @@ class V2GoerliAuctionSettle(base.AuctionSettle):
 
 
 class V2GoerliAuctionAuctionSettle(base.AuctionAuctionSettle):
+    pass
+
+
+class V2GoerliGrantDistributionPeriod(base.GrantDistributionPeriod):
+    pass
+
+
+class V2GoerliGrantProposal(base.GrantProposal):
+    pass
+
+
+class V2GoerliGrantEvent(base.GrantEvent):
     pass

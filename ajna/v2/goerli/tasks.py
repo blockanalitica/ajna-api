@@ -6,6 +6,7 @@ from celery.schedules import crontab
 from ajna.celery import app
 
 from ..modules.events import fetch_and_save_events_for_all_pools
+from ..modules.grants import fetch_and_save_grant_proposals
 from ..modules.pools import (
     fetch_and_save_pools_data,
     fetch_new_pools,
@@ -33,6 +34,9 @@ SCHEDULE = {
     "process_events_for_all_pools_task": {
         "schedule": crontab(minute="*/5"),
     },
+    # "fetch_and_save_grant_proposals_task": {
+    #     "schedule": crontab(minute="*/5"),
+    # },
     "save_all_pools_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
         # the snapshot
@@ -79,3 +83,9 @@ def save_all_pools_volume_for_yesterday_task():
     chain = Goerli()
     yesterday = (datetime.now() - timedelta(days=1)).date()
     save_all_pools_volume_for_date(chain, yesterday)
+
+
+@app.task
+def fetch_and_save_grant_proposals_task():
+    chain = Goerli()
+    fetch_and_save_grant_proposals(chain)

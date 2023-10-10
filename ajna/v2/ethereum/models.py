@@ -21,15 +21,7 @@ class V2EthereumPriceFeed(base.PriceFeed):
     pass
 
 
-class V2EthereumLiquidationAuction(base.LiquidationAuction):
-    pass
-
-
 class V2EthereumPoolVolumeSnapshot(base.PoolVolumeSnapshot):
-    pass
-
-
-class V2EthereumGrantProposal(base.GrantProposal):
     pass
 
 
@@ -82,4 +74,16 @@ class V2EthereumAuctionSettle(base.AuctionSettle):
 
 
 class V2EthereumAuctionAuctionSettle(base.AuctionAuctionSettle):
+    pass
+
+
+class V2EthereumGrantDistributionPeriod(base.GrantDistributionPeriod):
+    pass
+
+
+class V2EthereumGrantProposal(base.GrantProposal):
+    pass
+
+
+class V2EthereumGrantEvent(base.GrantEvent):
     pass
