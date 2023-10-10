@@ -21,10 +21,6 @@ class V2GoerliPriceFeed(base.PriceFeed):
     pass
 
 
-class V2GoerliLiquidationAuction(base.LiquidationAuction):
-    pass
-
-
 class V2GoerliPoolVolumeSnapshot(base.PoolVolumeSnapshot):
     pass
 

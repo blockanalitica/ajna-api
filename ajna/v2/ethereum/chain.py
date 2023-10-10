@@ -11,7 +11,6 @@ MODEL_MAP = {
     "pool_snapshot": models.V2EthereumPoolSnapshot,
     "bucket": models.V2EthereumBucket,
     "price_feed": models.V2EthereumPriceFeed,
-    "liqudation_auction": models.V2EthereumLiquidationAuction,
     "pool_volume_snapshot": models.V2EthereumPoolVolumeSnapshot,
     "pool_event": models.V2EthereumPoolEvent,
     "current_wallet_position": models.V2EthereumCurrentWalletPoolPosition,
