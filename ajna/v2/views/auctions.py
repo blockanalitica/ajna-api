@@ -4,7 +4,6 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from ajna.utils.db import fetch_all, fetch_one
-from ajna.utils.utils import date_to_timestamp
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
 
