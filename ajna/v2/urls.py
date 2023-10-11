@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import notifications, pools, search, stats, tokens, wallets
+from .views import grants, notifications, pools, search, stats, tokens, wallets
 
 urlpatterns = [
     path(
@@ -137,5 +137,10 @@ urlpatterns = [
         "notifications/",
         notifications.NotificationsView.as_view(),
         name="notifications",
+    ),
+    path(
+        "grants/",
+        grants.GrantsView.as_view(),
+        name="grants",
     ),
 ]
