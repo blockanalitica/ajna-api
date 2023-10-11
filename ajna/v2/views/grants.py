@@ -36,7 +36,10 @@ class GrantsView(RawSQLPaginatedChainView):
     def serialize_data(self, data):
         for row in data:
             if row["description"]:
-                row["description"] = json.loads(row["description"])
+                try:
+                    row["description"] = json.loads(row["description"])
+                except json.decoder.JSONDecodeError:
+                    row["description"]
             if row["params"]:
                 row["params"] = json.loads(row["params"])
         return data
