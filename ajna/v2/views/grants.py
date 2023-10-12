@@ -1,3 +1,4 @@
+import contextlib
 import json
 
 from ajna.utils.views import RawSQLPaginatedChainView
@@ -36,10 +37,8 @@ class GrantsView(RawSQLPaginatedChainView):
     def serialize_data(self, data):
         for row in data:
             if row["description"]:
-                try:
+                with contextlib.suppress(json.decoder.JSONDecodeError):
                     row["description"] = json.loads(row["description"])
-                except json.decoder.JSONDecodeError:
-                    row["description"]
             if row["params"]:
                 row["params"] = json.loads(row["params"])
         return data
