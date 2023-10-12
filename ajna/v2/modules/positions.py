@@ -170,6 +170,8 @@ class EventProcessor:
                 updated_bucket_wallets.update(bucket_wallets)
 
             inflator = wad_to_decimal(results[f"{pool_address}:inflatorInfo"][0])
+            lup = wad_to_decimal(results[f"{pool_address}:pricesInfo"][4])
+
             for wallet_address in data["wallets"]:
                 data = results[f"{pool_address}:{wallet_address}"]
                 t0debt = wad_to_decimal(data[0])
@@ -193,6 +195,8 @@ class EventProcessor:
                 self._chain.wallet_position.objects.create(
                     pool_address=pool_address,
                     wallet_address=wallet_address,
+                    lup=lup,
+                    pending_inflator=inflator,
                     **wallet_data,
                 )
 
@@ -270,6 +274,20 @@ class EventProcessor:
                         ["inflatorInfo()((uint256,uint256))"],
                         [f"{pool_address}:inflatorInfo", None],
                     )
+                )
+                # Call for lup
+                calls.append(
+                    (
+                        self._chain.pool_info_address,
+                        [
+                            (
+                                "poolPricesInfo(address)("
+                                "(uint256,uint256,uint256,uint256,uint256,uint256))"
+                            ),
+                            pool_address,
+                        ],
+                        [f"{pool_address}:pricesInfo", None],
+                    ),
                 )
 
             results = self._chain.multicall(calls, block_identifier=block_number)

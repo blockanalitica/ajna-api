@@ -144,17 +144,6 @@ class WalletView(BaseChainView):
             , x.supply_usd
             , x.collateral_usd
             , x.debt_usd
-            , CASE
-                WHEN NULLIF(x.collateral_usd, 0) IS NULL
-                    OR NULLIF(x.debt_usd, 0) IS NULL
-                THEN NULL
-                ELSE
-                    CASE
-                        WHEN x.collateral_usd / x.debt_usd > 1000
-                        THEN 1000
-                        ELSE x.collateral_usd / x.debt_usd
-                    END
-              END AS health_rate
             , prev.supply_usd AS prev_supply_usd
             , prev.collateral_usd AS prev_collateral_usd
             , prev.debt_usd AS prev_debt_usd
@@ -212,17 +201,6 @@ class WalletView(BaseChainView):
             , x.supply_usd
             , x.collateral_usd
             , x.debt_usd
-            , CASE
-                WHEN NULLIF(x.collateral_usd, 0) IS NULL
-                    OR NULLIF(x.debt_usd, 0) IS NULL
-                THEN NULL
-                ELSE
-                    CASE
-                        WHEN x.collateral_usd / x.debt_usd > 1000
-                        THEN 1000
-                        ELSE x.collateral_usd / x.debt_usd
-                    END
-              END AS health_rate
             FROM (
                 SELECT
                       w.address
@@ -363,14 +341,14 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                 , x.collateral_token_symbol
                 , x.quote_token_symbol
                 , CASE
-                    WHEN NULLIF(x.collateral_usd, 0) IS NULL
-                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    WHEN NULLIF(x.collateral, 0) IS NULL
+                        OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
                     ELSE
                         CASE
-                            WHEN x.collateral_usd / x.debt_usd > 1000
+                            WHEN x.lup / (x.debt / x.collateral) > 1000
                             THEN 1000
-                            ELSE x.collateral_usd / x.debt_usd
+                            ELSE x.lup / (x.debt / x.collateral)
                         END
                   END AS health_rate
                 , CASE
@@ -385,7 +363,6 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     THEN NULL
                     ELSE x.supply_usd / x.pool_supply_usd
                   END AS supply_share
-
                 , prev.supply AS prev_supply
                 , prev.supply * x.quote_token_price AS prev_supply_usd
                 , prev.collateral AS prev_collateral
@@ -407,6 +384,7 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     , qt.symbol AS quote_token_symbol
                     , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
                     , p.pool_size * qt.underlying_price AS pool_supply_usd
+                    , p.lup
                     , qt.underlying_price AS quote_token_price
                     , ct.underlying_price AS collateral_token_price
                 FROM {current_wallet_position_table} cwp
@@ -454,14 +432,14 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                 , x.collateral_token_symbol
                 , x.quote_token_symbol
                 , CASE
-                    WHEN NULLIF(x.collateral_usd, 0) IS NULL
-                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    WHEN NULLIF(x.collateral, 0) IS NULL
+                        OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
                     ELSE
                         CASE
-                            WHEN x.collateral_usd / x.debt_usd > 1000
+                            WHEN x.lup / (x.debt / x.collateral) > 1000
                             THEN 1000
-                            ELSE x.collateral_usd / x.debt_usd
+                            ELSE x.lup / (x.debt / x.collateral)
                         END
                   END AS health_rate
                 , CASE
@@ -490,6 +468,7 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     , qt.symbol AS quote_token_symbol
                     , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
                     , p.pool_size * qt.underlying_price AS pool_supply_usd
+                    , p.lup
                 FROM positions wp
                 JOIN {pool_table} p
                     ON wp.pool_address = p.address
@@ -535,14 +514,14 @@ class WalletPoolView(BaseChainView):
                 , x.collateral_token_symbol
                 , x.quote_token_symbol
                 , CASE
-                    WHEN NULLIF(x.collateral_usd, 0) IS NULL
-                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    WHEN NULLIF(x.collateral, 0) IS NULL
+                        OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
                     ELSE
                         CASE
-                            WHEN x.collateral_usd / x.debt_usd > 1000
+                            WHEN x.lup / (x.debt / x.collateral) > 1000
                             THEN 1000
-                            ELSE x.collateral_usd / x.debt_usd
+                            ELSE x.lup / (x.debt / x.collateral)
                         END
                   END AS health_rate
                 , CASE
@@ -571,6 +550,7 @@ class WalletPoolView(BaseChainView):
                     , qt.symbol AS quote_token_symbol
                     , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
                     , p.pool_size * qt.underlying_price AS pool_supply_usd
+                    , p.lup
                 FROM {current_wallet_position_table} cwp
                 JOIN {pool_table} p
                     ON cwp.pool_address = p.address
@@ -691,3 +671,78 @@ class WalletPoolBucketsView(RawSQLPaginatedChainView):
 
         sql_vars = [address, pool_address]
         return sql, sql_vars
+
+
+class WalletsAtRiskView(RawSQLPaginatedChainView):
+    order_nulls_last = True
+    default_order = "-price_change"
+    ordering_fields = ["price_change", "debt", "collateral", "lup", "last_activity"]
+
+    def get_raw_sql(self, query_params, **kwargs):
+        try:
+            change = int(query_params.get("change"))
+        except (TypeError, ValueError):
+            change = -5
+
+        price_change = change / 100
+
+        sql = """
+            SELECT
+                  x.wallet_address
+                , x.collateral
+                , x.debt
+                , x.collateral_usd
+                , x.debt_usd
+                , x.lup
+                , x.collateral_token_symbol
+                , x.quote_token_symbol
+                , wt.last_activity
+                , CASE
+                    WHEN (1 -  x.health_rate) < 0
+                    THEN ROUND(1 -  x.health_rate, 2)
+                    ELSE 0
+                END AS price_change
+            FROM (
+                SELECT
+                      cwpt.wallet_address
+                    , cwpt.collateral
+                    , cwpt.t0debt * pt.pending_inflator AS debt
+                    , cwpt.collateral * ct.underlying_price AS collateral_usd
+                    , cwpt.t0debt * pt.pending_inflator * qt.underlying_price AS debt_usd
+                    , pt.lup
+                    , ct.symbol AS collateral_token_symbol
+                    , qt.symbol AS quote_token_symbol
+                    , CASE
+                        WHEN NULLIF(cwpt.collateral, 0) IS NULL
+                            OR NULLIF(cwpt.t0debt, 0) IS NULL
+                        THEN NULL
+                        ELSE
+                            CASE
+                                WHEN pt.lup / (
+                                    (cwpt.t0debt * pt.pending_inflator) / cwpt.collateral
+                                ) > 1000
+                                THEN 1000
+                                ELSE pt.lup / (
+                                    (cwpt.t0debt * pt.pending_inflator) / cwpt.collateral)
+                            END
+                      END AS health_rate
+                FROM {current_wallet_position_table} cwpt
+                JOIN {pool_table} pt
+                    ON cwpt.pool_address = pt.address
+                JOIN {token_table} AS ct
+                    ON pt.collateral_token_address = ct.underlying_address
+                JOIN {token_table} AS qt
+                    ON pt.quote_token_address = qt.underlying_address
+                WHERE (cwpt.t0debt > 0.0001 AND cwpt.collateral > 0.0001)
+            ) x
+            LEFT JOIN {wallet_table} wt
+                ON x.wallet_address = wt.address
+            WHERE ROUND(1 -  x.health_rate, 2) >= %s
+        """.format(
+            current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
+        )
+
+        return sql, [price_change]
