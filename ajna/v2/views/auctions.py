@@ -197,3 +197,93 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
 
         sql_vars = []
         return sql, sql_vars
+
+
+class AuctionView(BaseChainView):
+    def get(
+        self,
+        request,
+        uid,
+    ):
+        sql_vars = [uid]
+        sql = """
+            SELECT
+                  at.uid
+                , at.pool_address
+                , at.borrower
+                , at.kicker
+                , at.collateral
+                , at.collateral_remaining
+                , at.debt
+                , at.debt_remaining
+                , at.settled
+                , at.settle_time
+                , at.bond_factor
+                , at.bond_size
+                , at.neutral_price
+                , at.last_take_price
+                , ak.bond
+                , ak.locked
+                , ak.kick_momp
+                , ak.starting_price
+            FROM {auction_table} at
+            JOIN {auction_kick_table} ak
+                ON at.uid = ak.auction_uid
+            WHERE at.uid = %s
+        """.format(
+            auction_table=self.models.auction._meta.db_table,
+            auction_kick_table=self.models.auction_kick._meta.db_table,
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql, sql_vars)
+            data = fetch_all(cursor)
+
+        if not data:
+            raise Http404
+
+        return Response(data, status.HTTP_200_OK)
+
+
+class AuctionTakesView(RawSQLPaginatedChainView):
+    def get_raw_sql(self, auction_uid, **kwargs):
+        sql = """
+            SELECT
+              at.order_index
+            , at.auction_uid
+            , at.pool_address
+            , at.borrower
+            , at.taker
+            , NULL AS index
+            , at.amount
+            , at.collateral
+            , at.auction_price
+            , at.bond_change
+            , at.is_reward
+            , at.block_number
+            , at.block_datetime
+        FROM {auction_take_table} at
+        WHERE auction_uid = %s
+        UNION
+            SELECT
+              abt.order_index
+            , abt.auction_uid
+            , abt.pool_address
+            , abt.borrower
+            , abt.taker
+            , abt.index
+            , abt.amount
+            , abt.collateral
+            , abt.auction_price
+            , abt.bond_change
+            , abt.is_reward
+            , abt. block_number
+            , abt.block_datetime
+         FROM {auction_bucket_take_table} abt
+         WHERE auction_uid = %s
+        """.format(
+            auction_take_table=self.models.auction_take._meta.db_table,
+            auction_bucket_take_table=self.models.auction_bucket_take._meta.db_table,
+        )
+
+        sql_vars = [auction_uid, auction_uid]
+        return sql, sql_vars
