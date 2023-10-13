@@ -108,6 +108,11 @@ urlpatterns = [
         name="wallets",
     ),
     path(
+        "wallets/at-risk/",
+        wallets.WalletsAtRiskView.as_view(),
+        name="wallets-at-risk",
+    ),
+    path(
         "wallets/<address>/",
         wallets.WalletView.as_view(),
         name="wallet",
