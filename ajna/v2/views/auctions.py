@@ -200,11 +200,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
 
 
 class AuctionView(BaseChainView):
-    def get(
-        self,
-        request,
-        uid,
-    ):
+    def get(self, request, uid):
         sql_vars = [uid]
         sql = """
             SELECT

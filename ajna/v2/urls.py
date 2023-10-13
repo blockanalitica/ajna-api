@@ -173,13 +173,13 @@ urlpatterns = [
         name="auctions-active",
     ),
     path(
-        "auction/<uid>/",
+        "auctions/<uid>/",
         auctions.AuctionView.as_view(),
-        name="auction",
+        name="auctions",
     ),
     path(
-        "auction/take/<auction_uid>/",
+        "auctions/<auction_uid>/takes/",
         auctions.AuctionTakesView.as_view(),
-        name="auction-takes",
+        name="auctions-takes",
     ),
 ]
