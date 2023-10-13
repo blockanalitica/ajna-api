@@ -243,7 +243,7 @@ class AuctionView(BaseChainView):
 class AuctionTakesView(RawSQLPaginatedChainView):
     def get_raw_sql(self, auction_uid, **kwargs):
         sql = """
-            SELECT
+        SELECT
               at.order_index
             , at.auction_uid
             , at.pool_address
@@ -260,7 +260,7 @@ class AuctionTakesView(RawSQLPaginatedChainView):
         FROM {auction_take_table} at
         WHERE auction_uid = %s
         UNION
-            SELECT
+        SELECT
               abt.order_index
             , abt.auction_uid
             , abt.pool_address
@@ -272,7 +272,7 @@ class AuctionTakesView(RawSQLPaginatedChainView):
             , abt.auction_price
             , abt.bond_change
             , abt.is_reward
-            , abt. block_number
+            , abt.block_number
             , abt.block_datetime
          FROM {auction_bucket_take_table} abt
          WHERE auction_uid = %s
