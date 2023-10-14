@@ -1,10 +1,16 @@
 import logging
+from datetime import datetime, timedelta
+
+from django.db import connection
+
+from ajna.utils.db import fetch_all
 
 log = logging.getLogger(__name__)
 
 WALLETS_AT_RISK_SQL = """
     SELECT
           x.wallet_address
+        , x.pool_address
         , x.collateral
         , x.debt
         , x.collateral_usd
@@ -21,6 +27,7 @@ WALLETS_AT_RISK_SQL = """
     FROM (
         SELECT
               cwpt.wallet_address
+            , cwpt.pool_address
             , cwpt.collateral
             , cwpt.t0debt * pt.pending_inflator AS debt
             , cwpt.collateral * ct.underlying_price AS collateral_usd
@@ -47,3 +54,39 @@ WALLETS_AT_RISK_SQL = """
         ON x.wallet_address = wt.address
     WHERE ROUND(1 -  x.health_rate, 2) >= %s
 """
+
+
+def wallets_at_risk_notification(chain):
+    sql_vars = [0]
+    sql = WALLETS_AT_RISK_SQL.format(
+        current_wallet_position_table=chain.current_wallet_position._meta.db_table,
+        pool_table=chain.pool._meta.db_table,
+        token_table=chain.token._meta.db_table,
+        wallet_table=chain.wallet._meta.db_table,
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(sql, sql_vars)
+        data = fetch_all(cursor)
+
+    for row in data:
+        notification, created = chain.notification.objects.get_or_create(
+            key=row["wallet_address"],
+            pool_address=row["pool_address"],
+            defaults={
+                "type": "WalletAtRisk",
+                "data": row,
+                "datetime": datetime.now(),
+            },
+        )
+        if not created and datetime.now() >= notification.datetime + timedelta(days=1):
+            notification.key = "{}_{}".format(
+                notification.key, notification.datetime.timestamp()
+            )
+            notification.save()
+            chain.notification.objects.create(
+                key=row["wallet_address"],
+                pool_address=row["pool_address"],
+                type="WalletAtRisk",
+                data=row,
+                datetime=datetime.now(),
+            )

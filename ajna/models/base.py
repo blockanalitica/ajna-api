@@ -504,7 +504,7 @@ class Notification(models.Model):
         abstract = True
         get_latest_by = "datetime"
         ordering = ("-datetime",)
-        unique_together = ("pool_address", "key")
+        unique_together = ("pool_address", "key", "type")
 
 
 class Auction(models.Model):
