@@ -137,6 +137,10 @@ class PoolView(BaseChainView):
                         , ps.reserves
                         , ps.quote_token_balance
                         , ps.collateral_token_balance
+                        , ps.lend_rate
+                        , ps.borrow_rate
+                        , ps.actual_utilization
+                        , ps.target_utilization
                     FROM {pool_snapshot_table} ps
                     WHERE ps.datetime <= %s AND ps.address = %s
                     ORDER BY ps.address, ps.datetime DESC
@@ -198,6 +202,10 @@ class PoolView(BaseChainView):
                 , prev.quote_token_price as prev_quote_token_price
                 , prev.collateral_token_price as prev_collateral_token_price
                 , prev.reserves as prev_reserves
+                , prev.lend_rate as prev_lend_rate
+                , prev.borrow_rate as prev_borrow_rate
+                , prev.actual_utilization as prev_actual_utilization
+                , prev.target_utilization as prev_target_utilization
             FROM {pool_table} AS pool
             JOIN {token_table} AS collateral_token
                 ON pool.collateral_token_address = collateral_token.underlying_address
