@@ -1,3 +1,4 @@
+import hashlib
 import logging
 
 from ajna.utils.wad import wad_to_decimal
@@ -6,22 +7,29 @@ log = logging.getLogger(__name__)
 
 
 def _generate_auction_uid(pool_address, borrower, block_number):
-    return "{}_{}_{}".format(pool_address, borrower, block_number)
+    key = "{}_{}_{}".format(pool_address, borrower, block_number).encode("utf-8")
+    return hashlib.md5(key).hexdigest()
 
 
 def _create_auction(chain, pool_address, borrower, kick):
     uid = _generate_auction_uid(pool_address, borrower, kick.block_number)
+
     chain.auction.objects.get_or_create(
         uid=uid,
-        pool_address=pool_address,
-        borrower=borrower,
-        kicker=kick.kicker,
-        collateral=kick.collateral,
-        collateral_remaining=kick.collateral,
-        debt=kick.debt,
-        debt_remaining=kick.debt,
-        settled=False,
+        defaults={
+            "pool_address": pool_address,
+            "borrower": borrower,
+            "borrower_eoa": chain.get_eoa(borrower),
+            "kicker": kick.kicker,
+            "kicker_eoa": chain.get_eoa(kick.kicker),
+            "collateral": kick.collateral,
+            "collateral_remaining": kick.collateral,
+            "debt": kick.debt,
+            "debt_remaining": kick.debt,
+            "settled": False,
+        },
     )
+
     _update_auction(chain, uid, kick.block_number)
 
 

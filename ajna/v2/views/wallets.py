@@ -353,16 +353,16 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                         END
                   END AS health_rate
                 , CASE
-                    WHEN NULLIF(x.pool_debt_usd, 0) IS NULL
-                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    WHEN NULLIF(x.pool_debt, 0) IS NULL
+                        OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
-                    ELSE x.debt_usd / x.pool_debt_usd
+                    ELSE x.debt / x.pool_debt
                   END AS debt_share
                 , CASE
-                    WHEN NULLIF(x.supply_usd, 0) IS NULL
-                        OR NULLIF(x.pool_supply_usd, 0) IS NULL
+                    WHEN NULLIF(x.supply, 0) IS NULL
+                        OR NULLIF(x.pool_size, 0) IS NULL
                     THEN NULL
-                    ELSE x.supply_usd / x.pool_supply_usd
+                    ELSE x.supply / x.pool_size
                   END AS supply_share
                 , prev.supply AS prev_supply
                 , prev.supply * x.quote_token_price AS prev_supply_usd
@@ -383,9 +383,9 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     , cwp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
                     , ct.symbol AS collateral_token_symbol
                     , qt.symbol AS quote_token_symbol
-                    , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
-                    , p.pool_size * qt.underlying_price AS pool_supply_usd
+                    , p.t0debt * p.pending_inflator AS pool_debt
                     , p.lup
+                    , p.pool_size
                     , qt.underlying_price AS quote_token_price
                     , ct.underlying_price AS collateral_token_price
                 FROM {current_wallet_position_table} cwp
@@ -432,29 +432,9 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                 , x.debt_usd
                 , x.collateral_token_symbol
                 , x.quote_token_symbol
-                , CASE
-                    WHEN NULLIF(x.collateral, 0) IS NULL
-                        OR NULLIF(x.debt, 0) IS NULL
-                    THEN NULL
-                    ELSE
-                        CASE
-                            WHEN x.lup / (x.debt / x.collateral) > 1000
-                            THEN 1000
-                            ELSE x.lup / (x.debt / x.collateral)
-                        END
-                  END AS health_rate
-                , CASE
-                    WHEN NULLIF(x.pool_debt_usd, 0) IS NULL
-                        OR NULLIF(x.debt_usd, 0) IS NULL
-                    THEN NULL
-                    ELSE x.debt_usd / x.pool_debt_usd
-                  END AS debt_share
-                , CASE
-                    WHEN NULLIF(x.supply_usd, 0) IS NULL
-                        OR NULLIF(x.pool_supply_usd, 0) IS NULL
-                    THEN NULL
-                    ELSE x.supply_usd / x.pool_supply_usd
-                  END AS supply_share
+                , NULL AS health_rate
+                , NULL AS debt_share
+                , NULL AS supply_share
             FROM (
                 SELECT
                       wp.wallet_address
@@ -468,7 +448,6 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     , ct.symbol AS collateral_token_symbol
                     , qt.symbol AS quote_token_symbol
                     , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
-                    , p.pool_size * qt.underlying_price AS pool_supply_usd
                     , p.lup
                 FROM positions wp
                 JOIN {pool_table} p
@@ -526,16 +505,16 @@ class WalletPoolView(BaseChainView):
                         END
                   END AS health_rate
                 , CASE
-                    WHEN NULLIF(x.pool_debt_usd, 0) IS NULL
-                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    WHEN NULLIF(x.pool_debt, 0) IS NULL
+                        OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
-                    ELSE x.debt_usd / x.pool_debt_usd
+                    ELSE x.debt / x.pool_debt
                   END AS debt_share
                 , CASE
-                    WHEN NULLIF(x.supply_usd, 0) IS NULL
-                        OR NULLIF(x.pool_supply_usd, 0) IS NULL
+                    WHEN NULLIF(x.supply, 0) IS NULL
+                        OR NULLIF(x.pool_size, 0) IS NULL
                     THEN NULL
-                    ELSE x.supply_usd / x.pool_supply_usd
+                    ELSE x.supply / x.pool_size
                   END AS supply_share
             FROM (
                 SELECT
@@ -549,9 +528,9 @@ class WalletPoolView(BaseChainView):
                     , cwp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
                     , ct.symbol AS collateral_token_symbol
                     , qt.symbol AS quote_token_symbol
-                    , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
-                    , p.pool_size * qt.underlying_price AS pool_supply_usd
+                    , p.t0debt * p.pending_inflator AS pool_debt
                     , p.lup
+                    , p.pool_size
                 FROM {current_wallet_position_table} cwp
                 JOIN {pool_table} p
                     ON cwp.pool_address = p.address

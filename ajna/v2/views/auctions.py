@@ -1,3 +1,5 @@
+import json
+
 from django.db import connection
 from django.http import Http404
 from rest_framework import status
@@ -6,13 +8,10 @@ from rest_framework.response import Response
 from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
+from ..modules.at_risk import WALLETS_AT_RISK_SQL
+
 
 class AuctionsSettledView(RawSQLPaginatedChainView):
-    """
-    A view that returns a paginated list of settled auctions.
-
-    """
-
     default_order = "-settle_time"
     ordering_fields = [
         "collateral",
@@ -30,6 +29,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.debt
                 , at.collateral
                 , at.borrower
+                , at.borrower_eoa
                 , at.debt * qt.underlying_price AS debt_usd
                 , at.collateral * ct.underlying_price AS collateral_usd
                 , at.pool_address
@@ -157,11 +157,6 @@ class AuctionsSettledOverviewView(BaseChainView):
 
 
 class AuctionsActiveView(RawSQLPaginatedChainView):
-    """
-    A view that returns a paginated list of settled auctions.
-
-    """
-
     default_order = "-collateral"
     ordering_fields = [
         "collateral",
@@ -179,9 +174,14 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 , at.collateral
                 , at.collateral_remaining
                 , at.borrower
+                , at.borrower_eoa
                 , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS debt_token_symbol
+                , qt.symbol AS quote_token_symbol
+                , ak.block_datetime AS kick_time
+                , p.lup
             FROM {auction_table} at
+            JOIN {auction_kick_table} ak
+                ON at.uid = ak.auction_uid
             JOIN {pool_table} p
                 ON at.pool_address = p.address
             JOIN {token_table} AS ct
@@ -193,6 +193,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             auction_table=self.models.auction._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
+            auction_kick_table=self.models.auction_kick._meta.db_table,
         )
 
         sql_vars = []
@@ -207,6 +208,7 @@ class AuctionView(BaseChainView):
                   at.uid
                 , at.pool_address
                 , at.borrower
+                , at.borrower_eoa
                 , at.kicker
                 , at.collateral
                 , at.collateral_remaining
@@ -222,17 +224,28 @@ class AuctionView(BaseChainView):
                 , ak.locked
                 , ak.kick_momp
                 , ak.starting_price
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+                , p.lup
             FROM {auction_table} at
             JOIN {auction_kick_table} ak
                 ON at.uid = ak.auction_uid
+            JOIN {pool_table} p
+                ON at.pool_address = p.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
             WHERE at.uid = %s
         """.format(
             auction_table=self.models.auction._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
         )
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+            data = fetch_one(cursor)
 
         if not data:
             raise Http404
@@ -240,46 +253,123 @@ class AuctionView(BaseChainView):
         return Response(data, status.HTTP_200_OK)
 
 
-class AuctionTakesView(RawSQLPaginatedChainView):
+class AuctionEventsView(RawSQLPaginatedChainView):
+    default_order = "-order_index"
+
     def get_raw_sql(self, auction_uid, **kwargs):
         sql = """
-        SELECT
-              at.order_index
-            , at.auction_uid
-            , at.pool_address
-            , at.borrower
-            , at.taker
-            , NULL AS index
-            , at.amount
-            , at.collateral
-            , at.auction_price
-            , at.bond_change
-            , at.is_reward
-            , at.block_number
-            , at.block_datetime
-        FROM {auction_take_table} at
-        WHERE auction_uid = %s
-        UNION
-        SELECT
-              abt.order_index
-            , abt.auction_uid
-            , abt.pool_address
-            , abt.borrower
-            , abt.taker
-            , abt.index
-            , abt.amount
-            , abt.collateral
-            , abt.auction_price
-            , abt.bond_change
-            , abt.is_reward
-            , abt.block_number
-            , abt.block_datetime
-         FROM {auction_bucket_take_table} abt
-         WHERE auction_uid = %s
+            SELECT
+                  at.order_index
+                , 'Take' AS event
+                , at.auction_uid
+                , at.pool_address
+                , at.block_number
+                , at.block_datetime
+                , jsonb_build_object(
+                    'taker', at.taker,
+                    'amount', at.amount::text,
+                    'collateral', at.collateral::text,
+                    'auction_price', at.auction_price::text,
+                    'bond_change', at.bond_change::text,
+                    'is_reward', at.is_reward
+                ) AS data
+            FROM {auction_take_table} at
+            WHERE at.auction_uid = %s
+
+            UNION
+
+            SELECT
+                  abt.order_index
+                , 'Bucket Take' AS event
+                , abt.auction_uid
+                , abt.pool_address
+                , abt.block_number
+                , abt.block_datetime
+                , jsonb_build_object(
+                    'taker', abt.taker,
+                    'index', abt.index,
+                    'amount', abt.amount::text,
+                    'collateral', abt.collateral::text,
+                    'auction_price', abt.auction_price::text,
+                    'bond_change', abt.bond_change::text,
+                    'is_reward', abt.is_reward
+                ) AS data
+            FROM {auction_bucket_take_table} abt
+            WHERE abt.auction_uid = %s
+
+            UNION
+
+            SELECT
+                  akt.order_index
+                , 'Kick' AS event
+                , akt.auction_uid
+                , akt.pool_address
+                , akt.block_number
+                , akt.block_datetime
+                , jsonb_build_object(
+                    'kicker', akt.kicker,
+                    'debt', akt.debt::text,
+                    'collateral', akt.collateral::text,
+                    'bond', akt.bond::text
+                ) AS data
+            FROM {auction_kick_table} akt
+            WHERE akt.auction_uid = %s
+
+            UNION
+
+            SELECT
+                  ast.order_index
+                , 'Settle' AS event
+                , ast.auction_uid
+                , ast.pool_address
+                , ast.block_number
+                , ast.block_datetime
+                , jsonb_build_object(
+                    'settled_debt', ast.settled_debt::text
+                ) AS data
+            FROM {auction_settle_table} ast
+            WHERE ast.auction_uid = %s
+
+            UNION
+
+            SELECT
+                  aast.order_index
+                , 'Auction Settle' AS event
+                , aast.auction_uid
+                , aast.pool_address
+                , aast.block_number
+                , aast.block_datetime
+                , jsonb_build_object(
+                    'collateral', aast.collateral::text
+                ) AS data
+            FROM {auction_auction_settle_table} aast
+            WHERE aast.auction_uid = %s
         """.format(
             auction_take_table=self.models.auction_take._meta.db_table,
             auction_bucket_take_table=self.models.auction_bucket_take._meta.db_table,
+            auction_kick_table=self.models.auction_kick._meta.db_table,
+            auction_settle_table=self.models.auction_settle._meta.db_table,
+            auction_auction_settle_table=self.models.auction_auction_settle._meta.db_table,
         )
 
-        sql_vars = [auction_uid, auction_uid]
+        sql_vars = [auction_uid] * 5
+        return sql, sql_vars
+
+    def serialize_data(self, data):
+        for row in data:
+            row["data"] = json.loads(row["data"])
+        return data
+
+
+class AuctionsToKickView(RawSQLPaginatedChainView):
+    default_order = "-debt"
+
+    def get_raw_sql(self, **kwargs):
+        sql = WALLETS_AT_RISK_SQL.format(
+            current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
+        )
+        sql_vars = [0]
         return sql, sql_vars
