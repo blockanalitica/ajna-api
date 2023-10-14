@@ -30,7 +30,6 @@ GRANTS_SQL = """
 # Cache for 3 minutes so that we don't need to call the chain on every single request
 @method_decorator(cache_page(60 * 3), name="dispatch")
 class GrantsView(RawSQLPaginatedChainView):
-
     def _funding_proposals(self):
         current_block = self.chain.get_latest_block()
         sql = """

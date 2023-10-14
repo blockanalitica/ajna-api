@@ -490,14 +490,14 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 , x.prev_collateral_usd
                 , x.prev_debt_usd
                 , CASE
-                    WHEN NULLIF(x.collateral_usd, 0) IS NULL
-                        OR NULLIF(x.debt_usd, 0) IS NULL
+                    WHEN NULLIF(x.collateral, 0) IS NULL
+                        OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
                     ELSE
                         CASE
-                            WHEN x.collateral_usd / x.debt_usd > 1000
-                            THEN 999
-                            ELSE x.collateral_usd / x.debt_usd
+                            WHEN x.lup / (x.debt / x.collateral) > 1000
+                            THEN 1000
+                            ELSE x.lup / (x.debt / x.collateral)
                         END
                   END AS health_rate
                 , CASE
@@ -517,7 +517,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                     , ct.symbol AS collateral_token_symbol
                     , qt.symbol AS quote_token_symbol
                     , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
-
+                    , p.lup
                     , prev.collateral AS prev_collateral
                     , prev.t0debt * p.pending_inflator AS prev_debt
                     , prev.collateral * ct.underlying_price AS prev_collateral_usd
