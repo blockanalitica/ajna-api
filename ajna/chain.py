@@ -11,19 +11,26 @@ BLOCK_DATETIMES = {}
 
 class AjnaChainMixin:
     def get_eoa(self, contract_address):
-        abi = [
-            {
-                "inputs": [],
-                "name": "owner",
-                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-                "stateMutability": "view",
-                "type": "function",
-            },
-        ]
-        contract = self.eth.contract(
-            address=Web3.to_checksum_address(contract_address), abi=abi
-        )
-        return contract.caller.owner()
+        address = Web3.to_checksum_address(contract_address)
+        code = self.eth.get_code(address).hex()
+        if len(code) > 2:
+            abi = [
+                {
+                    "inputs": [],
+                    "name": "owner",
+                    "outputs": [
+                        {"internalType": "address", "name": "", "type": "address"}
+                    ],
+                    "stateMutability": "view",
+                    "type": "function",
+                },
+            ]
+            contract = self.eth.contract(
+                address=Web3.to_checksum_address(contract_address), abi=abi
+            )
+            address = contract.caller.owner()
+
+        return address.lower()
 
     def get_abi_from_source(self, contract_address):
         # TODO: currently we don't filter by erc721 pools/tokens!

@@ -178,13 +178,18 @@ urlpatterns = [
         name="auctions-active",
     ),
     path(
+        "auctions/to-kick/",
+        auctions.AuctionsToKickView.as_view(),
+        name="auctions-to-kick",
+    ),
+    path(
         "auctions/<uid>/",
         auctions.AuctionView.as_view(),
         name="auction",
     ),
     path(
-        "auctions/<auction_uid>/takes/",
-        auctions.AuctionTakesView.as_view(),
-        name="auction-takes",
+        "auctions/<auction_uid>/events/",
+        auctions.AuctionEventsView.as_view(),
+        name="auction-events",
     ),
 ]
