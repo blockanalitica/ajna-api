@@ -1,9 +1,5 @@
-from datetime import datetime
-
 from django.core.management.base import BaseCommand
 
-from ajna.v2.ethereum.models import V2EthereumWallet
-from ajna.v2.goerli.models import V2GoerliPriceFeed
 from ajna.v2.ethereum.chain import Ethereum
 from ajna.v2.goerli.chain import Goerli
 
