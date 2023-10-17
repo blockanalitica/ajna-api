@@ -307,6 +307,43 @@ def _create_notification(chain, event):
                         datetime=event.block_datetime,
                         pool_address=event.pool_address,
                     )
+        case "AddCollateral":
+            chain.notification.objects.create(
+                type=event.name,
+                key=event.order_index,
+                data={
+                    "actor": event.data["actor"],
+                    "index": event.data["index"],
+                    "amount": wad_to_decimal(event.data["amount"]),
+                    "lpAwarded": wad_to_decimal(event.data["lpAwarded"]),
+                },
+                datetime=event.block_datetime,
+                pool_address=event.pool_address,
+            )
+        case "Kick":
+            chain.notification.objects.create(
+                type=event.name,
+                key=event.order_index,
+                data={
+                    "bond": wad_to_decimal(event.data["bond"]),
+                    "debt": wad_to_decimal(event.data["debt"]),
+                    "borrower": event.data["borrower"],
+                    "collateral": wad_to_decimal(event.data["collateral"]),
+                },
+                datetime=event.block_datetime,
+                pool_address=event.pool_address,
+            )
+        case "AuctionSettle":
+            chain.notification.objects.create(
+                type=event.name,
+                key=event.order_index,
+                data={
+                    "borrower": event.data["borrower"],
+                    "collateral": wad_to_decimal(event.data["collateral"]),
+                },
+                datetime=event.block_datetime,
+                pool_address=event.pool_address,
+            )
 
 
 def _process_auctions(chain, event):
