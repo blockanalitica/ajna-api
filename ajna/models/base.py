@@ -487,6 +487,7 @@ class Wallet(models.Model):
     address = models.CharField(max_length=42, unique=True)
     first_activity = models.DateTimeField(null=True)
     last_activity = models.DateTimeField(null=True)
+    eoa = models.CharField(max_length=42, null=True)
 
     class Meta:
         abstract = True
