@@ -19,9 +19,7 @@ def _create_auction(chain, pool_address, borrower, kick):
         defaults={
             "pool_address": pool_address,
             "borrower": borrower,
-            "borrower_eoa": chain.get_eoa(borrower),
             "kicker": kick.kicker,
-            "kicker_eoa": chain.get_eoa(kick.kicker),
             "collateral": kick.collateral,
             "collateral_remaining": kick.collateral,
             "debt": kick.debt,

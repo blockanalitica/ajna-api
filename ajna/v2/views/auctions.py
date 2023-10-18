@@ -29,7 +29,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.debt
                 , at.collateral
                 , at.borrower
-                , at.borrower_eoa
+                , w.eoa AS borrower_eoa
                 , at.debt * qt.underlying_price AS debt_usd
                 , at.collateral * ct.underlying_price AS collateral_usd
                 , at.pool_address
@@ -38,6 +38,8 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
             FROM {auction_table} at
             JOIN {pool_table} p
                 ON at.pool_address = p.address
+            LEFT JOIN {wallet_table} w
+                on at.borrower = w.address
             JOIN {token_table} AS ct
                 ON p.collateral_token_address = ct.underlying_address
             JOIN {token_table} AS qt
@@ -48,6 +50,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             auction_table=self.models.auction._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
         )
         sql_vars = [self.days_ago_dt]
         return sql, sql_vars
@@ -174,7 +177,8 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 , at.collateral
                 , at.collateral_remaining
                 , at.borrower
-                , at.borrower_eoa
+                , w.eoa AS borrower_eoa
+                , w.address
                 , ct.symbol AS collateral_token_symbol
                 , qt.symbol AS quote_token_symbol
                 , ak.block_datetime AS kick_time
@@ -184,6 +188,8 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 ON at.uid = ak.auction_uid
             JOIN {pool_table} p
                 ON at.pool_address = p.address
+            LEFT JOIN {wallet_table} w
+                on at.borrower = w.address
             JOIN {token_table} AS ct
                 ON p.collateral_token_address = ct.underlying_address
             JOIN {token_table} AS qt
@@ -194,6 +200,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
             auction_table=self.models.auction._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
         )
 
         sql_vars = []
@@ -208,7 +215,7 @@ class AuctionView(BaseChainView):
                   at.uid
                 , at.pool_address
                 , at.borrower
-                , at.borrower_eoa
+                , w.eoa AS borrower_eoa
                 , at.kicker
                 , at.collateral
                 , at.collateral_remaining
@@ -228,6 +235,8 @@ class AuctionView(BaseChainView):
                 , qt.symbol AS quote_token_symbol
                 , p.lup
             FROM {auction_table} at
+            LEFT JOIN {wallet_table} w
+                on at.borrower = w.address
             JOIN {auction_kick_table} ak
                 ON at.uid = ak.auction_uid
             JOIN {pool_table} p
@@ -242,6 +251,7 @@ class AuctionView(BaseChainView):
             auction_kick_table=self.models.auction_kick._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
         )
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_vars)
