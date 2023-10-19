@@ -422,6 +422,14 @@ def fetch_and_save_events_for_all_pools(chain):
                 collateral_token_price = _get_token_price(
                     chain, pool_info["collateral_token_address"], block_datetime
                 )
+            case "Kick" | "Take" | "BucketTake" | "Settle" | "AuctionSettle":
+                pool_info = _get_pool_info(chain, pool_address)
+                collateral_token_price = _get_token_price(
+                    chain, pool_info["collateral_token_address"], block_datetime
+                )
+                quote_token_price = _get_token_price(
+                    chain, pool_info["quote_token_address"], block_datetime
+                )
 
         pool_event = chain.pool_event(
             pool_address=pool_address,
