@@ -542,6 +542,10 @@ class AuctionKick(models.Model):
     starting_price = models.DecimalField(max_digits=32, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    collateral_token_price = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
         abstract = True
@@ -562,6 +566,10 @@ class AuctionTake(models.Model):
     is_reward = models.BooleanField(default=False)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    collateral_token_price = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
         abstract = True
@@ -583,6 +591,10 @@ class AuctionBucketTake(models.Model):
     is_reward = models.BooleanField(default=False)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    collateral_token_price = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
         abstract = True
@@ -598,6 +610,10 @@ class AuctionSettle(models.Model):
     settled_debt = models.DecimalField(max_digits=32, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    collateral_token_price = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
         abstract = True
@@ -613,6 +629,10 @@ class AuctionAuctionSettle(models.Model):
     collateral = models.DecimalField(max_digits=32, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    collateral_token_price = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
         abstract = True
