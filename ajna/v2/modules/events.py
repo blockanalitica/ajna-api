@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.core.cache import cache
 from web3 import Web3
 
+from ajna.constants import ERC721
 from ajna.utils.utils import compute_order_index
 from ajna.utils.wad import wad_to_decimal
 from ajna.v2.modules.auctions import (
@@ -24,30 +25,20 @@ POOL_INFO = {}
 def parse_event_data(event):
     data = None
 
-    event_data = None
-    if event["data"]:
+    event_data = event["data"]
+    if event_data and not isinstance(event_data, dict):
         event_data = json.loads(event["data"])
 
     match event["name"]:
-        case "UpdateInterestRate":
+        case "AddCollateral":
             data = {
-                "newRate": wad_to_decimal(event_data["newRate"]),
-                "oldRate": wad_to_decimal(event_data["oldRate"]),
+                "index": event_data["index"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "actor": event_data["actor"],
+                "lpAwarded": wad_to_decimal(event_data["lpAwarded"]),
             }
-        case "DrawDebt":
-            data = {
-                "lup": wad_to_decimal(event_data["lup"]),
-                "amountBorrowed": wad_to_decimal(event_data["amountBorrowed"]),
-                "borrower": event_data["borrower"],
-                "collateralPledged": wad_to_decimal(event_data["collateralPledged"]),
-            }
-        case "RepayDebt":
-            data = {
-                "lup": wad_to_decimal(event_data["lup"]),
-                "quoteRepaid": wad_to_decimal(event_data["quoteRepaid"]),
-                "borrower": event_data["borrower"],
-                "collateralPulled": wad_to_decimal(event_data["collateralPulled"]),
-            }
+        case "AddCollateralNFT":
+            pass  # TODO
         case "AddQuoteToken":
             data = {
                 "lup": wad_to_decimal(event_data["lup"]),
@@ -56,38 +47,50 @@ def parse_event_data(event):
                 "lender": event_data["lender"],
                 "lpAwarded": wad_to_decimal(event_data["lpAwarded"]),
             }
-        case "RemoveQuoteToken":
+        case "ApproveLPTransferors":
+            pass  # TODO
+        case "AuctionNFTSettle":
+            data = {
+                "borrower": event_data["borrower"],
+                "collateral": wad_to_decimal(event_data["collateral"]),
+            }
+        case "AuctionSettle":
+            data = {
+                "borrower": event_data["borrower"],
+                "collateral": wad_to_decimal(event_data["collateral"]),
+            }
+        case "BondWithdrawn":
+            data = {
+                "kicker": event_data["kicker"],
+                "reciever": event_data["reciever"],
+                "amount": wad_to_decimal(event_data["amount"]),
+            }
+        case "BucketBankruptcy":
+            pass  # TODO
+        case "BucketTake":
+            pass  # TODO
+        case "BucketTakeLPAwarded":
+            pass  # TODO
+        case "DecreaseLPAllowance":
+            pass  # TODO
+        case "DrawDebt":
             data = {
                 "lup": wad_to_decimal(event_data["lup"]),
-                "index": event_data["index"],
-                "amount": wad_to_decimal(event_data["amount"]),
-                "lender": event_data["lender"],
-                "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),
+                "amountBorrowed": wad_to_decimal(event_data["amountBorrowed"]),
+                "borrower": event_data["borrower"],
+                "collateralPledged": wad_to_decimal(event_data["collateralPledged"]),
             }
-        case "MoveQuoteToken":
+        case "DrawDebtNFT":
             data = {
                 "lup": wad_to_decimal(event_data["lup"]),
-                "to": event_data["to"],
-                "from": event_data["from"],
-                "amount": wad_to_decimal(event_data["amount"]),
-                "lender": event_data["lender"],
-                "lpAwardedTo": wad_to_decimal(event_data["lpAwardedTo"]),
-                "lpRedeemedFrom": wad_to_decimal(event_data["lpRedeemedFrom"]),
+                "amountBorrowed": wad_to_decimal(event_data["amountBorrowed"]),
+                "borrower": event_data["borrower"],
+                "tokenIdsPledged": event_data["tokenIdsPledged"],
             }
-        case "AddCollateral":
-            data = {
-                "index": event_data["index"],
-                "amount": wad_to_decimal(event_data["amount"]),
-                "actor": event_data["actor"],
-                "lpAwarded": wad_to_decimal(event_data["lpAwarded"]),
-            }
-        case "RemoveCollateral":
-            data = {
-                "index": event_data["index"],
-                "amount": wad_to_decimal(event_data["amount"]),
-                "claimer": event_data["claimer"],
-                "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),
-            }
+        case "Flashloan":
+            pass  # TODO
+        case "IncreaseLPAllowance":
+            pass  # TODO
         case "Kick":
             data = {
                 "bond": wad_to_decimal(event_data["bond"]),
@@ -103,16 +106,56 @@ def parse_event_data(event):
                 ),
                 "currentBurnEpoch": event_data["currentBurnEpoch"],
             }
+        case "LoanStamped":
+            pass  # TODO
+        case "MergeOrRemoveCollateralNFT":
+            pass  # TODO
+        case "MoveQuoteToken":
+            data = {
+                "lup": wad_to_decimal(event_data["lup"]),
+                "to": event_data["to"],
+                "from": event_data["from"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "lender": event_data["lender"],
+                "lpAwardedTo": wad_to_decimal(event_data["lpAwardedTo"]),
+                "lpRedeemedFrom": wad_to_decimal(event_data["lpRedeemedFrom"]),
+            }
+        case "RemoveCollateral":
+            data = {
+                "index": event_data["index"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "claimer": event_data["claimer"],
+                "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),
+            }
+        case "RemoveQuoteToken":
+            data = {
+                "lup": wad_to_decimal(event_data["lup"]),
+                "index": event_data["index"],
+                "amount": wad_to_decimal(event_data["amount"]),
+                "lender": event_data["lender"],
+                "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),
+            }
+        case "RepayDebt":
+            data = {
+                "lup": wad_to_decimal(event_data["lup"]),
+                "quoteRepaid": wad_to_decimal(event_data["quoteRepaid"]),
+                "borrower": event_data["borrower"],
+                "collateralPulled": wad_to_decimal(event_data["collateralPulled"]),
+            }
+        case "ReserveAuction":
+            pass  # TODO
+        case "ResetInterestRate":
+            pass  # TODO
+        case "RevokeLPAllowance":
+            pass  # TODO
+        case "RevokeLPTransferors":
+            pass  # TODO
         case "Settle":
             data = {
                 "borrower": event_data["borrower"],
                 "settledDebt": wad_to_decimal(event_data["settledDebt"]),
             }
-        case "AuctionSettle":
-            data = {
-                "borrower": event_data["borrower"],
-                "collateral": wad_to_decimal(event_data["collateral"]),
-            }
+
         case "Take":
             data = {
                 "borrower": event_data["borrower"],
@@ -121,11 +164,12 @@ def parse_event_data(event):
                 "bondChange": wad_to_decimal(event_data["bondChange"]),
                 "collateral": wad_to_decimal(event_data["collateral"]),
             }
-        case "BondWithdrawn":
+        case "TransferLP":
+            pass  # TODO
+        case "UpdateInterestRate":
             data = {
-                "kicker": event_data["kicker"],
-                "reciever": event_data["reciever"],
-                "amount": wad_to_decimal(event_data["amount"]),
+                "newRate": wad_to_decimal(event_data["newRate"]),
+                "oldRate": wad_to_decimal(event_data["oldRate"]),
             }
     return data
 
@@ -145,6 +189,8 @@ def _get_wallet_addresses(event):
             wallet_addresses = [event["args"]["lender"]]
         case "AddCollateral":
             wallet_addresses = [event["args"]["actor"]]
+        case "AddCollateralNFT":
+            wallet_addresses = [event["args"]["actor"]]
         case "RemoveCollateral":
             wallet_addresses = [event["args"]["claimer"]]
         case "Kick":
@@ -154,6 +200,8 @@ def _get_wallet_addresses(event):
         case "Settle":
             wallet_addresses = [event["args"]["borrower"]]
         case "AuctionSettle":
+            wallet_addresses = [event["args"]["borrower"]]
+        case "AuctionNFTSettle":
             wallet_addresses = [event["args"]["borrower"]]
         case "Take":
             wallet_addresses = [event["args"]["borrower"]]
@@ -176,6 +224,10 @@ def _get_wallet_addresses(event):
             wallet_addresses = [event["args"]["kicker"], event["args"]["reciever"]]
         case "LoanStamped":
             wallet_addresses = [event["args"]["borrower"]]
+        case "DrawDebtNFT":
+            wallet_addresses = [event["args"]["borrower"]]
+        case "MergeOrRemoveCollateralNFT":
+            wallet_addresses = [event["args"]["actor"]]
         case (
             "UpdateInterestRate"
             | "KickReserveAuction"
@@ -186,7 +238,13 @@ def _get_wallet_addresses(event):
             pass
         case _:
             log.error(
-                "Missing _get_wallet_addresses case for event: %s", event["event"]
+                "Missing _get_wallet_addresses case for event: %s",
+                event["event"],
+                extra={
+                    "event": event["event"],
+                    "pool": event["address"],
+                    "block": event["blockNumber"],
+                },
             )
 
     if wallet_addresses:
@@ -204,6 +262,8 @@ def _get_bucket_indexes(event):
         case "MoveQuoteToken":
             bucket_indexes = [event["args"]["from"], event["args"]["to"]]
         case "AddCollateral":
+            bucket_indexes = [event["args"]["index"]]
+        case "AddCollateralNFT":
             bucket_indexes = [event["args"]["index"]]
         case "RemoveCollateral":
             bucket_indexes = [event["args"]["index"]]
@@ -229,11 +289,22 @@ def _get_bucket_indexes(event):
             | "BucketTakeLPAwarded"
             | "ReserveAuction"
             | "ApproveLPTransferors"
+            | "DrawDebtNFT"
+            | "AuctionNFTSettle"
+            | "MergeOrRemoveCollateralNFT"
         ):
             # Skip these events as they don't touch any buckets
             pass
         case _:
-            log.error("Missing _get_bucket_indexes case for event: %s", event["event"])
+            log.error(
+                "Missing _get_bucket_indexes case for event: %s",
+                event["event"],
+                extra={
+                    "event": event["event"],
+                    "pool": event["address"],
+                    "block": event["blockNumber"],
+                },
+            )
 
     return bucket_indexes
 
@@ -328,7 +399,10 @@ def fetch_and_save_events_for_all_pools(chain):
         chain.unique_key
     )
 
-    pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
+    # pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
+    pool_addresses = list(
+        chain.pool.objects.filter(erc=ERC721).values_list("address", flat=True)
+    )
 
     if not pool_addresses:
         log.debug("No pool addresses. Skipping fetch_and_save_events_for_all_pools")
@@ -347,7 +421,15 @@ def fetch_and_save_events_for_all_pools(chain):
         if last_event:
             from_block = last_event.block_number + 1
         else:
-            from_block = chain.erc20_pool_factory_start_block
+            from_block = min(
+                chain.erc20_pool_factory_start_block,
+                chain.erc721_pool_factory_start_block,
+            )
+
+    from_block = min(
+        chain.erc20_pool_factory_start_block,
+        chain.erc721_pool_factory_start_block,
+    )
 
     to_block = chain.get_latest_block()
 

@@ -2,8 +2,11 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
+from ajna.constants import ERC_CHOICES
+
 
 class PoolBase(models.Model):
+    erc = models.CharField(max_length=10, choices=ERC_CHOICES, null=True)
     pool_size = models.DecimalField(max_digits=32, decimal_places=18)
     debt = models.DecimalField(max_digits=32, decimal_places=18)
     t0debt = models.DecimalField(max_digits=32, decimal_places=18, null=True)
@@ -41,9 +44,6 @@ class PoolBase(models.Model):
     total_bond_escrowed = models.DecimalField(
         max_digits=32, decimal_places=18, null=True
     )
-
-    datetime = models.DateTimeField(db_index=True)
-
     quote_token_balance = models.DecimalField(
         max_digits=32, decimal_places=18, null=True
     )
@@ -53,6 +53,8 @@ class PoolBase(models.Model):
     collateral_token_address = models.CharField(max_length=42, db_index=True, null=True)
     quote_token_address = models.CharField(max_length=42, db_index=True, null=True)
     volume_today = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    allowed_token_ids = ArrayField(models.TextField(), null=True)
+    datetime = models.DateTimeField(db_index=True)
 
     class Meta:
         abstract = True
@@ -91,11 +93,15 @@ class Token(models.Model):
     symbol = models.CharField(max_length=64, db_index=True)
     name = models.CharField(max_length=255)
     decimals = models.BigIntegerField()
-    is_erc721 = models.BooleanField()
     underlying_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     pool_count = models.BigIntegerField(null=True)
     total_supply = models.BigIntegerField(null=True)
     tx_count = models.BigIntegerField(null=True)
+
+    is_erc721 = models.BooleanField(  # TODO: this field should become obsolete
+        null=True
+    )
+    erc = models.CharField(max_length=10, choices=ERC_CHOICES, null=True)
 
     def __str__(self):
         return self.symbol
