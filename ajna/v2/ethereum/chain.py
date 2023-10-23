@@ -59,6 +59,9 @@ class Ethereum(AjnaChainMixin, EthereumMainnetChain):
         self.erc20_pool_abi_contract = "0x05bB4F6362B02F17C1A3F2B047A8b23368269A21"
         self.erc20_pool_factory_address = "0xe6F4d9711121e5304b30aC2Aae57E3b085ad3c4d"
         self.erc20_pool_factory_start_block = 17622995
+        self.erc721_pool_abi_contract = "0xe19b31c00c01ab38ea279e93ac66ca773d314c91"
+        self.erc721_pool_factory_address = "0xb8DA113516bfb986B7b8738a76C136D1c16c5609"
+        self.erc721_pool_factory_start_block = 17622995
         self.grant_fund_address = ""  # TODO
         self.grant_fund_start_block = 0  # TODO
 
