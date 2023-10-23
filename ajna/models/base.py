@@ -384,6 +384,7 @@ class CurrentWalletPoolPosition(models.Model):
     collateral = models.DecimalField(max_digits=32, decimal_places=18)
     t0debt = models.DecimalField(max_digits=32, decimal_places=18)
     debt = models.DecimalField(max_digits=32, decimal_places=18)
+    in_liquidation = models.BooleanField(default=False)
 
     datetime = models.DateTimeField()
     block_number = models.BigIntegerField(db_index=True)
@@ -407,6 +408,7 @@ class WalletPoolPosition(models.Model):
     collateral = models.DecimalField(max_digits=32, decimal_places=18)
     t0debt = models.DecimalField(max_digits=32, decimal_places=18)
     debt = models.DecimalField(max_digits=32, decimal_places=18)
+    in_liquidation = models.BooleanField(default=False)
 
     pending_inflator = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     lup = models.DecimalField(max_digits=32, decimal_places=18, null=True)

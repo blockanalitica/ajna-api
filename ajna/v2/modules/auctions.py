@@ -92,6 +92,12 @@ def _update_kick_locked_amount(chain, auction_uid, is_reward, locked_change):
 def process_kick_event(chain, event):
     borrower = event.data["borrower"].lower()
     bond = wad_to_decimal(event.data["bond"])
+    cwp = chain.current_wallet_position.objects.get(
+        pool_address=event.pool_address, wallet_address=borrower, in_liquidation=False
+    )
+    wp = chain.wallet_position.objects.get(
+        pool_address=event.pool_address, wallet_address=borrower, in_liquidation=False
+    )
 
     # get kicker from transaction
     transaction_info = chain.eth.get_transaction(event.transaction_hash)
@@ -144,6 +150,10 @@ def process_kick_event(chain, event):
         collateral_token_price=event.collateral_token_price,
         quote_token_price=event.quote_token_price,
     )
+    cwp.in_liquidation = True
+    cwp.save()
+    wp.in_liquidation = cwp.in_liquidation
+    wp.save()
 
     _create_auction(chain, event.pool_address, borrower, kick)
 
@@ -244,6 +254,12 @@ def process_settle_event(chain, event):
 def process_auction_settle_event(chain, event):
     borrower = event.data["borrower"].lower()
 
+    cwp = chain.current_wallet_position.objects.get(
+        pool_address=event.pool_address, wallet_address=borrower, in_liquidation=True
+    )
+    wp = chain.wallet_position.objects.get(
+        pool_address=event.pool_address, wallet_address=borrower, in_liquidation=False
+    )
     auction = chain.auction.objects.get(
         pool_address=event.pool_address, borrower=borrower, settled=False
     )
@@ -261,3 +277,7 @@ def process_auction_settle_event(chain, event):
     auction.settled = True
     auction.settle_time = event.block_datetime
     auction.save()
+    cwp.in_liquidation = False
+    cwp.save()
+    wp.in_liquidation = cwp.in_liquidation
+    wp.save()
