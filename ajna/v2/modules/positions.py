@@ -180,9 +180,6 @@ class EventProcessor:
                 supply = self._fetch_supply_for_wallet(
                     pool_address, updated_bucket_wallets, wallet_address, block_number
                 )
-                current_position = self._chain.current_wallet_position.objects.get(
-                    pool_address=pool_address, wallet_address=wallet_address
-                )
 
                 debt = round(t0debt * inflator)
 
@@ -195,19 +192,22 @@ class EventProcessor:
                     "datetime": self._block_datetimes[block_number],
                 }
 
+                (
+                    current_position,
+                    _,
+                ) = self._chain.current_wallet_position.objects.update_or_create(
+                    wallet_address=wallet_address,
+                    pool_address=pool_address,
+                    defaults=wallet_data,
+                )
+
                 self._chain.wallet_position.objects.create(
                     pool_address=pool_address,
                     wallet_address=wallet_address,
                     lup=lup,
                     pending_inflator=inflator,
+                    in_liquidation=current_position.in_liquidation,
                     **wallet_data,
-                    in_liquidation=current_position,
-                )
-
-                self._chain.current_wallet_position.objects.update_or_create(
-                    wallet_address=wallet_address,
-                    pool_address=pool_address,
-                    defaults=wallet_data,
                 )
 
                 try:
