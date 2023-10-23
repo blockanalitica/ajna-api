@@ -49,7 +49,7 @@ class EventProcessor:
                         event.wallet_addresses[0]
                     )
 
-                case "AddCollateral" | "RemoveCollateral":
+                case "AddCollateral" | "RemoveCollateral" | "AddCollateralNFT":
                     pool_data["buckets"][event.data["index"]].add(
                         event.wallet_addresses[0]
                     )
