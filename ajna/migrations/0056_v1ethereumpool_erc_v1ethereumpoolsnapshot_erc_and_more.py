@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("ajna", "0051_v2ethereumauction_borrower_eoa_and_more"),
+        ("ajna", "0055_v2ethereumauctionauctionsettle_collateral_token_price_and_more"),
     ]
 
     operations = [

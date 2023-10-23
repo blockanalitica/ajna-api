@@ -19,9 +19,7 @@ def _create_auction(chain, pool_address, borrower, kick):
         defaults={
             "pool_address": pool_address,
             "borrower": borrower,
-            "borrower_eoa": chain.get_eoa(borrower),
             "kicker": kick.kicker,
-            "kicker_eoa": chain.get_eoa(kick.kicker),
             "collateral": kick.collateral,
             "collateral_remaining": kick.collateral,
             "debt": kick.debt,
@@ -143,6 +141,8 @@ def process_kick_event(chain, event):
         kicker=kicker,
         kick_momp=kick_momp,
         starting_price=starting_price,
+        collateral_token_price=event.collateral_token_price,
+        quote_token_price=event.quote_token_price,
     )
 
     _create_auction(chain, event.pool_address, borrower, kick)
@@ -174,6 +174,8 @@ def process_take_event(chain, event):
         is_reward=event.data["isReward"],
         block_number=event.block_number,
         block_datetime=event.block_datetime,
+        collateral_token_price=event.collateral_token_price,
+        quote_token_price=event.quote_token_price,
     )
 
     _update_auction(
@@ -209,6 +211,8 @@ def process_bucket_take_event(chain, event):
         is_reward=event.data["isReward"],
         block_number=event.block_number,
         block_datetime=event.block_datetime,
+        collateral_token_price=event.collateral_token_price,
+        quote_token_price=event.quote_token_price,
     )
 
     _update_auction(
@@ -230,6 +234,8 @@ def process_settle_event(chain, event):
         settled_debt=wad_to_decimal(event.data["settledDebt"]),
         block_number=event.block_number,
         block_datetime=event.block_datetime,
+        collateral_token_price=event.collateral_token_price,
+        quote_token_price=event.quote_token_price,
     )
 
     _update_auction(chain, auction.uid, event.block_number)
@@ -248,6 +254,8 @@ def process_auction_settle_event(chain, event):
         collateral=wad_to_decimal(event.data["collateral"]),
         block_number=event.block_number,
         block_datetime=event.block_datetime,
+        collateral_token_price=event.collateral_token_price,
+        quote_token_price=event.quote_token_price,
     )
 
     auction.settled = True

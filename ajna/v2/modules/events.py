@@ -378,6 +378,43 @@ def _create_notification(chain, event):
                         datetime=event.block_datetime,
                         pool_address=event.pool_address,
                     )
+        case "AddCollateral":
+            chain.notification.objects.create(
+                type=event.name,
+                key=event.order_index,
+                data={
+                    "actor": event.data["actor"],
+                    "index": event.data["index"],
+                    "amount": wad_to_decimal(event.data["amount"]),
+                    "lpAwarded": wad_to_decimal(event.data["lpAwarded"]),
+                },
+                datetime=event.block_datetime,
+                pool_address=event.pool_address,
+            )
+        case "Kick":
+            chain.notification.objects.create(
+                type=event.name,
+                key=event.order_index,
+                data={
+                    "bond": wad_to_decimal(event.data["bond"]),
+                    "debt": wad_to_decimal(event.data["debt"]),
+                    "borrower": event.data["borrower"],
+                    "collateral": wad_to_decimal(event.data["collateral"]),
+                },
+                datetime=event.block_datetime,
+                pool_address=event.pool_address,
+            )
+        case "AuctionSettle":
+            chain.notification.objects.create(
+                type=event.name,
+                key=event.order_index,
+                data={
+                    "borrower": event.data["borrower"],
+                    "collateral": wad_to_decimal(event.data["collateral"]),
+                },
+                datetime=event.block_datetime,
+                pool_address=event.pool_address,
+            )
 
 
 def _process_auctions(chain, event):
@@ -466,6 +503,14 @@ def fetch_and_save_events_for_all_pools(chain):
                 pool_info = _get_pool_info(chain, pool_address)
                 collateral_token_price = _get_token_price(
                     chain, pool_info["collateral_token_address"], block_datetime
+                )
+            case "Kick" | "Take" | "BucketTake" | "Settle" | "AuctionSettle":
+                pool_info = _get_pool_info(chain, pool_address)
+                collateral_token_price = _get_token_price(
+                    chain, pool_info["collateral_token_address"], block_datetime
+                )
+                quote_token_price = _get_token_price(
+                    chain, pool_info["quote_token_address"], block_datetime
                 )
 
         pool_event = chain.pool_event(

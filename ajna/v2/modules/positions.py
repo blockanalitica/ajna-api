@@ -213,6 +213,7 @@ class EventProcessor:
                         address=wallet_address,
                         first_activity=self._block_datetimes[block_number],
                         last_activity=self._block_datetimes[block_number],
+                        eoa=self._chain.get_eoa(wallet_address),
                     )
                 else:
                     wallet.last_activity = self._block_datetimes[block_number]
