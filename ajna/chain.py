@@ -3,6 +3,8 @@ from datetime import datetime
 
 from web3 import Web3
 
+from ajna.constants import ERC20
+
 log = logging.getLogger(__name__)
 
 
@@ -33,10 +35,15 @@ class AjnaChainMixin:
         return address.lower()
 
     def get_abi_from_source(self, contract_address):
-        # TODO: currently we don't filter by erc721 pools/tokens!
-        erc20_pools = self.pool.objects.all().values_list("address", flat=True)
-        if contract_address in list(erc20_pools):
-            contract_address = self.erc20_pool_abi_contract
+        try:
+            pool = self.pool.objects.get(address=contract_address.lower())
+        except self.pool.DoesNotExist:
+            pass
+        else:
+            if pool.erc == ERC20:
+                contract_address = self.erc20_pool_abi_contract
+            else:
+                contract_address = self.erc721_pool_abi_contract
 
         return super().get_abi_from_source(contract_address)
 

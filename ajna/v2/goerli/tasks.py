@@ -8,8 +8,8 @@ from ajna.celery import app
 from ..modules.events import fetch_and_save_events_for_all_pools
 from ..modules.grants import fetch_and_save_grant_proposals
 from ..modules.pools import (
-    fetch_and_save_pools_data,
-    fetch_new_pools,
+    PoolERC20Manager,
+    PoolERC721Manager,
     save_all_pools_volume_for_date,
 )
 from ..modules.positions import EventProcessor
@@ -25,10 +25,16 @@ SCHEDULE = {
     "fetch_and_save_events_for_all_pools_task": {
         "schedule": crontab(minute="*/2"),
     },
-    "fetch_new_pools_task": {
+    "fetch_erc20_pool_created_events_task": {
         "schedule": crontab(minute="*/5"),
     },
-    "fetch_and_save_pools_data_task": {
+    "fetch_erc721_pool_created_events_task": {
+        "schedule": crontab(minute="*/5"),
+    },
+    "fetch_erc20_pools_data_task": {
+        "schedule": crontab(minute="*/5"),
+    },
+    "fetch_erc721_pools_data_task": {
         "schedule": crontab(minute="*/5"),
     },
     "process_events_for_all_pools_task": {
@@ -52,15 +58,31 @@ def fetch_market_price_task():
 
 
 @app.task
-def fetch_new_pools_task():
+def fetch_erc20_pool_created_events_task():
     chain = Goerli()
-    fetch_new_pools(chain)
+    erc20_manager = PoolERC20Manager(chain)
+    erc20_manager.fetch_and_save_pool_created_events()
 
 
 @app.task
-def fetch_and_save_pools_data_task():
+def fetch_erc721_pool_created_events_task():
     chain = Goerli()
-    fetch_and_save_pools_data(chain)
+    erc20_manager = PoolERC721Manager(chain)
+    erc20_manager.fetch_and_save_pool_created_events()
+
+
+@app.task
+def fetch_erc20_pools_data_task():
+    chain = Goerli()
+    erc20_manager = PoolERC20Manager(chain)
+    erc20_manager.fetch_and_save_pools_data()
+
+
+@app.task
+def fetch_erc721_pools_data_task():
+    chain = Goerli()
+    erc20_manager = PoolERC721Manager(chain)
+    erc20_manager.fetch_and_save_pools_data()
 
 
 @app.task
