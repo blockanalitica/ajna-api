@@ -40,6 +40,8 @@ POOLS_SQL = """
         , pool.borrow_rate
         , pool.lend_rate
         , pool.total_ajna_burned
+        , pool.erc
+        , pool.allowed_token_ids
         , collateral_token.symbol AS collateral_token_symbol
         , collateral_token.name AS collateral_token_name
         , quote_token.symbol AS quote_token_symbol
@@ -177,6 +179,8 @@ class PoolView(BaseChainView):
                 , pool.actual_utilization
                 , pool.target_utilization
                 , pool.quote_token_balance
+                , pool.erc
+                , pool.allowed_token_ids
                 , pool.quote_token_balance * quote_token.underlying_price AS quote_token_balance_usd
                 , collateral_token.symbol AS collateral_token_symbol
                 , collateral_token.name AS collateral_token_name
