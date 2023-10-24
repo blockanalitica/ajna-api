@@ -76,6 +76,13 @@ class EventProcessor:
                             event.wallet_addresses
                         )
 
+                case "BucketBankruptcy":
+                    bucket_index = event.data["index"]
+                    if bucket_index not in pool_data["buckets"]:
+                        # Add bucket index to the buckets without any wallets so that
+                        # we update the bucket itself
+                        pool_data["buckets"][bucket_index] = []
+
     def _save_buckets(self, block_number, to_update, results):
         for pool_address, data in to_update.items():
             for bucket_index, wallet_addresses in data["buckets"].items():
