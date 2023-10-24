@@ -192,18 +192,22 @@ class EventProcessor:
                     "datetime": self._block_datetimes[block_number],
                 }
 
+                (
+                    current_position,
+                    _,
+                ) = self._chain.current_wallet_position.objects.update_or_create(
+                    wallet_address=wallet_address,
+                    pool_address=pool_address,
+                    defaults=wallet_data,
+                )
+
                 self._chain.wallet_position.objects.create(
                     pool_address=pool_address,
                     wallet_address=wallet_address,
                     lup=lup,
                     pending_inflator=inflator,
+                    in_liquidation=current_position.in_liquidation,
                     **wallet_data,
-                )
-
-                self._chain.current_wallet_position.objects.update_or_create(
-                    wallet_address=wallet_address,
-                    pool_address=pool_address,
-                    defaults=wallet_data,
                 )
 
                 try:

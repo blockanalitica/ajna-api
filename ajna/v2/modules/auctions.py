@@ -92,6 +92,9 @@ def _update_kick_locked_amount(chain, auction_uid, is_reward, locked_change):
 def process_kick_event(chain, event):
     borrower = event.data["borrower"].lower()
     bond = wad_to_decimal(event.data["bond"])
+    current_position = chain.current_wallet_position.objects.get(
+        pool_address=event.pool_address, wallet_address=borrower
+    )
 
     # get kicker from transaction
     transaction_info = chain.eth.get_transaction(event.transaction_hash)
@@ -144,7 +147,8 @@ def process_kick_event(chain, event):
         collateral_token_price=event.collateral_token_price,
         quote_token_price=event.quote_token_price,
     )
-
+    current_position.in_liquidation = True
+    current_position.save()
     _create_auction(chain, event.pool_address, borrower, kick)
 
 
@@ -244,6 +248,9 @@ def process_settle_event(chain, event):
 def process_auction_settle_event(chain, event):
     borrower = event.data["borrower"].lower()
 
+    current_position = chain.current_wallet_position.objects.get(
+        pool_address=event.pool_address, wallet_address=borrower, in_liquidation=True
+    )
     auction = chain.auction.objects.get(
         pool_address=event.pool_address, borrower=borrower, settled=False
     )
@@ -261,3 +268,5 @@ def process_auction_settle_event(chain, event):
     auction.settled = True
     auction.settle_time = event.block_datetime
     auction.save()
+    current_position.in_liquidation = False
+    current_position.save()
