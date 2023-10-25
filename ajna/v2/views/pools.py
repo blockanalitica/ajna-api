@@ -978,3 +978,159 @@ class BucketEventsView(RawSQLPaginatedChainView):
         for row in data:
             row["data"] = parse_event_data(row)
         return data
+
+
+class AuctionsSettledView(RawSQLPaginatedChainView):
+    default_order = "-settle_time"
+    ordering_fields = [
+        "collateral",
+        "debt",
+        "settle_time",
+    ]
+    days_ago_required = True
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  at.uid
+                , at.settle_time
+                , at.neutral_price
+                , at.debt
+                , at.collateral
+                , at.borrower
+                , w.eoa AS borrower_eoa
+                , at.debt * qt.underlying_price AS debt_usd
+                , at.collateral * ct.underlying_price AS collateral_usd
+                , at.pool_address
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS debt_token_symbol
+            FROM {auction_table} at
+            JOIN {pool_table} p
+                ON at.pool_address = p.address
+            LEFT JOIN {wallet_table} w
+                on at.borrower = w.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            WHERE at.settled = TRUE
+                AND at.settle_time >= %s
+                AND p.address = %s
+        """.format(
+            token_table=self.models.token._meta.db_table,
+            auction_table=self.models.auction._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
+        )
+        sql_vars = [self.days_ago_dt, pool_address]
+        return sql, sql_vars
+
+
+class AuctionsActiveView(RawSQLPaginatedChainView):
+    default_order = "-collateral"
+    ordering_fields = [
+        "collateral",
+        "debt",
+        "kick_time",
+    ]
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  at.uid
+                , at.pool_address
+                , at.debt
+                , at.debt_remaining
+                , at.collateral
+                , at.collateral_remaining
+                , at.borrower
+                , w.eoa AS borrower_eoa
+                , w.address
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+                , ak.block_datetime AS kick_time
+                , p.lup
+            FROM {auction_table} at
+            JOIN {auction_kick_table} ak
+                ON at.uid = ak.auction_uid
+            JOIN {pool_table} p
+                ON at.pool_address = p.address
+            LEFT JOIN {wallet_table} w
+                on at.borrower = w.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            WHERE at.settled = False
+                AND p.address = %s
+        """.format(
+            token_table=self.models.token._meta.db_table,
+            auction_table=self.models.auction._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            auction_kick_table=self.models.auction_kick._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
+        )
+
+        sql_vars = [pool_address]
+        return sql, sql_vars
+
+
+class AuctionsToKickView(RawSQLPaginatedChainView):
+    default_order = "-debt"
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = """
+    SELECT
+          x.wallet_address
+        , x.pool_address
+        , x.collateral
+        , x.debt
+        , x.collateral_usd
+        , x.debt_usd
+        , x.lup
+        , x.collateral_token_symbol
+        , x.quote_token_symbol
+        , wt.last_activity
+        , CASE
+            WHEN (1 -  x.health_rate) < 0
+            THEN ROUND(1 -  x.health_rate, 2)
+            ELSE 0
+        END AS price_change
+    FROM (
+        SELECT
+              cwpt.wallet_address
+            , cwpt.pool_address
+            , cwpt.collateral
+            , cwpt.t0debt * pt.pending_inflator AS debt
+            , cwpt.collateral * ct.underlying_price AS collateral_usd
+            , cwpt.t0debt * pt.pending_inflator * qt.underlying_price AS debt_usd
+            , pt.lup
+            , ct.symbol AS collateral_token_symbol
+            , qt.symbol AS quote_token_symbol
+            , CASE
+                WHEN NULLIF(cwpt.collateral, 0) IS NULL
+                    OR NULLIF(cwpt.t0debt, 0) IS NULL
+                THEN NULL
+                ELSE pt.lup / ((cwpt.t0debt * pt.pending_inflator) / cwpt.collateral)
+              END AS health_rate
+        FROM {current_wallet_position_table} cwpt
+        JOIN {pool_table} pt
+            ON cwpt.pool_address = pt.address
+        JOIN {token_table} AS ct
+            ON pt.collateral_token_address = ct.underlying_address
+        JOIN {token_table} AS qt
+            ON pt.quote_token_address = qt.underlying_address
+        WHERE (cwpt.t0debt > 0.0001 AND cwpt.collateral > 0.0001)
+            AND pt.address = %s
+    ) x
+    LEFT JOIN {wallet_table} wt
+        ON x.wallet_address = wt.address
+    WHERE ROUND(1 -  x.health_rate, 2) >= %s
+""".format(
+            current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
+        )
+        sql_vars = [pool_address, 0]
+        return sql, sql_vars
