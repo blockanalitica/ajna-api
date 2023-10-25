@@ -22,9 +22,9 @@ SCHEDULE = {
     "fetch_market_price_task": {
         "schedule": crontab(minute="*/1"),
     },
-    "fetch_and_save_events_for_all_pools_task": {
-        "schedule": crontab(minute="*/2"),
-    },
+    # "fetch_and_save_events_for_all_pools_task": {
+    #     "schedule": crontab(minute="*/2"),
+    # },
     "fetch_erc20_pool_created_events_task": {
         "schedule": crontab(minute="*/5"),
     },
@@ -37,9 +37,9 @@ SCHEDULE = {
     "fetch_erc721_pools_data_task": {
         "schedule": crontab(minute="*/5"),
     },
-    "process_events_for_all_pools_task": {
-        "schedule": crontab(minute="*/5"),
-    },
+    # "process_events_for_all_pools_task": {
+    #     "schedule": crontab(minute="*/5"),
+    # },
     # "fetch_and_save_grant_proposals_task": {
     #     "schedule": crontab(minute="*/5"),
     # },

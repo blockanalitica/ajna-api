@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from web3 import Web3
+from web3.exceptions import ContractLogicError
 
 from ajna.constants import ERC20
 
@@ -15,6 +16,7 @@ class AjnaChainMixin:
     def get_eoa(self, contract_address):
         address = Web3.to_checksum_address(contract_address)
         code = self.eth.get_code(address).hex()
+
         if len(code) > 2:
             abi = [
                 {
@@ -30,13 +32,17 @@ class AjnaChainMixin:
             contract = self.eth.contract(
                 address=Web3.to_checksum_address(contract_address), abi=abi
             )
-            address = contract.caller.owner()
+            try:
+                address = contract.caller.owner()
+            except ContractLogicError:
+                log.error("Can't find owner (EOA) of %s contract", contract_address)
 
         return address.lower()
 
-    def get_abi_from_source(self, contract_address):
+    def load_abi(self, contract_address, abi_name=None):
+        contract_address = contract_address.lower()
         try:
-            pool = self.pool.objects.get(address=contract_address.lower())
+            pool = self.pool.objects.get(address=contract_address)
         except self.pool.DoesNotExist:
             pass
         else:
@@ -44,8 +50,7 @@ class AjnaChainMixin:
                 contract_address = self.erc20_pool_abi_contract
             else:
                 contract_address = self.erc721_pool_abi_contract
-
-        return super().get_abi_from_source(contract_address)
+        return super().load_abi(contract_address, abi_name=abi_name)
 
     def get_block_datetime(self, block_number):
         global BLOCK_DATETIMES
