@@ -7,6 +7,13 @@ from django.db import IntegrityError, connection
 
 from ajna.utils.db import fetch_one
 from ajna.utils.wad import wad_to_decimal
+from ajna.v2.modules.auctions import (
+    process_auction_settle_event,
+    process_bucket_take_event,
+    process_kick_event,
+    process_settle_event,
+    process_take_event,
+)
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +34,7 @@ class EventProcessor:
             )
         )
 
-    def _build_data_to_update_from_events(self, events):
+    def _build_wallets_and_buckets_to_update(self, events):
         for event in events:
             pool_data = self._data_to_update[event.block_number][event.pool_address]
             self._block_datetimes[event.block_number] = event.block_datetime
@@ -81,7 +88,7 @@ class EventProcessor:
                     if bucket_index not in pool_data["buckets"]:
                         # Add bucket index to the buckets without any wallets so that
                         # we update the bucket itself
-                        pool_data["buckets"][bucket_index] = []
+                        pool_data["buckets"][bucket_index] = set()
 
     def _save_buckets(self, block_number, to_update, results):
         for pool_address, data in to_update.items():
@@ -307,14 +314,118 @@ class EventProcessor:
             self._save_buckets(block_number, pool_data, results)
             self._save_wallet_positions(block_number, pool_data, results)
 
+    def _create_notifications(self, event):
+        match event.name:
+            case "AddQuoteToken":
+                if event.quote_token_price:
+                    amount = wad_to_decimal(event.data["amount"])
+                    amount_usd = amount * event.quote_token_price
+                    if amount_usd >= Decimal("1000000"):
+                        self._chain.notification.objects.create(
+                            type=event.name,
+                            key=event.order_index,
+                            data={
+                                "amount": amount,
+                                "quote_token_price": event.quote_token_price,
+                                "amount_usd": amount_usd,
+                                "lp_awarded": wad_to_decimal(event.data["lpAwarded"]),
+                                "wallet_address": event.data["lender"].lower(),
+                            },
+                            datetime=event.block_datetime,
+                            pool_address=event.pool_address,
+                        )
+            case "DrawDebt":
+                if event.quote_token_price:
+                    amount = wad_to_decimal(event.data["amountBorrowed"])
+                    amount_usd = amount * event.quote_token_price
+                    if amount_usd >= Decimal("1000000"):
+                        self._chain.notification.objects.create(
+                            type=event.name,
+                            key=event.order_index,
+                            data={
+                                "amount": amount,
+                                "quote_token_price": event.quote_token_price,
+                                "amount_usd": amount_usd,
+                                "collateral": wad_to_decimal(
+                                    event.data["collateralPledged"]
+                                ),
+                                "wallet_address": event.data["borrower"].lower(),
+                            },
+                            datetime=event.block_datetime,
+                            pool_address=event.pool_address,
+                        )
+            case "AddCollateral":
+                self._chain.notification.objects.create(
+                    type=event.name,
+                    key=event.order_index,
+                    data={
+                        "actor": event.data["actor"],
+                        "index": event.data["index"],
+                        "amount": wad_to_decimal(event.data["amount"]),
+                        "lpAwarded": wad_to_decimal(event.data["lpAwarded"]),
+                    },
+                    datetime=event.block_datetime,
+                    pool_address=event.pool_address,
+                )
+            case "Kick":
+                self._chain.notification.objects.create(
+                    type=event.name,
+                    key=event.order_index,
+                    data={
+                        "bond": wad_to_decimal(event.data["bond"]),
+                        "debt": wad_to_decimal(event.data["debt"]),
+                        "borrower": event.data["borrower"],
+                        "collateral": wad_to_decimal(event.data["collateral"]),
+                    },
+                    datetime=event.block_datetime,
+                    pool_address=event.pool_address,
+                )
+            case "AuctionSettle":
+                self._chain.notification.objects.create(
+                    type=event.name,
+                    key=event.order_index,
+                    data={
+                        "borrower": event.data["borrower"],
+                        "collateral": wad_to_decimal(event.data["collateral"]),
+                    },
+                    datetime=event.block_datetime,
+                    pool_address=event.pool_address,
+                )
+
+    def _process_auctions(self, event):
+        match event.name:
+            case "Kick":
+                process_kick_event(self._chain, event)
+            case "Take":
+                process_take_event(self._chain, event)
+            case "BucketTake":
+                process_bucket_take_event(self._chain, event)
+            case "Settle":
+                process_settle_event(self._chain, event)
+            case "AuctionSettle":
+                process_auction_settle_event(self._chain, event)
+
+    def _post_process_events(self, processed_pool_events):
+        for pool_address, data in processed_pool_events.items():
+            events = self._chain.pool_event.objects.filter(
+                pool_address=pool_address,
+                order_index__gte=data["from"],
+                order_index__lte=data["to"],
+            ).order_by("order_index")
+
+            for event in events:
+                self._create_notifications(event)
+                self._process_auctions(event)
+
     def process_all_events(self, from_block=None):
         pool_addresses = list(
             self._chain.pool.objects.all().values_list("address", flat=True)
         )
 
+        processed_pool_events = {}
         for pool_address in pool_addresses:
             filters = {}
-            if from_block:
+            if from_block is not None:
                 filters["block_number__gt"] = from_block
             else:
                 last_position = (
@@ -327,18 +438,23 @@ class EventProcessor:
                 if last_position:
                     filters["block_number__gt"] = last_position.block_number
 
-            events = (
+            events = list(
                 self._chain.pool_event.objects.filter(
                     pool_address=pool_address, **filters
-                )
-                .exclude(name__in=["UpdateInterestRate", "PoolCreated"])
-                .order_by("order_index")
+                ).order_by("order_index")
             )
 
             if not events:
                 log.debug("No new events for pool {}".format(pool_address))
                 continue
 
-            self._build_data_to_update_from_events(events)
+            processed_pool_events[pool_address] = {
+                "from": events[0].order_index,
+                "to": events[-1].order_index,
+            }
+
+            self._build_wallets_and_buckets_to_update(events)
 
         self._save_wallets_and_buckets()
+
+        self._post_process_events(processed_pool_events)

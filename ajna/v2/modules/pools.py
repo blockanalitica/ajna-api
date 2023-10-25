@@ -11,7 +11,7 @@ from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.utils import chunks, compute_order_index, datetime_to_next_full_hour
 from ajna.utils.wad import wad_to_decimal
 
-VOLUME_ERC20_SQL = """
+VOLUME_SQL = """
     SELECT
           pool_address
         , SUM(
@@ -27,6 +27,8 @@ VOLUME_ERC20_SQL = """
                 WHEN name = 'DrawDebt' THEN
                     CAST(data->>'amountBorrowed' AS NUMERIC) / 1e18 * quote_token_price +
                     CAST(data->>'collateralPledged' AS NUMERIC) / 1e18 * collateral_token_price
+                WHEN name = 'DrawDebtNFT' THEN
+                    CAST(data->>'amountBorrowed' AS NUMERIC) / 1e18 * quote_token_price
                 WHEN name = 'RepayDebt' THEN
                     CAST(data->>'quoteRepaid' AS NUMERIC) / 1e18 * quote_token_price +
                     CAST(data->>'collateralPulled' AS NUMERIC) / 1e18 * collateral_token_price
@@ -40,6 +42,7 @@ VOLUME_ERC20_SQL = """
             'AddQuoteToken',
             'RemoveQuoteToken',
             'DrawDebt',
+            'DrawDebtNFT',
             'RepayDebt'
         )
         {filters}
@@ -47,10 +50,9 @@ VOLUME_ERC20_SQL = """
 """
 
 
-# TODO
 def save_all_pools_volume_for_date(chain, dt):
     assert type(dt) == date
-    sql = VOLUME_ERC20_SQL.format(
+    sql = VOLUME_SQL.format(
         pool_event_table=chain.pool_event._meta.db_table, filters=""
     )
 
@@ -156,7 +158,7 @@ class BasePoolManager:
         )
         return True
 
-    def _fetch_new_pool_events(self):
+    def _fetch_new_pool_created_events(self):
         sql = """
             SELECT
                 pe.block_number
@@ -541,7 +543,7 @@ class PoolERC20Manager(BasePoolManager):
 
     def _calculate_volume_for_pool_for_date(self, pool_address, dt):
         assert type(dt) == date
-        sql = VOLUME_ERC20_SQL.format(
+        sql = VOLUME_SQL.format(
             pool_event_table=self._chain.pool_event._meta.db_table,
             filters="AND pool_address = %s",
         )
@@ -555,7 +557,7 @@ class PoolERC20Manager(BasePoolManager):
 
     def fetch_and_save_pool_created_events(self):
         token_created = False
-        events = self._fetch_new_pool_events()
+        events = self._fetch_new_pool_created_events()
         for event in events:
             transaction_info = self._chain.eth.get_transaction(event["transactionHash"])
 
@@ -633,7 +635,7 @@ class PoolERC721Manager(BasePoolManager):
 
     def _calculate_volume_for_pool_for_date(self, pool_address, dt):
         assert type(dt) == date
-        sql = VOLUME_ERC20_SQL.format(
+        sql = VOLUME_SQL.format(
             pool_event_table=self._chain.pool_event._meta.db_table,
             filters="AND pool_address = %s",
         )
@@ -647,7 +649,7 @@ class PoolERC721Manager(BasePoolManager):
 
     def fetch_and_save_pool_created_events(self):
         token_created = False
-        events = self._fetch_new_pool_events()
+        events = self._fetch_new_pool_created_events()
         for event in events:
             transaction_info = self._chain.eth.get_transaction(event["transactionHash"])
 

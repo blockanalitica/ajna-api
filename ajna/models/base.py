@@ -61,7 +61,7 @@ class PoolBase(models.Model):
 
 
 class Pool(PoolBase):
-    address = models.CharField(max_length=42, unique=True)
+    address = models.CharField(max_length=42, unique=True, db_index=True)
     created_at_block_number = models.BigIntegerField()
     created_at_timestamp = models.BigIntegerField()
 

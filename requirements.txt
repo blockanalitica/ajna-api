@@ -49,7 +49,7 @@ certifi==2023.7.22
     #   sentry-sdk
 cffi==1.15.1
     # via cryptography
-chain-harvester==0.9.0
+chain-harvester==0.15.2
     # via -r requirements.in
 charset-normalizer==3.2.0
     # via

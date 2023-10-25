@@ -1,20 +1,11 @@
 import json
 import logging
-from decimal import Decimal
 
 from django.core.cache import cache
 from web3 import Web3
 
-from ajna.constants import ERC721
 from ajna.utils.utils import compute_order_index
 from ajna.utils.wad import wad_to_decimal
-from ajna.v2.modules.auctions import (
-    process_auction_settle_event,
-    process_bucket_take_event,
-    process_kick_event,
-    process_settle_event,
-    process_take_event,
-)
 
 log = logging.getLogger(__name__)
 
@@ -371,108 +362,12 @@ def _get_pool_info(chain, pool_address):
     return POOL_INFO[pool_address]
 
 
-def _create_notification(chain, event):
-    match event.name:
-        case "AddQuoteToken":
-            if event.quote_token_price:
-                amount = wad_to_decimal(event.data["amount"])
-                amount_usd = amount * event.quote_token_price
-                if amount_usd >= Decimal("1000000"):
-                    chain.notification.objects.create(
-                        type=event.name,
-                        key=event.order_index,
-                        data={
-                            "amount": amount,
-                            "quote_token_price": event.quote_token_price,
-                            "amount_usd": amount_usd,
-                            "lp_awarded": wad_to_decimal(event.data["lpAwarded"]),
-                            "wallet_address": event.data["lender"].lower(),
-                        },
-                        datetime=event.block_datetime,
-                        pool_address=event.pool_address,
-                    )
-        case "DrawDebt":
-            if event.quote_token_price:
-                amount = wad_to_decimal(event.data["amountBorrowed"])
-                amount_usd = amount * event.quote_token_price
-                if amount_usd >= Decimal("1000000"):
-                    chain.notification.objects.create(
-                        type=event.name,
-                        key=event.order_index,
-                        data={
-                            "amount": amount,
-                            "quote_token_price": event.quote_token_price,
-                            "amount_usd": amount_usd,
-                            "collateral": wad_to_decimal(
-                                event.data["collateralPledged"]
-                            ),
-                            "wallet_address": event.data["borrower"].lower(),
-                        },
-                        datetime=event.block_datetime,
-                        pool_address=event.pool_address,
-                    )
-        case "AddCollateral":
-            chain.notification.objects.create(
-                type=event.name,
-                key=event.order_index,
-                data={
-                    "actor": event.data["actor"],
-                    "index": event.data["index"],
-                    "amount": wad_to_decimal(event.data["amount"]),
-                    "lpAwarded": wad_to_decimal(event.data["lpAwarded"]),
-                },
-                datetime=event.block_datetime,
-                pool_address=event.pool_address,
-            )
-        case "Kick":
-            chain.notification.objects.create(
-                type=event.name,
-                key=event.order_index,
-                data={
-                    "bond": wad_to_decimal(event.data["bond"]),
-                    "debt": wad_to_decimal(event.data["debt"]),
-                    "borrower": event.data["borrower"],
-                    "collateral": wad_to_decimal(event.data["collateral"]),
-                },
-                datetime=event.block_datetime,
-                pool_address=event.pool_address,
-            )
-        case "AuctionSettle":
-            chain.notification.objects.create(
-                type=event.name,
-                key=event.order_index,
-                data={
-                    "borrower": event.data["borrower"],
-                    "collateral": wad_to_decimal(event.data["collateral"]),
-                },
-                datetime=event.block_datetime,
-                pool_address=event.pool_address,
-            )
-
-
-def _process_auctions(chain, event):
-    match event.name:
-        case "Kick":
-            process_kick_event(chain, event)
-        case "Take":
-            process_take_event(chain, event)
-        case "BucketTake":
-            process_bucket_take_event(chain, event)
-        case "Settle":
-            process_settle_event(chain, event)
-        case "AuctionSettle":
-            process_auction_settle_event(chain, event)
-
-
 def fetch_and_save_events_for_all_pools(chain):
     cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(
         chain.unique_key
     )
 
-    # pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
-    pool_addresses = list(
-        chain.pool.objects.filter(erc=ERC721).values_list("address", flat=True)
-    )
+    pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
 
     if not pool_addresses:
         log.debug("No pool addresses. Skipping fetch_and_save_events_for_all_pools")
@@ -495,11 +390,6 @@ def fetch_and_save_events_for_all_pools(chain):
                 chain.erc20_pool_factory_start_block,
                 chain.erc721_pool_factory_start_block,
             )
-
-    from_block = min(
-        chain.erc20_pool_factory_start_block,
-        chain.erc721_pool_factory_start_block,
-    )
 
     to_block = chain.get_latest_block()
 
@@ -560,9 +450,6 @@ def fetch_and_save_events_for_all_pools(chain):
             quote_token_price=quote_token_price,
         )
         pool_events.append(pool_event)
-        _create_notification(chain, pool_event)
-
-        _process_auctions(chain, pool_event)
 
         if len(pool_events) > 100:
             log.debug("Saving pool events chunk")
