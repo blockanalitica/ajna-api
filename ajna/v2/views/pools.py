@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
+from ..modules.at_risk import WALLETS_AT_RISK_SQL
 from ..modules.events import parse_event_data
 
 POOLS_SQL = """
@@ -1079,58 +1080,12 @@ class AuctionsToKickView(RawSQLPaginatedChainView):
     default_order = "-debt"
 
     def get_raw_sql(self, pool_address, **kwargs):
-        sql = """
-    SELECT
-          x.wallet_address
-        , x.pool_address
-        , x.collateral
-        , x.debt
-        , x.collateral_usd
-        , x.debt_usd
-        , x.lup
-        , x.collateral_token_symbol
-        , x.quote_token_symbol
-        , wt.last_activity
-        , CASE
-            WHEN (1 -  x.health_rate) < 0
-            THEN ROUND(1 -  x.health_rate, 2)
-            ELSE 0
-        END AS price_change
-    FROM (
-        SELECT
-              cwpt.wallet_address
-            , cwpt.pool_address
-            , cwpt.collateral
-            , cwpt.t0debt * pt.pending_inflator AS debt
-            , cwpt.collateral * ct.underlying_price AS collateral_usd
-            , cwpt.t0debt * pt.pending_inflator * qt.underlying_price AS debt_usd
-            , pt.lup
-            , ct.symbol AS collateral_token_symbol
-            , qt.symbol AS quote_token_symbol
-            , CASE
-                WHEN NULLIF(cwpt.collateral, 0) IS NULL
-                    OR NULLIF(cwpt.t0debt, 0) IS NULL
-                THEN NULL
-                ELSE pt.lup / ((cwpt.t0debt * pt.pending_inflator) / cwpt.collateral)
-              END AS health_rate
-        FROM {current_wallet_position_table} cwpt
-        JOIN {pool_table} pt
-            ON cwpt.pool_address = pt.address
-        JOIN {token_table} AS ct
-            ON pt.collateral_token_address = ct.underlying_address
-        JOIN {token_table} AS qt
-            ON pt.quote_token_address = qt.underlying_address
-        WHERE (cwpt.t0debt > 0.0001 AND cwpt.collateral > 0.0001)
-            AND pt.address = %s
-    ) x
-    LEFT JOIN {wallet_table} wt
-        ON x.wallet_address = wt.address
-    WHERE ROUND(1 -  x.health_rate, 2) >= %s
-""".format(
+        sql = WALLETS_AT_RISK_SQL.format(
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
-        sql_vars = [pool_address, 0]
+        sql = "{} AND x.pool_addres = %s".format(sql)
+        sql_vars = [0, pool_address]
         return sql, sql_vars
