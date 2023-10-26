@@ -477,11 +477,24 @@ class WalletPoolsView(RawSQLPaginatedChainView):
 
 class WalletPoolView(BaseChainView):
     days_ago_required = False
-    days_ago_default = 7
+    days_ago_default = 1
     days_ago_options = [1, 7, 30, 365]
 
     def get(self, request, address, pool_address):
         sql = """
+            WITH previous AS (
+                SELECT DISTINCT ON (wp.wallet_address)
+                      wp.wallet_address
+                    , wp.supply
+                    , wp.collateral
+                    , wp.debt
+                FROM {wallet_position_table} wp
+                WHERE wp.wallet_address = %s
+                    AND wp.pool_address = %s
+                    AND wp.datetime <= %s
+                ORDER BY wp.wallet_address, wp.datetime DESC
+            )
+
             SELECT
                   x.wallet_address
                 , x.pool_address
@@ -493,6 +506,13 @@ class WalletPoolView(BaseChainView):
                 , x.debt_usd
                 , x.collateral_token_symbol
                 , x.quote_token_symbol
+                , x.lup
+                , CASE
+                    WHEN NULLIF(x.collateral, 0) IS NULL
+                        OR NULLIF(x.debt, 0) IS NULL
+                    THEN NULL
+                    ELSE x.debt / x.collateral
+                  END AS threshold_price
                 , CASE
                     WHEN NULLIF(x.collateral, 0) IS NULL
                         OR NULLIF(x.debt, 0) IS NULL
@@ -516,6 +536,12 @@ class WalletPoolView(BaseChainView):
                     THEN NULL
                     ELSE x.supply / x.pool_size
                   END AS supply_share
+                , x.prev_supply
+                , x.prev_supply_usd
+                , x.prev_collateral
+                , x.prev_collateral_usd
+                , x.prev_debt
+                , x.prev_debt_usd
             FROM (
                 SELECT
                       cwp.wallet_address
@@ -531,6 +557,12 @@ class WalletPoolView(BaseChainView):
                     , p.t0debt * p.pending_inflator AS pool_debt
                     , p.lup
                     , p.pool_size
+                    , prev.supply AS prev_supply
+                    , prev.supply * qt.underlying_price AS prev_supply_usd
+                    , prev.collateral AS prev_collateral
+                    , prev.collateral * ct.underlying_price AS prev_collateral_usd
+                    , prev.debt AS prev_debt
+                    , prev.debt * qt.underlying_price AS prev_debt_usd
                 FROM {current_wallet_position_table} cwp
                 JOIN {pool_table} p
                     ON cwp.pool_address = p.address
@@ -538,6 +570,8 @@ class WalletPoolView(BaseChainView):
                     ON p.collateral_token_address = ct.underlying_address
                 JOIN {token_table} AS qt
                     ON p.quote_token_address = qt.underlying_address
+                LEFT JOIN previous AS prev
+                    ON cwp.wallet_address = prev.wallet_address
                 WHERE cwp.wallet_address = %s
                     AND cwp.pool_address = %s
             ) x
@@ -545,9 +579,10 @@ class WalletPoolView(BaseChainView):
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
+            wallet_position_table=self.models.wallet_position._meta.db_table,
         )
 
-        sql_vars = [address, pool_address]
+        sql_vars = [address, pool_address, self.days_ago_dt, address, pool_address]
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_vars)
             wallet = fetch_one(cursor)
@@ -632,18 +667,24 @@ class WalletPoolEventsView(RawSQLPaginatedChainView):
 class WalletPoolBucketsView(RawSQLPaginatedChainView):
     def get_raw_sql(self, address, pool_address, query_params, **kwargs):
         sql = """
-            SELECT DISTINCT ON (wbs.bucket_index)
-                  wbs.bucket_index
-                , wbs.deposit
-                , b.bucket_price
-            FROM {wallet_bucket_state_table} wbs
-            JOIN {bucket_table} b
-                ON b.bucket_index = wbs.bucket_index
-                AND b.pool_address = wbs.pool_address
-            WHERE wbs.wallet_address = %s
-                AND wbs.pool_address = %s
-                AND wbs.deposit > 0
-            ORDER BY wbs.bucket_index, wbs.block_number DESC
+            SELECT
+                  x.bucket_index
+                , x.deposit
+                , x.bucket_price
+            FROM (
+                SELECT DISTINCT ON (wbs.bucket_index)
+                      wbs.bucket_index
+                    , wbs.deposit
+                    , b.bucket_price
+                FROM {wallet_bucket_state_table} wbs
+                JOIN {bucket_table} b
+                    ON b.bucket_index = wbs.bucket_index
+                    AND b.pool_address = wbs.pool_address
+                WHERE wbs.wallet_address = %s
+                    AND wbs.pool_address = %s
+                ORDER BY wbs.bucket_index, wbs.block_number DESC
+            ) x
+            WHERE x.deposit > 0
         """.format(
             wallet_bucket_state_table=self.models.wallet_bucket_state._meta.db_table,
             bucket_table=self.models.bucket._meta.db_table,

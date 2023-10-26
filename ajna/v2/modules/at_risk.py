@@ -18,12 +18,9 @@ WALLETS_AT_RISK_SQL = """
         , x.lup
         , x.collateral_token_symbol
         , x.quote_token_symbol
+        , x.threshold_price
         , wt.last_activity
-        , CASE
-            WHEN (1 -  x.health_rate) < 0
-            THEN ROUND(1 -  x.health_rate, 2)
-            ELSE 0
-        END AS price_change
+        , -ROUND(1 -  1 / x.health_rate, 4) AS price_change
     FROM (
         SELECT
               cwpt.wallet_address
@@ -41,6 +38,12 @@ WALLETS_AT_RISK_SQL = """
                 THEN NULL
                 ELSE pt.lup / ((cwpt.t0debt * pt.pending_inflator) / cwpt.collateral)
               END AS health_rate
+            , CASE
+                WHEN NULLIF(cwpt.collateral, 0) IS NULL
+                    OR NULLIF(cwpt.t0debt, 0) IS NULL
+                THEN NULL
+                ELSE (cwpt.t0debt * pt.pending_inflator) / cwpt.collateral
+              END AS threshold_price
         FROM {current_wallet_position_table} cwpt
         JOIN {pool_table} pt
             ON cwpt.pool_address = pt.address
@@ -52,7 +55,7 @@ WALLETS_AT_RISK_SQL = """
     ) x
     LEFT JOIN {wallet_table} wt
         ON x.wallet_address = wt.address
-    WHERE ROUND(1 -  x.health_rate, 2) >= %s
+    WHERE -ROUND(1 -  1 / x.health_rate, 4) >= %s AND x.health_rate > 0.1
 """
 
 
