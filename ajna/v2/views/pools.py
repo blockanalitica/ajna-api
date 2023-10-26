@@ -1086,6 +1086,6 @@ class AuctionsToKickView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
-        sql = "{} AND x.pool_addres = %s".format(sql)
+        sql = "{} AND x.pool_address = %s".format(sql)
         sql_vars = [0, pool_address]
         return sql, sql_vars
