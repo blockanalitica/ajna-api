@@ -68,6 +68,21 @@ urlpatterns = [
         name="pool-events",
     ),
     path(
+        "pools/<pool_address>/auctions/settled/",
+        pools.AuctionsSettledView.as_view(),
+        name="pools-auctions-settled",
+    ),
+    path(
+        "pools/<pool_address>/auctions/active/",
+        pools.AuctionsActiveView.as_view(),
+        name="pools-auctions-active",
+    ),
+    path(
+        "pools/<pool_address>/auctions/to-kick/",
+        pools.AuctionsToKickView.as_view(),
+        name="pools-auctions-to-kick",
+    ),
+    path(
         "tokens/",
         tokens.TokensView.as_view(),
         name="tokens",

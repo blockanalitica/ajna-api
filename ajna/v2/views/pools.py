@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
+from ..modules.at_risk import WALLETS_AT_RISK_SQL
 from ..modules.events import parse_event_data
 
 POOLS_SQL = """
@@ -978,3 +979,113 @@ class BucketEventsView(RawSQLPaginatedChainView):
         for row in data:
             row["data"] = parse_event_data(row)
         return data
+
+
+class AuctionsSettledView(RawSQLPaginatedChainView):
+    default_order = "-settle_time"
+    ordering_fields = [
+        "collateral",
+        "debt",
+        "settle_time",
+    ]
+    days_ago_required = True
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  at.uid
+                , at.settle_time
+                , at.neutral_price
+                , at.debt
+                , at.collateral
+                , at.borrower
+                , w.eoa AS borrower_eoa
+                , at.debt * qt.underlying_price AS debt_usd
+                , at.collateral * ct.underlying_price AS collateral_usd
+                , at.pool_address
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS debt_token_symbol
+            FROM {auction_table} at
+            JOIN {pool_table} p
+                ON at.pool_address = p.address
+            LEFT JOIN {wallet_table} w
+                on at.borrower = w.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            WHERE at.settled = TRUE
+                AND at.settle_time >= %s
+                AND p.address = %s
+        """.format(
+            token_table=self.models.token._meta.db_table,
+            auction_table=self.models.auction._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
+        )
+        sql_vars = [self.days_ago_dt, pool_address]
+        return sql, sql_vars
+
+
+class AuctionsActiveView(RawSQLPaginatedChainView):
+    default_order = "-collateral"
+    ordering_fields = [
+        "collateral",
+        "debt",
+        "kick_time",
+    ]
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  at.uid
+                , at.pool_address
+                , at.debt
+                , at.debt_remaining
+                , at.collateral
+                , at.collateral_remaining
+                , at.borrower
+                , w.eoa AS borrower_eoa
+                , w.address
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+                , ak.block_datetime AS kick_time
+                , p.lup
+            FROM {auction_table} at
+            JOIN {auction_kick_table} ak
+                ON at.uid = ak.auction_uid
+            JOIN {pool_table} p
+                ON at.pool_address = p.address
+            LEFT JOIN {wallet_table} w
+                on at.borrower = w.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            WHERE at.settled = False
+                AND p.address = %s
+        """.format(
+            token_table=self.models.token._meta.db_table,
+            auction_table=self.models.auction._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            auction_kick_table=self.models.auction_kick._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
+        )
+
+        sql_vars = [pool_address]
+        return sql, sql_vars
+
+
+class AuctionsToKickView(RawSQLPaginatedChainView):
+    default_order = "-debt"
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = WALLETS_AT_RISK_SQL.format(
+            current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
+        )
+        sql = "{} AND x.pool_address = %s".format(sql)
+        sql_vars = [0, pool_address]
+        return sql, sql_vars
