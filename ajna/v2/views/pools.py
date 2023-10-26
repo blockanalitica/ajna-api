@@ -502,6 +502,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 , x.prev_debt
                 , x.prev_collateral_usd
                 , x.prev_debt_usd
+                , x.in_liquidation
                 , CASE
                     WHEN NULLIF(x.collateral, 0) IS NULL
                         OR NULLIF(x.debt, 0) IS NULL
@@ -525,6 +526,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
             FROM (
                 SELECT
                       cwp.wallet_address
+                    , cwp.in_liquidation
                     , cwp.collateral
                     , cwp.collateral * ct.underlying_price AS collateral_usd
                     , cwp.t0debt * p.pending_inflator AS debt

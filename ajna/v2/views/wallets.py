@@ -22,11 +22,13 @@ class WalletsView(RawSQLPaginatedChainView):
                 , x.debt_usd
                 , w.last_activity
                 , w.first_activity
+                , x.in_liquidation
             FROM (
                 SELECT
                       cwp.wallet_address
                     , SUM(cwp.collateral * ct.underlying_price) AS collateral_usd
                     , SUM(cwp.t0debt * p.pending_inflator * qt.underlying_price) AS debt_usd
+                    , BOOL_OR(cwp.in_liquidation) AS in_liquidation
                 FROM {current_wallet_position_table} cwp
                 JOIN {pool_table} p
                     ON cwp.pool_address = p.address
@@ -142,6 +144,7 @@ class WalletView(BaseChainView):
               x.address
             , x.last_activity
             , x.first_activity
+            , x.eoa
             , x.supply_usd
             , x.collateral_usd
             , x.debt_usd
@@ -153,6 +156,7 @@ class WalletView(BaseChainView):
                       w.address
                     , w.last_activity
                     , w.first_activity
+                    , w.eoa
                     , SUM(cwp.supply * qt.underlying_price) AS supply_usd
                     , SUM(cwp.collateral * ct.underlying_price) AS collateral_usd
                     , SUM(cwp.t0debt * p.pending_inflator * qt.underlying_price) AS debt_usd
@@ -166,7 +170,7 @@ class WalletView(BaseChainView):
                 JOIN {token_table} AS qt
                     ON p.quote_token_address = qt.underlying_address
                 WHERE w.address = %s
-                GROUP BY 1,2,3
+                GROUP BY 1,2,3,4
             ) x
             LEFT JOIN previous AS prev
                 ON x.address = prev.wallet_address
@@ -333,6 +337,7 @@ class WalletPoolsView(RawSQLPaginatedChainView):
             SELECT
                   x.wallet_address
                 , x.pool_address
+                , x.in_liquidation
                 , x.supply
                 , x.supply_usd
                 , x.collateral
@@ -375,6 +380,7 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                 SELECT
                       cwp.wallet_address
                     , cwp.pool_address
+                    , cwp.in_liquidation
                     , cwp.supply
                     , cwp.supply * qt.underlying_price AS supply_usd
                     , cwp.collateral
@@ -498,6 +504,7 @@ class WalletPoolView(BaseChainView):
             SELECT
                   x.wallet_address
                 , x.pool_address
+                , x.in_liquidation
                 , x.supply
                 , x.supply_usd
                 , x.collateral
@@ -546,6 +553,7 @@ class WalletPoolView(BaseChainView):
                 SELECT
                       cwp.wallet_address
                     , cwp.pool_address
+                    , cwp.in_liquidation
                     , cwp.supply
                     , cwp.supply * qt.underlying_price AS supply_usd
                     , cwp.collateral
