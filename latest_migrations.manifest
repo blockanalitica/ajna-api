@@ -1,5 +1,5 @@
 admin: 0003_logentry_add_action_flag_choices
-ajna: 0061_rename_kick_award_v2ethereumreserveauctionkick_kicker_award_and_more
+ajna: 0062_v1ethereumpool_last_block_number_and_more
 auth: 0012_alter_user_first_name_max_length
 contenttypes: 0002_remove_content_type_name
 django_celery_beat: 0018_improve_crontab_helptext

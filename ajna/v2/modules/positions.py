@@ -429,38 +429,35 @@ class EventProcessor:
                 self._process_auctions(event)
                 self._process_reserve_auctions(event)
 
+            # Update pools last_block_number to the last event block number
+            # so on the next run we start from that block number onwards
+            if event:
+                self._chain.pool.objects.filter(address=pool_address).update(
+                    last_block_number=event.block_number
+                )
+
     def process_all_events(self, from_block=None):
-        pool_addresses = list(
-            self._chain.pool.objects.all().values_list("address", flat=True)
-        )
+        pools = self._chain.pool.objects.all().values("address", "last_block_number")
 
         processed_pool_events = {}
-        for pool_address in pool_addresses:
+        for pool in pools:
             filters = {}
             if from_block is not None:
                 filters["block_number__gt"] = from_block
-            else:
-                last_position = (
-                    self._chain.current_wallet_position.objects.filter(
-                        pool_address=pool_address
-                    )
-                    .order_by("-block_number")
-                    .first()
-                )
-                if last_position:
-                    filters["block_number__gt"] = last_position.block_number
+            elif pool["last_block_number"]:
+                filters["block_number__gt"] = pool["last_block_number"]
 
             events = list(
                 self._chain.pool_event.objects.filter(
-                    pool_address=pool_address, **filters
+                    pool_address=pool["address"], **filters
                 ).order_by("order_index")
             )
 
             if not events:
-                log.debug("No new events for pool {}".format(pool_address))
+                log.debug("No new events for pool {}".format(pool["address"]))
                 continue
 
-            processed_pool_events[pool_address] = {
+            processed_pool_events[pool["address"]] = {
                 "from": events[0].order_index,
                 "to": events[-1].order_index,
             }
