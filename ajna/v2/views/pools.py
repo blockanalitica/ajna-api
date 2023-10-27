@@ -990,7 +990,6 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
         "debt",
         "settle_time",
     ]
-    days_ago_required = True
 
     def get_raw_sql(self, pool_address, **kwargs):
         sql = """
@@ -1002,12 +1001,14 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.collateral
                 , at.borrower
                 , w.eoa AS borrower_eoa
-                , at.debt * qt.underlying_price AS debt_usd
-                , at.collateral * ct.underlying_price AS collateral_usd
+                , at.debt * ak.quote_token_price AS debt_usd
+                , at.collateral * ak.collateral_token_price AS collateral_usd
                 , at.pool_address
                 , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS debt_token_symbol
+                , qt.symbol AS quote_token_symbol
             FROM {auction_table} at
+            JOIN {auction_kick_table} ak
+                ON at.uid = ak.auction_uid
             JOIN {pool_table} p
                 ON at.pool_address = p.address
             LEFT JOIN {wallet_table} w
@@ -1017,15 +1018,15 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
             JOIN {token_table} AS qt
                 ON p.quote_token_address = qt.underlying_address
             WHERE at.settled = TRUE
-                AND at.settle_time >= %s
                 AND p.address = %s
         """.format(
             token_table=self.models.token._meta.db_table,
             auction_table=self.models.auction._meta.db_table,
+            auction_kick_table=self.models.auction_kick._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
-        sql_vars = [self.days_ago_dt, pool_address]
+        sql_vars = [pool_address]
         return sql, sql_vars
 
 
@@ -1042,10 +1043,10 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
             SELECT
                   at.uid
                 , at.pool_address
-                , at.debt
                 , at.debt_remaining
-                , at.collateral
+                , at.debt_remaining * ak.quote_token_price AS debt_remaining_usd
                 , at.collateral_remaining
+                , at.collateral_remaining * ak.collateral_token_price AS collateral_remaining_usd
                 , at.borrower
                 , w.eoa AS borrower_eoa
                 , w.address
@@ -1053,6 +1054,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 , qt.symbol AS quote_token_symbol
                 , ak.block_datetime AS kick_time
                 , p.lup
+                , p.lup * ak.quote_token_price AS lup_usd
             FROM {auction_table} at
             JOIN {auction_kick_table} ak
                 ON at.uid = ak.auction_uid
@@ -1090,4 +1092,83 @@ class AuctionsToKickView(RawSQLPaginatedChainView):
         )
         sql = "{} AND x.pool_address = %s".format(sql)
         sql_vars = [0, pool_address]
+        return sql, sql_vars
+
+
+class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
+    default_order = "-block_number"
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  ra.uid
+                , ra.pool_address
+                , ra.claimable_reserves
+                , ra.claimable_reserves_remaining
+                , ra.last_take_price
+                , ra.burn_epoch
+                , ra.ajna_burned
+                , rak.block_number
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+            FROM {reserve_auction_table} ra
+            JOIN {reserve_auction_kick_table} rak
+                ON rak.reserve_auction_uid = ra.uid
+            JOIN {pool_table} p
+                ON ra.pool_address = p.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            WHERE ra.claimable_reserves_remaining > 0
+                AND ra.pool_address = %s
+        """.format(
+            reserve_auction_table=self.models.reserve_auction._meta.db_table,
+            reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+        sql_vars = [pool_address]
+        return sql, sql_vars
+
+
+class PoolReserveAuctionsSettledView(RawSQLPaginatedChainView):
+    default_order = "-block_number"
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  ra.uid
+                , ra.pool_address
+                , ra.claimable_reserves
+                , ra.claimable_reserves_remaining
+                , ra.last_take_price
+                , ra.burn_epoch
+                , ra.ajna_burned
+                , rak.block_number
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+                , COUNT(rak.order_index) as take_count
+            FROM {reserve_auction_table} ra
+            JOIN {reserve_auction_kick_table} rak
+                ON rak.reserve_auction_uid = ra.uid
+            JOIN {reserve_auction_take_table} rat
+                ON rat.reserve_auction_uid = ra.uid
+            JOIN {pool_table} p
+                ON ra.pool_address = p.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            WHERE ra.claimable_reserves_remaining = 0
+                AND ra.pool_address = %s
+            GROUP BY 1,2,3,4,5,6,7,8,9,10
+        """.format(
+            reserve_auction_table=self.models.reserve_auction._meta.db_table,
+            reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
+            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+        sql_vars = [pool_address]
         return sql, sql_vars

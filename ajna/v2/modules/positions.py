@@ -14,6 +14,10 @@ from ajna.v2.modules.auctions import (
     process_settle_event,
     process_take_event,
 )
+from ajna.v2.modules.reserve_auctions import (
+    process_kick_reserve_auction_event,
+    process_reserve_auction_event,
+)
 
 log = logging.getLogger(__name__)
 
@@ -405,6 +409,13 @@ class EventProcessor:
             case "AuctionSettle":
                 process_auction_settle_event(self._chain, event)
 
+    def _process_reserve_auctions(self, event):
+        match event.name:
+            case "KickReserveAuction":
+                process_kick_reserve_auction_event(self._chain, event)
+            case "ReserveAuction":
+                process_reserve_auction_event(self._chain, event)
+
     def _post_process_events(self, processed_pool_events):
         for pool_address, data in processed_pool_events.items():
             events = self._chain.pool_event.objects.filter(
@@ -416,6 +427,7 @@ class EventProcessor:
             for event in events:
                 self._create_notifications(event)
                 self._process_auctions(event)
+                self._process_reserve_auctions(event)
 
     def process_all_events(self, from_block=None):
         pool_addresses = list(

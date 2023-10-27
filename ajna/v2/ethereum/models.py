@@ -87,3 +87,15 @@ class V2EthereumGrantProposal(base.GrantProposal):
 
 class V2EthereumGrantEvent(base.GrantEvent):
     pass
+
+
+class V2EthereumReserveAuction(base.ReserveAuction):
+    pass
+
+
+class V2EthereumReserveAuctionKick(base.ReserveAuctionKick):
+    pass
+
+
+class V2EthereumReserveAuctionTake(base.ReserveAuctionTake):
+    pass

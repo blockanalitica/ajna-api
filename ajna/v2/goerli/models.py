@@ -87,3 +87,15 @@ class V2GoerliGrantProposal(base.GrantProposal):
 
 class V2GoerliGrantEvent(base.GrantEvent):
     pass
+
+
+class V2GoerliReserveAuction(base.ReserveAuction):
+    pass
+
+
+class V2GoerliReserveAuctionKick(base.ReserveAuctionKick):
+    pass
+
+
+class V2GoerliReserveAuctionTake(base.ReserveAuctionTake):
+    pass
