@@ -5,6 +5,7 @@ from .views import (
     grants,
     notifications,
     pools,
+    reserve_auctions,
     search,
     stats,
     tokens,
@@ -81,6 +82,16 @@ urlpatterns = [
         "pools/<pool_address>/auctions/to-kick/",
         pools.AuctionsToKickView.as_view(),
         name="pools-auctions-to-kick",
+    ),
+    path(
+        "pools/<pool_address>/reserve-auctions/settled/",
+        pools.PoolReserveAuctionsSettledView.as_view(),
+        name="pools-reserve-auctions-settled",
+    ),
+    path(
+        "pools/<pool_address>/reserve-auctions/active/",
+        pools.PoolReserveAuctionsActiveView.as_view(),
+        name="pools-reserve-auctions-active",
     ),
     path(
         "tokens/",
@@ -206,5 +217,25 @@ urlpatterns = [
         "auctions/<auction_uid>/events/",
         auctions.AuctionEventsView.as_view(),
         name="auction-events",
+    ),
+    path(
+        "reserve-auctions/active/",
+        reserve_auctions.ReserveAuctionsActiveView.as_view(),
+        name="reserve-auctions-active",
+    ),
+    path(
+        "reserve-auctions/settled/",
+        reserve_auctions.ReserveAuctionsSettledView.as_view(),
+        name="reserve-auctions-settled",
+    ),
+    path(
+        "reserve-auctions/<uid>/",
+        reserve_auctions.ReserveAuctionView.as_view(),
+        name="reserve-auction",
+    ),
+    path(
+        "reserve-auctions/<uid>/events/",
+        reserve_auctions.ReserveAuctionEventsView.as_view(),
+        name="reserve-auction-events",
     ),
 ]

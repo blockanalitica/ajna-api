@@ -1093,3 +1093,82 @@ class AuctionsToKickView(RawSQLPaginatedChainView):
         sql = "{} AND x.pool_address = %s".format(sql)
         sql_vars = [0, pool_address]
         return sql, sql_vars
+
+
+class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
+    default_order = "-block_number"
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  ra.uid
+                , ra.pool_address
+                , ra.claimable_reserves
+                , ra.claimable_reserves_remaining
+                , ra.last_take_price
+                , ra.burn_epoch
+                , ra.ajna_burned
+                , rak.block_number
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+            FROM {reserve_auction_table} ra
+            JOIN {reserve_auction_kick_table} rak
+                ON rak.reserve_auction_uid = ra.uid
+            JOIN {pool_table} p
+                ON ra.pool_address = p.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            WHERE ra.claimable_reserves_remaining > 0
+                AND ra.pool_address = %s
+        """.format(
+            reserve_auction_table=self.models.reserve_auction._meta.db_table,
+            reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+        sql_vars = [pool_address]
+        return sql, sql_vars
+
+
+class PoolReserveAuctionsSettledView(RawSQLPaginatedChainView):
+    default_order = "-block_number"
+
+    def get_raw_sql(self, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  ra.uid
+                , ra.pool_address
+                , ra.claimable_reserves
+                , ra.claimable_reserves_remaining
+                , ra.last_take_price
+                , ra.burn_epoch
+                , ra.ajna_burned
+                , rak.block_number
+                , ct.symbol AS collateral_token_symbol
+                , qt.symbol AS quote_token_symbol
+                , COUNT(rak.order_index) as take_count
+            FROM {reserve_auction_table} ra
+            JOIN {reserve_auction_kick_table} rak
+                ON rak.reserve_auction_uid = ra.uid
+            JOIN {reserve_auction_take_table} rat
+                ON rat.reserve_auction_uid = ra.uid
+            JOIN {pool_table} p
+                ON ra.pool_address = p.address
+            JOIN {token_table} AS ct
+                ON p.collateral_token_address = ct.underlying_address
+            JOIN {token_table} AS qt
+                ON p.quote_token_address = qt.underlying_address
+            WHERE ra.claimable_reserves_remaining = 0
+                AND ra.pool_address = %s
+            GROUP BY 1,2,3,4,5,6,7,8,9,10
+        """.format(
+            reserve_auction_table=self.models.reserve_auction._meta.db_table,
+            reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
+            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+        )
+        sql_vars = [pool_address]
+        return sql, sql_vars
