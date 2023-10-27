@@ -64,6 +64,7 @@ class Pool(PoolBase):
     address = models.CharField(max_length=42, unique=True, db_index=True)
     created_at_block_number = models.BigIntegerField()
     created_at_timestamp = models.BigIntegerField()
+    last_block_number = models.BigIntegerField(null=True)
 
     def __str__(self):
         return self.address
