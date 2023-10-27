@@ -34,7 +34,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.collateral * ak.collateral_token_price AS collateral_usd
                 , at.pool_address
                 , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS debt_token_symbol
+                , qt.symbol AS quote_token_symbol
             FROM {auction_table} at
             JOIN {auction_kick_table} ak
                 ON at.uid = ak.auction_uid
@@ -176,7 +176,9 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
             SELECT
                   at.uid
                 , at.pool_address
+                , at.debt_remaining
                 , at.debt_remaining * ak.quote_token_price AS debt_remaining_usd
+                , at.collateral_remaining
                 , at.collateral_remaining * ak.collateral_token_price AS collateral_remaining_usd
                 , at.borrower
                 , w.eoa AS borrower_eoa
