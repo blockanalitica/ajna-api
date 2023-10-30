@@ -133,6 +133,7 @@ CELERY_IMPORTS = [
     "ajna.v1.ethereum.tasks",
     "ajna.v2.goerli.tasks",
     "ajna.v2.ethereum.tasks",
+    "ajna.v3.goerli.tasks",
 ]
 
 # django-celery-beat configuration options
