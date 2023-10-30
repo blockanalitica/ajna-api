@@ -16,6 +16,7 @@ urlpatterns = [
     path("v1/ethereum/", include("ajna.v1.ethereum.urls")),
     path("v2/goerli/", include("ajna.v2.goerli.urls")),
     path("v2/ethereum/", include("ajna.v2.ethereum.urls")),
+    path("v3/goerli/", include("ajna.v3.goerli.urls")),
 ]
 
 if settings.DEBUG:
