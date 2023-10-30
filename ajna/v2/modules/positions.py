@@ -325,75 +325,87 @@ class EventProcessor:
                     amount = wad_to_decimal(event.data["amount"])
                     amount_usd = amount * event.quote_token_price
                     if amount_usd >= Decimal("1000000"):
-                        self._chain.notification.objects.create(
+                        self._chain.notification.objects.get_or_create(
                             type=event.name,
                             key=event.order_index,
-                            data={
-                                "amount": amount,
-                                "quote_token_price": event.quote_token_price,
-                                "amount_usd": amount_usd,
-                                "lp_awarded": wad_to_decimal(event.data["lpAwarded"]),
-                                "wallet_address": event.data["lender"].lower(),
-                            },
-                            datetime=event.block_datetime,
                             pool_address=event.pool_address,
+                            defaults={
+                                "data": {
+                                    "amount": amount,
+                                    "quote_token_price": event.quote_token_price,
+                                    "amount_usd": amount_usd,
+                                    "lp_awarded": wad_to_decimal(
+                                        event.data["lpAwarded"]
+                                    ),
+                                    "wallet_address": event.data["lender"].lower(),
+                                },
+                                "datetime": event.block_datetime,
+                            },
                         )
             case "DrawDebt":
                 if event.quote_token_price:
                     amount = wad_to_decimal(event.data["amountBorrowed"])
                     amount_usd = amount * event.quote_token_price
                     if amount_usd >= Decimal("1000000"):
-                        self._chain.notification.objects.create(
+                        self._chain.notification.objects.get_or_create(
                             type=event.name,
                             key=event.order_index,
-                            data={
-                                "amount": amount,
-                                "quote_token_price": event.quote_token_price,
-                                "amount_usd": amount_usd,
-                                "collateral": wad_to_decimal(
-                                    event.data["collateralPledged"]
-                                ),
-                                "wallet_address": event.data["borrower"].lower(),
-                            },
-                            datetime=event.block_datetime,
                             pool_address=event.pool_address,
+                            defaults={
+                                "data": {
+                                    "amount": amount,
+                                    "quote_token_price": event.quote_token_price,
+                                    "amount_usd": amount_usd,
+                                    "collateral": wad_to_decimal(
+                                        event.data["collateralPledged"]
+                                    ),
+                                    "wallet_address": event.data["borrower"].lower(),
+                                },
+                                "datetime": event.block_datetime,
+                            },
                         )
             case "AddCollateral":
-                self._chain.notification.objects.create(
+                self._chain.notification.objects.get_or_create(
                     type=event.name,
                     key=event.order_index,
-                    data={
-                        "actor": event.data["actor"],
-                        "index": event.data["index"],
-                        "amount": wad_to_decimal(event.data["amount"]),
-                        "lpAwarded": wad_to_decimal(event.data["lpAwarded"]),
-                    },
-                    datetime=event.block_datetime,
                     pool_address=event.pool_address,
+                    defaults={
+                        "data": {
+                            "actor": event.data["actor"],
+                            "index": event.data["index"],
+                            "amount": wad_to_decimal(event.data["amount"]),
+                            "lpAwarded": wad_to_decimal(event.data["lpAwarded"]),
+                        },
+                        "datetime": event.block_datetime,
+                    },
                 )
             case "Kick":
-                self._chain.notification.objects.create(
+                self._chain.notification.objects.get_or_create(
                     type=event.name,
                     key=event.order_index,
-                    data={
-                        "bond": wad_to_decimal(event.data["bond"]),
-                        "debt": wad_to_decimal(event.data["debt"]),
-                        "borrower": event.data["borrower"],
-                        "collateral": wad_to_decimal(event.data["collateral"]),
-                    },
-                    datetime=event.block_datetime,
                     pool_address=event.pool_address,
+                    defaults={
+                        "data": {
+                            "bond": wad_to_decimal(event.data["bond"]),
+                            "debt": wad_to_decimal(event.data["debt"]),
+                            "borrower": event.data["borrower"],
+                            "collateral": wad_to_decimal(event.data["collateral"]),
+                        },
+                        "datetime": event.block_datetime,
+                    },
                 )
             case "AuctionSettle":
-                self._chain.notification.objects.create(
+                self._chain.notification.objects.get_or_create(
                     type=event.name,
                     key=event.order_index,
-                    data={
-                        "borrower": event.data["borrower"],
-                        "collateral": wad_to_decimal(event.data["collateral"]),
-                    },
-                    datetime=event.block_datetime,
                     pool_address=event.pool_address,
+                    defaults={
+                        "data": {
+                            "borrower": event.data["borrower"],
+                            "collateral": wad_to_decimal(event.data["collateral"]),
+                        },
+                        "datetime": event.block_datetime,
+                    },
                 )
 
     def _process_auctions(self, event):
@@ -406,7 +418,7 @@ class EventProcessor:
                 process_bucket_take_event(self._chain, event)
             case "Settle":
                 process_settle_event(self._chain, event)
-            case "AuctionSettle":
+            case "AuctionSettle" | "AuctionNFTSettle":
                 process_auction_settle_event(self._chain, event)
 
     def _process_reserve_auctions(self, event):
@@ -436,16 +448,30 @@ class EventProcessor:
                     last_block_number=event.block_number
                 )
 
-    def process_all_events(self, from_block=None):
+    def process_all_events(self):
         pools = self._chain.pool.objects.all().values("address", "last_block_number")
 
         processed_pool_events = {}
         for pool in pools:
             filters = {}
-            if from_block is not None:
-                filters["block_number__gt"] = from_block
-            elif pool["last_block_number"]:
-                filters["block_number__gt"] = pool["last_block_number"]
+            # Figure out which last block number to use. We decide here which one to use
+            # either from pool or from position, as it's possible that an error happens
+            # and on the pool it's not updated to the last block, so in that case
+            # get it from current position
+            current_position = (
+                self._chain.current_wallet_position.objects.filter(
+                    pool_address=pool["address"]
+                )
+                .order_by("-datetime")
+                .first()
+            )
+            current_pos_last_block = 0
+            if current_position:
+                current_pos_last_block = current_position.block_number
+
+            last_block_num = max(pool["last_block_number"] or 0, current_pos_last_block)
+            if last_block_num:
+                filters["block_number__gt"] = last_block_num
 
             events = list(
                 self._chain.pool_event.objects.filter(

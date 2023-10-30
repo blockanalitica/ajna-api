@@ -44,7 +44,9 @@ def parse_event_data(event):
                 "transferors": [t.lower() for t in event_data["transferors"]],
             }
         case "AuctionNFTSettle":
-            pass  # TODO
+            data = {
+                "borrower": event_data["borrower"].lower(),
+            }
         case "AuctionSettle":
             data = {
                 "borrower": event_data["borrower"].lower(),

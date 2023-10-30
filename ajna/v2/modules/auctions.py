@@ -90,6 +90,14 @@ def _update_kick_locked_amount(chain, auction_uid, is_reward, locked_change):
 
 
 def process_kick_event(chain, event):
+    try:
+        chain.auction_kick.objects.get(order_index=event.order_index)
+    except chain.auction_kick.DoesNotExist:
+        pass
+    else:
+        # If auction_kick already exists, don't process it
+        return
+
     borrower = event.data["borrower"].lower()
     bond = wad_to_decimal(event.data["bond"])
     current_position = chain.current_wallet_position.objects.get(
@@ -153,6 +161,14 @@ def process_kick_event(chain, event):
 
 
 def process_take_event(chain, event):
+    try:
+        chain.auction_take.objects.get(order_index=event.order_index)
+    except chain.auction_take.DoesNotExist:
+        pass
+    else:
+        # If auction_take already exists, don't process it
+        return
+
     borrower = event.data["borrower"].lower()
 
     # get taker from transaction
@@ -189,6 +205,14 @@ def process_take_event(chain, event):
 
 
 def process_bucket_take_event(chain, event):
+    try:
+        chain.auction_bucket_take.objects.get(order_index=event.order_index)
+    except chain.auction_bucket_take.DoesNotExist:
+        pass
+    else:
+        # If auction_bucket_take already exists, don't process it
+        return
+
     borrower = event.data["borrower"].lower()
 
     # get taker from transaction
@@ -226,6 +250,14 @@ def process_bucket_take_event(chain, event):
 
 
 def process_settle_event(chain, event):
+    try:
+        chain.auction_settle.objects.get(order_index=event.order_index)
+    except chain.auction_settle.DoesNotExist:
+        pass
+    else:
+        # If auction_settle already exists, don't process it
+        return
+
     borrower = event.data["borrower"].lower()
 
     auction = chain.auction.objects.get(
@@ -246,6 +278,14 @@ def process_settle_event(chain, event):
 
 
 def process_auction_settle_event(chain, event):
+    try:
+        chain.auction_auction_settle.objects.get(order_index=event.order_index)
+    except chain.auction_auction_settle.DoesNotExist:
+        pass
+    else:
+        # If auction_auction_settle already exists, don't process it
+        return
+
     borrower = event.data["borrower"].lower()
 
     current_position = chain.current_wallet_position.objects.get(

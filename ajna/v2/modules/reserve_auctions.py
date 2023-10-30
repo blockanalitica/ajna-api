@@ -13,6 +13,14 @@ def _generate_reserve_auction_uid(pool_address, current_burn_epoch):
 
 
 def process_kick_reserve_auction_event(chain, event):
+    try:
+        chain.reserve_auction_kick.objects.get(order_index=event.order_index)
+    except chain.reserve_auction_kick.DoesNotExist:
+        pass
+    else:
+        # If reserve_auction_kick already exists, don't process it
+        return
+
     # get kicker from transaction
     transaction_info = chain.eth.get_transaction(event.transaction_hash)
     kicker = transaction_info["from"].lower()
@@ -52,6 +60,14 @@ def process_kick_reserve_auction_event(chain, event):
 
 
 def process_reserve_auction_event(chain, event):
+    try:
+        chain.reserve_auction_take.objects.get(order_index=event.order_index)
+    except chain.reserve_auction_take.DoesNotExist:
+        pass
+    else:
+        # If reserve_auction_take already exists, don't process it
+        return
+
     # get taker from transaction
     transaction_info = chain.eth.get_transaction(event.transaction_hash)
     taker = transaction_info["from"].lower()
