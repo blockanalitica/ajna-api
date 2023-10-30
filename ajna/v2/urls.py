@@ -84,9 +84,9 @@ urlpatterns = [
         name="pools-auctions-to-kick",
     ),
     path(
-        "pools/<pool_address>/reserve-auctions/settled/",
-        pools.PoolReserveAuctionsSettledView.as_view(),
-        name="pools-reserve-auctions-settled",
+        "pools/<pool_address>/reserve-auctions/expired/",
+        pools.PoolReserveAuctionsExpiredView.as_view(),
+        name="pools-reserve-auctions-expired",
     ),
     path(
         "pools/<pool_address>/reserve-auctions/active/",
@@ -224,9 +224,9 @@ urlpatterns = [
         name="reserve-auctions-active",
     ),
     path(
-        "reserve-auctions/settled/",
-        reserve_auctions.ReserveAuctionsSettledView.as_view(),
-        name="reserve-auctions-settled",
+        "reserve-auctions/expired/",
+        reserve_auctions.ReserveAuctionsExpiredView.as_view(),
+        name="reserve-auctions-expired",
     ),
     path(
         "reserve-auctions/<uid>/",
