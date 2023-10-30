@@ -1109,22 +1109,29 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
                 , ra.burn_epoch
                 , ra.ajna_burned
                 , rak.block_number
+                , rak.block_datetime AS kick_datetime
                 , ct.symbol AS collateral_token_symbol
                 , qt.symbol AS quote_token_symbol
+                , 'active' AS type
+                , COUNT(rat.order_index) as take_count
             FROM {reserve_auction_table} ra
             JOIN {reserve_auction_kick_table} rak
                 ON rak.reserve_auction_uid = ra.uid
+            LEFT JOIN {reserve_auction_take_table} rat
+                ON rat.reserve_auction_uid = ra.uid
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
             JOIN {token_table} AS ct
                 ON p.collateral_token_address = ct.underlying_address
             JOIN {token_table} AS qt
                 ON p.quote_token_address = qt.underlying_address
-            WHERE ra.claimable_reserves_remaining > 0
+            WHERE rak.block_datetime + INTERVAL '72 hours' > CURRENT_TIMESTAMP
                 AND ra.pool_address = %s
+            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
+            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
         )
@@ -1132,7 +1139,7 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
         return sql, sql_vars
 
 
-class PoolReserveAuctionsSettledView(RawSQLPaginatedChainView):
+class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
     default_order = "-block_number"
 
     def get_raw_sql(self, pool_address, **kwargs):
@@ -1148,11 +1155,12 @@ class PoolReserveAuctionsSettledView(RawSQLPaginatedChainView):
                 , rak.block_number
                 , ct.symbol AS collateral_token_symbol
                 , qt.symbol AS quote_token_symbol
-                , COUNT(rak.order_index) as take_count
+                , 'expired' AS type
+                , COUNT(rat.order_index) as take_count
             FROM {reserve_auction_table} ra
             JOIN {reserve_auction_kick_table} rak
                 ON rak.reserve_auction_uid = ra.uid
-            JOIN {reserve_auction_take_table} rat
+            LEFT JOIN {reserve_auction_take_table} rat
                 ON rat.reserve_auction_uid = ra.uid
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
@@ -1160,9 +1168,9 @@ class PoolReserveAuctionsSettledView(RawSQLPaginatedChainView):
                 ON p.collateral_token_address = ct.underlying_address
             JOIN {token_table} AS qt
                 ON p.quote_token_address = qt.underlying_address
-            WHERE ra.claimable_reserves_remaining = 0
+            WHERE rak.block_datetime + INTERVAL '72 hours' <= CURRENT_TIMESTAMP
                 AND ra.pool_address = %s
-            GROUP BY 1,2,3,4,5,6,7,8,9,10
+            GROUP BY 1,2,3,4,5,6,7,8,9,10,11
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
