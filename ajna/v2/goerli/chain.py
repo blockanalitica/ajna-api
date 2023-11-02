@@ -25,6 +25,7 @@ MODEL_MAP = {
     "auction_bucket_take": models.V2GoerliAuctionBucketTake,
     "auction_settle": models.V2GoerliAuctionSettle,
     "auction_auction_settle": models.V2GoerliAuctionAuctionSettle,
+    "auction_auction_nft_settle": models.V2GoerliAuctionAuctionNFTSettle,
     "reserve_auction": models.V2GoerliReserveAuction,
     "reserve_auction_kick": models.V2GoerliReserveAuctionKick,
     "reserve_auction_take": models.V2GoerliReserveAuctionTake,
