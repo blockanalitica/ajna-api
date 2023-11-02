@@ -77,6 +77,10 @@ class V2EthereumAuctionAuctionSettle(base.AuctionAuctionSettle):
     pass
 
 
+class V2EthereumAuctionAuctionNFTSettle(base.AuctionAuctionNFTSettle):
+    pass
+
+
 class V2EthereumGrantDistributionPeriod(base.GrantDistributionPeriod):
     pass
 

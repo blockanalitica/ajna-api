@@ -77,6 +77,10 @@ class V2GoerliAuctionAuctionSettle(base.AuctionAuctionSettle):
     pass
 
 
+class V2GoerliAuctionAuctionNFTSettle(base.AuctionAuctionNFTSettle):
+    pass
+
+
 class V2GoerliGrantDistributionPeriod(base.GrantDistributionPeriod):
     pass
 

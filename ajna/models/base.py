@@ -551,6 +551,7 @@ class AuctionKick(models.Model):
     starting_price = models.DecimalField(max_digits=32, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    transaction_hash = models.CharField(max_length=66, null=True)
     collateral_token_price = models.DecimalField(
         max_digits=32, decimal_places=18, null=True
     )
@@ -575,6 +576,7 @@ class AuctionTake(models.Model):
     is_reward = models.BooleanField(default=False)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    transaction_hash = models.CharField(max_length=66, null=True)
     collateral_token_price = models.DecimalField(
         max_digits=32, decimal_places=18, null=True
     )
@@ -600,6 +602,7 @@ class AuctionBucketTake(models.Model):
     is_reward = models.BooleanField(default=False)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    transaction_hash = models.CharField(max_length=66, null=True)
     collateral_token_price = models.DecimalField(
         max_digits=32, decimal_places=18, null=True
     )
@@ -619,6 +622,7 @@ class AuctionSettle(models.Model):
     settled_debt = models.DecimalField(max_digits=32, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    transaction_hash = models.CharField(max_length=66, null=True)
     collateral_token_price = models.DecimalField(
         max_digits=32, decimal_places=18, null=True
     )
@@ -638,6 +642,28 @@ class AuctionAuctionSettle(models.Model):
     collateral = models.DecimalField(max_digits=32, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
+    transaction_hash = models.CharField(max_length=66, null=True)
+    collateral_token_price = models.DecimalField(
+        max_digits=32, decimal_places=18, null=True
+    )
+    quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+
+    class Meta:
+        abstract = True
+        get_latest_by = "block_number"
+        ordering = ("-block_number",)
+
+
+class AuctionAuctionNFTSettle(models.Model):
+    order_index = models.CharField(max_length=26, unique=True)
+    auction_uid = models.TextField()
+    pool_address = models.CharField(max_length=42)
+    borrower = models.CharField(max_length=42)
+    index = models.TextField()
+    collateral = models.DecimalField(max_digits=32, decimal_places=18)
+    block_number = models.BigIntegerField()
+    block_datetime = models.DateTimeField()
+    transaction_hash = models.CharField(max_length=66, null=True)
     collateral_token_price = models.DecimalField(
         max_digits=32, decimal_places=18, null=True
     )
