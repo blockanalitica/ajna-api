@@ -124,6 +124,11 @@ urlpatterns = [
         name="overview",
     ),
     path(
+        "stats/history/",
+        stats.HistoryView.as_view(),
+        name="stats-history",
+    ),
+    path(
         "search/",
         search.SearchView.as_view(),
         name="search",
