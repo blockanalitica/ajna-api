@@ -162,8 +162,7 @@ class TokenView(BaseChainView):
         """.format(
             token_table=self.models.token._meta.db_table,
         )
-        # with connection.cursor() as cursor:
-        #     cursor.execute(sql, [underlying_address])
+
         data = fetch_one(sql, [underlying_address])
 
         if not data:
@@ -293,8 +292,7 @@ class TokenOverviewView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        # with connection.cursor() as cursor:
-        #     cursor.execute(sql, sql_vars)
+
         data = fetch_one(sql, sql_vars)
 
         if not data:

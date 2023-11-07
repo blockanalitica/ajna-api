@@ -224,8 +224,7 @@ class PoolView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        # with connection.cursor() as cursor:
-        #     cursor.execute(sql, sql_vars)
+
         pool_data = fetch_one(sql, sql_vars)
 
         if not pool_data:
@@ -459,8 +458,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        # with connection.cursor() as cursor:
-        #     cursor.execute(sql, [pool_address])
+
         pool_data = fetch_one(sql, [pool_address])
 
         if not pool_data:
@@ -661,8 +659,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        # with connection.cursor() as cursor:
-        #     cursor.execute(sql, [pool_address])
+
         pool_data = fetch_one(sql, [pool_address])
 
         if not pool_data:
@@ -741,8 +738,7 @@ class BucketsListView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        # with connection.cursor() as cursor:
-        #     cursor.execute(sql, [pool_address])
+
         pool_data = fetch_one(sql, [pool_address])
 
         if not pool_data:
@@ -863,8 +859,7 @@ class BucketView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
         )
-        # with connection.cursor() as cursor:
-        #     cursor.execute(sql, [pool_address, bucket_index])
+
         data = fetch_one(sql, [pool_address, bucket_index])
 
         if not data:
