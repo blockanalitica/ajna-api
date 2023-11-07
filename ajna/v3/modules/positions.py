@@ -9,6 +9,7 @@ from ajna.utils.db import fetch_one
 from ajna.utils.wad import wad_to_decimal
 
 from .auctions import (
+    process_auction_NFT_settle_event,
     process_auction_settle_event,
     process_bucket_take_event,
     process_kick_event,
@@ -418,8 +419,10 @@ class EventProcessor:
                 process_bucket_take_event(self._chain, event)
             case "Settle":
                 process_settle_event(self._chain, event)
-            case "AuctionSettle" | "AuctionNFTSettle":
+            case "AuctionSettle":
                 process_auction_settle_event(self._chain, event)
+            case "AuctionNFTSettle":
+                process_auction_NFT_settle_event(self._chain, event)
 
     def _process_reserve_auctions(self, event):
         match event.name:

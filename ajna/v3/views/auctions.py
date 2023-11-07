@@ -279,6 +279,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                 , at.pool_address
                 , at.block_number
                 , at.block_datetime
+                , at.transaction_hash
                 , jsonb_build_object(
                     'taker', at.taker,
                     'amount', at.amount::text,
@@ -299,6 +300,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                 , abt.pool_address
                 , abt.block_number
                 , abt.block_datetime
+                , abt.transaction_hash
                 , jsonb_build_object(
                     'taker', abt.taker,
                     'index', abt.index,
@@ -320,6 +322,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                 , akt.pool_address
                 , akt.block_number
                 , akt.block_datetime
+                , akt.transaction_hash
                 , jsonb_build_object(
                     'kicker', akt.kicker,
                     'debt', akt.debt::text,
@@ -338,6 +341,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                 , ast.pool_address
                 , ast.block_number
                 , ast.block_datetime
+                , ast.transaction_hash
                 , jsonb_build_object(
                     'settled_debt', ast.settled_debt::text
                 ) AS data
@@ -353,20 +357,39 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                 , aast.pool_address
                 , aast.block_number
                 , aast.block_datetime
+                , aast.transaction_hash
                 , jsonb_build_object(
                     'collateral', aast.collateral::text
                 ) AS data
             FROM {auction_auction_settle_table} aast
             WHERE aast.auction_uid = %s
+
+            UNION
+
+            SELECT
+                  aanst.order_index
+                , 'Auction NFT Settle' AS event
+                , aanst.auction_uid
+                , aanst.pool_address
+                , aanst.block_number
+                , aanst.block_datetime
+                , aanst.transaction_hash
+                , jsonb_build_object(
+                    'collateral', aanst.collateral::text,
+                    'index', aanst.index::text
+                ) AS data
+            FROM {auction_auction_nft_settle_table} aanst
+            WHERE aanst.auction_uid = %s
         """.format(
             auction_take_table=self.models.auction_take._meta.db_table,
             auction_bucket_take_table=self.models.auction_bucket_take._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
             auction_settle_table=self.models.auction_settle._meta.db_table,
             auction_auction_settle_table=self.models.auction_auction_settle._meta.db_table,
+            auction_auction_nft_settle_table=self.models.auction_auction_nft_settle._meta.db_table,
         )
 
-        sql_vars = [auction_uid] * 5
+        sql_vars = [auction_uid] * 6
         return sql, sql_vars
 
     def serialize_data(self, data):

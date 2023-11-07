@@ -107,7 +107,6 @@ def parse_event_data(event):
                 "spender": event_data["spender"].lower(),
             }
             pass
-
         case "Kick":
             data = {
                 "bond": wad_to_decimal(event_data["bond"]),
@@ -181,7 +180,6 @@ def parse_event_data(event):
                 "borrower": event_data["borrower"].lower(),
                 "settledDebt": wad_to_decimal(event_data["settledDebt"]),
             }
-
         case "Take":
             data = {
                 "borrower": event_data["borrower"].lower(),
@@ -197,7 +195,6 @@ def parse_event_data(event):
                 "lp": wad_to_decimal(event_data["lp"]),
                 "indexes": event_data["indexes"],
             }
-
         case "UpdateInterestRate":
             data = {
                 "newRate": wad_to_decimal(event_data["newRate"]),
@@ -411,7 +408,7 @@ def fetch_and_save_events_for_all_pools(chain):
         quote_token_price = None
 
         match event["event"]:
-            case "DrawDebt" | "RepayDebt":
+            case "DrawDebt" | "RepayDebt" | "DrawDebtNFT":
                 pool_info = _get_pool_info(chain, pool_address)
                 collateral_token_price = _get_token_price(
                     chain, pool_info["collateral_token_address"], block_datetime
