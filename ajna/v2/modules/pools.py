@@ -458,7 +458,7 @@ class BasePoolManager:
         dt = datetime.now()
 
         # Put pools into more managable chunks so that we don't use too much ram and
-        # so that we don't download half of the blockchain in one multicall call.
+        # we don't download half of the blockchain in one multicall call.
         pool_chunks = chunks(pool_addresses, 100)
         for addresses in pool_chunks:
             pools_data = self._fetch_pools_data(pool_addresses)

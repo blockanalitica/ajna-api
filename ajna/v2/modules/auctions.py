@@ -149,6 +149,7 @@ def process_kick_event(chain, event):
         locked=bond,
         block_number=event.block_number,
         block_datetime=event.block_datetime,
+        transaction_hash=event.transaction_hash,
         kicker=kicker,
         kick_momp=kick_momp,
         starting_price=starting_price,
@@ -194,6 +195,7 @@ def process_take_event(chain, event):
         is_reward=event.data["isReward"],
         block_number=event.block_number,
         block_datetime=event.block_datetime,
+        transaction_hash=event.transaction_hash,
         collateral_token_price=event.collateral_token_price,
         quote_token_price=event.quote_token_price,
     )
@@ -239,6 +241,7 @@ def process_bucket_take_event(chain, event):
         is_reward=event.data["isReward"],
         block_number=event.block_number,
         block_datetime=event.block_datetime,
+        transaction_hash=event.transaction_hash,
         collateral_token_price=event.collateral_token_price,
         quote_token_price=event.quote_token_price,
     )
@@ -270,6 +273,7 @@ def process_settle_event(chain, event):
         settled_debt=wad_to_decimal(event.data["settledDebt"]),
         block_number=event.block_number,
         block_datetime=event.block_datetime,
+        transaction_hash=event.transaction_hash,
         collateral_token_price=event.collateral_token_price,
         quote_token_price=event.quote_token_price,
     )
@@ -301,6 +305,44 @@ def process_auction_settle_event(chain, event):
         collateral=wad_to_decimal(event.data["collateral"]),
         block_number=event.block_number,
         block_datetime=event.block_datetime,
+        transaction_hash=event.transaction_hash,
+        collateral_token_price=event.collateral_token_price,
+        quote_token_price=event.quote_token_price,
+    )
+
+    auction.settled = True
+    auction.settle_time = event.block_datetime
+    auction.save()
+    current_position.in_liquidation = False
+    current_position.save()
+
+
+def process_auction_NFT_settle_event(chain, event):
+    try:
+        chain.auction_auction_nft_settle.objects.get(order_index=event.order_index)
+    except chain.auction_auction_nft_settle.DoesNotExist:
+        pass
+    else:
+        # If auction_auction_nft_settle already exists, don't process it
+        return
+
+    borrower = event.data["borrower"].lower()
+
+    current_position = chain.current_wallet_position.objects.get(
+        pool_address=event.pool_address, wallet_address=borrower, in_liquidation=True
+    )
+    auction = chain.auction.objects.get(
+        pool_address=event.pool_address, borrower=borrower, settled=False
+    )
+    chain.auction_auction_nft_settle.objects.create(
+        order_index=event.order_index,
+        auction_uid=auction.uid,
+        pool_address=event.pool_address,
+        index=event.data["index"],
+        collateral=wad_to_decimal(event.data["collateral"]),
+        block_number=event.block_number,
+        block_datetime=event.block_datetime,
+        transaction_hash=event.transaction_hash,
         collateral_token_price=event.collateral_token_price,
         quote_token_price=event.quote_token_price,
     )

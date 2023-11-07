@@ -11,18 +11,8 @@ class Command(BaseCommand):
         pools = v2.pool.objects.all()
 
         for pool in pools:
-            first_snapshot = (
-                v2.pool_snapshot.objects.filter(address=pool.address)
-                .order_by("datetime")
-                .first()
-            )
-
-            filters = {}
-            if first_snapshot:
-                filters["datetime__lt"] = first_snapshot.datetime
-
             snapshots = v1.pool_snapshot.objects.filter(
-                address=pool.address, **filters
+                address=pool.address,
             ).values()
 
             snaps = []
@@ -31,11 +21,11 @@ class Command(BaseCommand):
                 snaps.append(v2.pool_snapshot(**snapshot))
 
                 if len(snaps) > 100:
-                    v2.pool_snapshot.objects.bulk_create(snaps)
+                    v2.pool_snapshot.objects.bulk_create(snaps, ignore_conflicts=True)
                     snaps = []
 
             if len(snaps) > 100:
-                v2.pool_snapshot.objects.bulk_create(snaps)
+                v2.pool_snapshot.objects.bulk_create(snaps, ignore_conflicts=True)
 
     def handle(self, *args, **options):
         v1_goerli = V1Goerli()

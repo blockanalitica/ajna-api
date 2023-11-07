@@ -1096,7 +1096,14 @@ class AuctionsToKickView(RawSQLPaginatedChainView):
 
 
 class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
-    default_order = "-block_number"
+    default_order = "-kick_datetime"
+    ordering_fields = [
+        "pool_address",
+        "kick_datetime",
+        "claimable_reserves_remaining",
+        "last_take_price",
+        "ajna_burned",
+    ]
 
     def get_raw_sql(self, pool_address, **kwargs):
         sql = """
@@ -1141,6 +1148,14 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
 
 class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
     default_order = "-block_number"
+    ordering_fields = [
+        "block_number",
+        "pool_address",
+        "claimable_reserves",
+        "last_take_price",
+        "take_count",
+        "ajna_burned",
+    ]
 
     def get_raw_sql(self, pool_address, **kwargs):
         sql = """
@@ -1153,6 +1168,8 @@ class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 , ra.burn_epoch
                 , ra.ajna_burned
                 , rak.block_number
+                , rak.transaction_hash
+                , rak.block_datetime
                 , ct.symbol AS collateral_token_symbol
                 , qt.symbol AS quote_token_symbol
                 , 'expired' AS type
@@ -1170,7 +1187,7 @@ class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 ON p.quote_token_address = qt.underlying_address
             WHERE rak.block_datetime + INTERVAL '72 hours' <= CURRENT_TIMESTAMP
                 AND ra.pool_address = %s
-            GROUP BY 1,2,3,4,5,6,7,8,9,10,11
+            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
