@@ -1,4 +1,3 @@
-from django.db import connection
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
@@ -69,9 +68,8 @@ class OverviewView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_one(cursor)
+
+        data = fetch_one(sql, sql_vars)
 
         if not data:
             raise Http404

@@ -170,9 +170,8 @@ class BasePoolManager:
         """.format(
             pool_event_table=self._chain.pool_event._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [self.erc])
-            data = fetch_one(cursor)
+
+        data = fetch_one(sql, [self.erc])
 
         if data:
             from_block_number = data["block_number"] + 1
@@ -549,9 +548,7 @@ class PoolERC20Manager(BasePoolManager):
         )
 
         sql_vars = [dt, pool_address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            volume = fetch_one(cursor)
+        volume = fetch_one(sql, sql_vars)
 
         return volume["amount"] if volume and volume["amount"] else Decimal("0")
 
@@ -641,9 +638,7 @@ class PoolERC721Manager(BasePoolManager):
         )
 
         sql_vars = [dt, pool_address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            volume = fetch_one(cursor)
+        volume = fetch_one(sql, sql_vars)
 
         return volume["amount"] if volume and volume["amount"] else Decimal("0")
 

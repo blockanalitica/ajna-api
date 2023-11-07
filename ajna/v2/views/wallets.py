@@ -183,9 +183,7 @@ class WalletView(BaseChainView):
         )
 
         sql_vars = [address, self.days_ago_dt, address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            wallet = fetch_one(cursor)
+        wallet = fetch_one(sql, sql_vars)
         return wallet
 
     def _get_for_block(self, address, block_number):
@@ -234,9 +232,7 @@ class WalletView(BaseChainView):
         )
 
         sql_vars = [address, block_number, address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            wallet = fetch_one(cursor)
+        wallet = fetch_one(sql, sql_vars)
         return wallet
 
     def get(self, request, address):
@@ -591,9 +587,7 @@ class WalletPoolView(BaseChainView):
         )
 
         sql_vars = [address, pool_address, self.days_ago_dt, address, pool_address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            wallet = fetch_one(cursor)
+        wallet = fetch_one(sql, sql_vars)
 
         if not wallet:
             raise Http404

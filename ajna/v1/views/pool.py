@@ -153,9 +153,8 @@ class PoolView(BaseChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
             draw_debt_table=self.models.draw_debt._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            pool_data = fetch_one(cursor)
+
+        pool_data = fetch_one(sql, sql_vars)
 
         if not pool_data:
             raise Http404
@@ -170,9 +169,7 @@ class PoolView(BaseChainView):
             repay_debt_table=self.models.repay_debt._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(today_sql, [pool_address] * 6)
-            today_volume = fetch_one(cursor)
+        today_volume = fetch_one(today_sql, [pool_address] * 6)
         pool_data["volume"] = today_volume["amount"]
 
         return Response({"results": pool_data}, status.HTTP_200_OK)
@@ -424,9 +421,7 @@ class PoolHistoricView(BaseChainView):
             repay_debt_table=self.models.repay_debt._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(today_sql, [pool_address] * 6)
-            today_data = fetch_one(cursor)
+        today_data = fetch_one(today_sql, [pool_address] * 6)
 
         data.append(
             {
@@ -690,9 +685,8 @@ class PoolEventsView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [pool_address])
-            pool_data = fetch_one(cursor)
+
+        pool_data = fetch_one(sql, [pool_address])
 
         if not pool_data:
             raise Http404

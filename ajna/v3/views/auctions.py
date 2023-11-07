@@ -150,14 +150,10 @@ class AuctionsSettledOverviewView(BaseChainView):
             auction_table=self.models.auction._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [])
-            data = fetch_one(cursor)
 
+        data = fetch_one(sql, [])
         change_sql = "{} AND at.settle_time >= %s".format(sql)
-        with connection.cursor() as cursor:
-            cursor.execute(change_sql, [self.days_ago_dt])
-            change_data = fetch_one(cursor)
+        change_data = fetch_one(change_sql, [self.days_ago_dt])
 
         data["change"] = change_data
         return Response(data, status.HTTP_200_OK)
@@ -262,9 +258,9 @@ class AuctionView(BaseChainView):
             token_table=self.models.token._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_one(cursor)
+        # with connection.cursor() as cursor:
+        #     cursor.execute(sql, sql_vars)
+        data = fetch_one(sql, sql_vars)
 
         if not data:
             raise Http404
