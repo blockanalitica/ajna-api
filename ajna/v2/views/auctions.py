@@ -258,8 +258,7 @@ class AuctionView(BaseChainView):
             token_table=self.models.token._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
-        # with connection.cursor() as cursor:
-        #     cursor.execute(sql, sql_vars)
+
         data = fetch_one(sql, sql_vars)
 
         if not data:
