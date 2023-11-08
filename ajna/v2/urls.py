@@ -179,6 +179,11 @@ urlpatterns = [
         name="wallet-events",
     ),
     path(
+        "wallets/<address>/activity-heatmap/",
+        wallets.WalletActivityHeatmapView.as_view(),
+        name="wallet-activity-heatmap",
+    ),
+    path(
         "notifications/",
         notifications.NotificationsView.as_view(),
         name="notifications",

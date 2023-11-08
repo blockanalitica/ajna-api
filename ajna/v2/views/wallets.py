@@ -1,3 +1,6 @@
+from datetime import date, timedelta
+
+
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
@@ -715,3 +718,34 @@ class WalletsAtRiskView(RawSQLPaginatedChainView):
         )
 
         return sql, [price_change]
+
+
+class WalletActivityHeatmapView(BaseChainView):
+    days_ago_required = False
+    days_ago_default = 365
+    days_ago_options = [30, 90, 365]
+
+    def get(self, request, address):
+        sql = """
+            SELECT
+                  DATE_TRUNC('day', pe.block_datetime) AS date
+                , COUNT(*) AS value
+            FROM {pool_event_table} pe
+            WHERE pe.wallet_addresses @> ARRAY[%s]::varchar[]
+                AND pe.block_datetime > %s
+            GROUP BY 1
+        """.format(
+            pool_event_table=self.models.pool_event._meta.db_table,
+        )
+
+        # We always need to select data from the start of the week
+        dt = date.today() - timedelta(days=self.days_ago)
+        dt = dt - timedelta(days=dt.weekday())
+        sql_vars = [address, dt]
+
+        wallet = fetch_all(sql, sql_vars)
+
+        if not wallet:
+            raise Http404
+
+        return Response(wallet, status.HTTP_200_OK)
