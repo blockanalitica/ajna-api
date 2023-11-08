@@ -1,4 +1,3 @@
-from django.db import connection
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
@@ -612,9 +611,8 @@ class WalletPoolHistoricView(BaseChainView):
         )
 
         sql_vars = [address, pool_address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            history = fetch_all(cursor)
+
+        history = fetch_all(sql, sql_vars)
 
         return Response(history, status.HTTP_200_OK)
 

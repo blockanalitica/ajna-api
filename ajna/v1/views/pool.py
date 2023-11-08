@@ -2,7 +2,6 @@ import csv
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from django.db import connection
 from django.http import Http404, HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
@@ -257,9 +256,7 @@ class BucketsGraphView(BaseChainView):
             token_table=self.models.token._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            buckets = fetch_all(cursor)
+        buckets = fetch_all(sql, sql_vars)
 
         data = []
         if not buckets:
@@ -339,9 +336,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_pool_size(self, pool_address):
@@ -356,9 +352,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_debt(self, pool_address):
@@ -373,9 +368,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_pledged_collateral(self, pool_address):
@@ -390,9 +384,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_volume(self, pool_address):
@@ -407,9 +400,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_volume_snapshot_table=self.models.pool_volume_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
 
         # Get todays volume on the fly
         today_sql = SQL_TODAYS_VOLUME_FOR_POOL.format(
@@ -450,9 +442,8 @@ class PoolHistoricView(BaseChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
             date_trunc=trunc,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_mau_tu(self, pool_address):
@@ -478,9 +469,8 @@ class PoolHistoricView(BaseChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
             date_trunc=trunc,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def get(self, request, pool_address, historic_type):
@@ -804,9 +794,7 @@ class PoolBorrowersCsvView(BaseChainView):
             token_table=self.models.token._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            borrowers = fetch_all(cursor)
+        borrowers = fetch_all(sql, sql_vars)
 
         response = HttpResponse(
             content_type="text/csv",
@@ -907,9 +895,7 @@ class PoolLendersCsvView(BaseChainView):
             bucket_table=self.models.bucket._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            borrowers = fetch_all(cursor)
+        borrowers = fetch_all(sql, sql_vars)
 
         response = HttpResponse(
             content_type="text/csv",

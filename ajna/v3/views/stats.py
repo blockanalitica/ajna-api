@@ -1,4 +1,3 @@
-from django.db import connection
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
@@ -199,8 +198,6 @@ class HistoryView(BaseChainView):
             case _:  # deposit or default
                 sql, sql_vars = self._get_deposit()
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+        data = fetch_all(sql, sql_vars)
 
         return Response(data, status.HTTP_200_OK)

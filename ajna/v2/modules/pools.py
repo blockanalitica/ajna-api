@@ -1,7 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from django.db import connection
 from eth_abi import abi
 from eth_abi.exceptions import InsufficientDataBytes
 from web3 import Web3
@@ -57,9 +56,8 @@ def save_all_pools_volume_for_date(chain, dt):
     )
 
     sql_vars = [dt]
-    with connection.cursor() as cursor:
-        cursor.execute(sql, sql_vars)
-        volumes = fetch_all(cursor)
+
+    volumes = fetch_all(sql, sql_vars)
 
     for volume in volumes:
         chain.pool_volume_snapshot.objects.update_or_create(

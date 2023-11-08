@@ -1,6 +1,5 @@
 import json
 
-from django.db import connection
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
@@ -84,9 +83,7 @@ class AuctionsSettledGraphsView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [date_trunc, from_ts])
-            auctions = fetch_all(cursor)
+        auctions = fetch_all(sql, [date_trunc, from_ts])
         return auctions
 
     def _get_debt_graph_data(self, from_ts, date_trunc):
@@ -113,9 +110,7 @@ class AuctionsSettledGraphsView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [date_trunc, from_ts])
-            auctions = fetch_all(cursor)
+        auctions = fetch_all(sql, [date_trunc, from_ts])
         return auctions
 
     def get(self, request, graph_type):
