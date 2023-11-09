@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 
-from django.db import connection
-
 from ajna.utils.db import fetch_all
 
 log = logging.getLogger(__name__)
@@ -67,9 +65,8 @@ def wallets_at_risk_notification(chain):
         token_table=chain.token._meta.db_table,
         wallet_table=chain.wallet._meta.db_table,
     )
-    with connection.cursor() as cursor:
-        cursor.execute(sql, sql_vars)
-        data = fetch_all(cursor)
+
+    data = fetch_all(sql, sql_vars)
 
     for row in data:
         notification, created = chain.notification.objects.get_or_create(

@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.db import connection
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
@@ -224,9 +223,8 @@ class PoolView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            pool_data = fetch_one(cursor)
+
+        pool_data = fetch_one(sql, sql_vars)
 
         if not pool_data:
             raise Http404
@@ -256,9 +254,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_pool_size(self, pool_address):
@@ -273,9 +270,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_debt(self, pool_address):
@@ -290,9 +286,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_pledged_collateral(self, pool_address):
@@ -307,9 +302,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_volume(self, pool_address):
@@ -324,9 +318,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_volume_snapshot_table=self.models.pool_volume_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
 
         volume = self.models.pool.objects.get(address=pool_address).volume_today
 
@@ -357,9 +350,8 @@ class PoolHistoricView(BaseChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
             date_trunc=trunc,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_mau_tu(self, pool_address):
@@ -385,9 +377,8 @@ class PoolHistoricView(BaseChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
             date_trunc=trunc,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def get(self, request, pool_address, historic_type):
@@ -459,9 +450,8 @@ class PoolEventsView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [pool_address])
-            pool_data = fetch_one(cursor)
+
+        pool_data = fetch_one(sql, [pool_address])
 
         if not pool_data:
             raise Http404
@@ -661,9 +651,8 @@ class PoolPositionsView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [pool_address])
-            pool_data = fetch_one(cursor)
+
+        pool_data = fetch_one(sql, [pool_address])
 
         if not pool_data:
             raise Http404
@@ -741,9 +730,8 @@ class BucketsListView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [pool_address])
-            pool_data = fetch_one(cursor)
+
+        pool_data = fetch_one(sql, [pool_address])
 
         if not pool_data:
             raise Http404
@@ -773,9 +761,7 @@ class BucketsGraphView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            buckets = fetch_all(cursor)
+        buckets = fetch_all(sql, sql_vars)
 
         data = []
         if not buckets:
@@ -863,9 +849,8 @@ class BucketView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [pool_address, bucket_index])
-            data = fetch_one(cursor)
+
+        data = fetch_one(sql, [pool_address, bucket_index])
 
         if not data:
             raise Http404
@@ -903,9 +888,8 @@ class BucketHistoricView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [pool_address, bucket_index])
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, [pool_address, bucket_index])
 
         if not data:
             raise Http404

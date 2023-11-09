@@ -1,4 +1,3 @@
-from django.db import connection
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -41,9 +40,8 @@ class SearchView(BaseChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [search_term] * 4)
-            pools = fetch_all(cursor)
+
+        pools = fetch_all(sql, [search_term] * 4)
         return pools
 
     def _get_tokens(self, search_term):
@@ -93,9 +91,8 @@ class SearchView(BaseChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [search_term] * 2)
-            tokens = fetch_all(cursor)
+
+        tokens = fetch_all(sql, [search_term] * 2)
         return tokens
 
     def get(self, request):

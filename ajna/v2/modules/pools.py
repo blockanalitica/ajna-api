@@ -1,7 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from django.db import connection
 from eth_abi import abi
 from eth_abi.exceptions import InsufficientDataBytes
 from web3 import Web3
@@ -57,9 +56,8 @@ def save_all_pools_volume_for_date(chain, dt):
     )
 
     sql_vars = [dt]
-    with connection.cursor() as cursor:
-        cursor.execute(sql, sql_vars)
-        volumes = fetch_all(cursor)
+
+    volumes = fetch_all(sql, sql_vars)
 
     for volume in volumes:
         chain.pool_volume_snapshot.objects.update_or_create(
@@ -170,9 +168,8 @@ class BasePoolManager:
         """.format(
             pool_event_table=self._chain.pool_event._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [self.erc])
-            data = fetch_one(cursor)
+
+        data = fetch_one(sql, [self.erc])
 
         if data:
             from_block_number = data["block_number"] + 1
@@ -549,9 +546,7 @@ class PoolERC20Manager(BasePoolManager):
         )
 
         sql_vars = [dt, pool_address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            volume = fetch_one(cursor)
+        volume = fetch_one(sql, sql_vars)
 
         return volume["amount"] if volume and volume["amount"] else Decimal("0")
 
@@ -641,9 +636,7 @@ class PoolERC721Manager(BasePoolManager):
         )
 
         sql_vars = [dt, pool_address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            volume = fetch_one(cursor)
+        volume = fetch_one(sql, sql_vars)
 
         return volume["amount"] if volume and volume["amount"] else Decimal("0")
 

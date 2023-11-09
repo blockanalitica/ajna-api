@@ -2,7 +2,6 @@ import csv
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from django.db import connection
 from django.http import Http404, HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
@@ -153,9 +152,8 @@ class PoolView(BaseChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
             draw_debt_table=self.models.draw_debt._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            pool_data = fetch_one(cursor)
+
+        pool_data = fetch_one(sql, sql_vars)
 
         if not pool_data:
             raise Http404
@@ -170,9 +168,7 @@ class PoolView(BaseChainView):
             repay_debt_table=self.models.repay_debt._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(today_sql, [pool_address] * 6)
-            today_volume = fetch_one(cursor)
+        today_volume = fetch_one(today_sql, [pool_address] * 6)
         pool_data["volume"] = today_volume["amount"]
 
         return Response({"results": pool_data}, status.HTTP_200_OK)
@@ -260,9 +256,7 @@ class BucketsGraphView(BaseChainView):
             token_table=self.models.token._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            buckets = fetch_all(cursor)
+        buckets = fetch_all(sql, sql_vars)
 
         data = []
         if not buckets:
@@ -342,9 +336,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_pool_size(self, pool_address):
@@ -359,9 +352,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_debt(self, pool_address):
@@ -376,9 +368,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_pledged_collateral(self, pool_address):
@@ -393,9 +384,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_volume(self, pool_address):
@@ -410,9 +400,8 @@ class PoolHistoricView(BaseChainView):
         """.format(
             pool_volume_snapshot_table=self.models.pool_volume_snapshot._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
 
         # Get todays volume on the fly
         today_sql = SQL_TODAYS_VOLUME_FOR_POOL.format(
@@ -424,9 +413,7 @@ class PoolHistoricView(BaseChainView):
             repay_debt_table=self.models.repay_debt._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(today_sql, [pool_address] * 6)
-            today_data = fetch_one(cursor)
+        today_data = fetch_one(today_sql, [pool_address] * 6)
 
         data.append(
             {
@@ -455,9 +442,8 @@ class PoolHistoricView(BaseChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
             date_trunc=trunc,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def _get_mau_tu(self, pool_address):
@@ -483,9 +469,8 @@ class PoolHistoricView(BaseChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
             date_trunc=trunc,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_all(cursor)
+
+        data = fetch_all(sql, sql_vars)
         return data
 
     def get(self, request, pool_address, historic_type):
@@ -690,9 +675,8 @@ class PoolEventsView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [pool_address])
-            pool_data = fetch_one(cursor)
+
+        pool_data = fetch_one(sql, [pool_address])
 
         if not pool_data:
             raise Http404
@@ -810,9 +794,7 @@ class PoolBorrowersCsvView(BaseChainView):
             token_table=self.models.token._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            borrowers = fetch_all(cursor)
+        borrowers = fetch_all(sql, sql_vars)
 
         response = HttpResponse(
             content_type="text/csv",
@@ -913,9 +895,7 @@ class PoolLendersCsvView(BaseChainView):
             bucket_table=self.models.bucket._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            borrowers = fetch_all(cursor)
+        borrowers = fetch_all(sql, sql_vars)
 
         response = HttpResponse(
             content_type="text/csv",

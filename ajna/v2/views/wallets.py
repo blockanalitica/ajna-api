@@ -1,6 +1,5 @@
 from datetime import date, timedelta
 
-from django.db import connection
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
@@ -185,9 +184,7 @@ class WalletView(BaseChainView):
         )
 
         sql_vars = [address, self.days_ago_dt, address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            wallet = fetch_one(cursor)
+        wallet = fetch_one(sql, sql_vars)
         return wallet
 
     def _get_for_block(self, address, block_number):
@@ -236,9 +233,7 @@ class WalletView(BaseChainView):
         )
 
         sql_vars = [address, block_number, address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            wallet = fetch_one(cursor)
+        wallet = fetch_one(sql, sql_vars)
         return wallet
 
     def get(self, request, address):
@@ -593,9 +588,7 @@ class WalletPoolView(BaseChainView):
         )
 
         sql_vars = [address, pool_address, self.days_ago_dt, address, pool_address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            wallet = fetch_one(cursor)
+        wallet = fetch_one(sql, sql_vars)
 
         if not wallet:
             raise Http404
@@ -620,9 +613,8 @@ class WalletPoolHistoricView(BaseChainView):
         )
 
         sql_vars = [address, pool_address]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            history = fetch_all(cursor)
+
+        history = fetch_all(sql, sql_vars)
 
         return Response(history, status.HTTP_200_OK)
 
@@ -749,9 +741,8 @@ class WalletActivityHeatmapView(BaseChainView):
         dt = date.today() - timedelta(days=self.days_ago)
         dt = dt - timedelta(days=dt.weekday())
         sql_vars = [address, dt]
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            wallet = fetch_all(cursor)
+
+        wallet = fetch_all(sql, sql_vars)
 
         if not wallet:
             raise Http404

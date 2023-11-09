@@ -3,12 +3,13 @@ import logging
 from collections import defaultdict
 from decimal import Decimal
 
-from django.db import IntegrityError, connection
+from django.db import IntegrityError
 
 from ajna.utils.db import fetch_one
 from ajna.utils.wad import wad_to_decimal
 
 from .auctions import (
+    process_auction_NFT_settle_event,
     process_auction_settle_event,
     process_bucket_take_event,
     process_kick_event,
@@ -163,10 +164,9 @@ class EventProcessor:
             """.format(
                 wallet_bucket_state_table=self._chain.wallet_bucket_state._meta.db_table
             )
-            with connection.cursor() as cursor:
-                cursor.execute(sql, [pool_address, wallet_address, block_number])
-                data = fetch_one(cursor)
-                self._wallet_supply[wallet_address] = data["supply"]
+
+            data = fetch_one(sql, [pool_address, wallet_address, block_number])
+            self._wallet_supply[wallet_address] = data["supply"]
         elif wallet_address not in self._wallet_supply:
             with contextlib.suppress(self._chain.current_wallet_position.DoesNotExist):
                 self._wallet_supply[
@@ -419,8 +419,10 @@ class EventProcessor:
                 process_bucket_take_event(self._chain, event)
             case "Settle":
                 process_settle_event(self._chain, event)
-            case "AuctionSettle" | "AuctionNFTSettle":
+            case "AuctionSettle":
                 process_auction_settle_event(self._chain, event)
+            case "AuctionNFTSettle":
+                process_auction_NFT_settle_event(self._chain, event)
 
     def _process_reserve_auctions(self, event):
         match event.name:

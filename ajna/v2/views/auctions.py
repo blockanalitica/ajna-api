@@ -1,6 +1,5 @@
 import json
 
-from django.db import connection
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
@@ -84,9 +83,7 @@ class AuctionsSettledGraphsView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [date_trunc, from_ts])
-            auctions = fetch_all(cursor)
+        auctions = fetch_all(sql, [date_trunc, from_ts])
         return auctions
 
     def _get_debt_graph_data(self, from_ts, date_trunc):
@@ -113,9 +110,7 @@ class AuctionsSettledGraphsView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [date_trunc, from_ts])
-            auctions = fetch_all(cursor)
+        auctions = fetch_all(sql, [date_trunc, from_ts])
         return auctions
 
     def get(self, request, graph_type):
@@ -150,14 +145,10 @@ class AuctionsSettledOverviewView(BaseChainView):
             auction_table=self.models.auction._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [])
-            data = fetch_one(cursor)
 
+        data = fetch_one(sql, [])
         change_sql = "{} AND at.settle_time >= %s".format(sql)
-        with connection.cursor() as cursor:
-            cursor.execute(change_sql, [self.days_ago_dt])
-            change_data = fetch_one(cursor)
+        change_data = fetch_one(change_sql, [self.days_ago_dt])
 
         data["change"] = change_data
         return Response(data, status.HTTP_200_OK)
@@ -262,9 +253,8 @@ class AuctionView(BaseChainView):
             token_table=self.models.token._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, sql_vars)
-            data = fetch_one(cursor)
+
+        data = fetch_one(sql, sql_vars)
 
         if not data:
             raise Http404

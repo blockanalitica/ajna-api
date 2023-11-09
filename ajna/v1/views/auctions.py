@@ -1,4 +1,3 @@
-from django.db import connection
 from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
@@ -71,9 +70,7 @@ class AuctionsSettledGraphsView(BaseChainView):
             liqudation_auction_table=self.models.liqudation_auction._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [date_trunc, from_ts])
-            auctions = fetch_all(cursor)
+        auctions = fetch_all(sql, [date_trunc, from_ts])
         return auctions
 
     def _get_debt_graph_data(self, from_ts, date_trunc):
@@ -94,9 +91,7 @@ class AuctionsSettledGraphsView(BaseChainView):
             liqudation_auction_table=self.models.liqudation_auction._meta.db_table,
         )
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [date_trunc, from_ts])
-            auctions = fetch_all(cursor)
+        auctions = fetch_all(sql, [date_trunc, from_ts])
         return auctions
 
     def get(self, request, graph_type):
@@ -129,9 +124,8 @@ class AuctionsSettledOverviewView(BaseChainView):
         """.format(
             liqudation_auction_table=self.models.liqudation_auction._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql_change, [self.days_ago_dt.timestamp()])
-            change_data = fetch_one(cursor)
+
+        change_data = fetch_one(sql_change, [self.days_ago_dt.timestamp()])
 
         sql = """
             SELECT
@@ -143,14 +137,12 @@ class AuctionsSettledOverviewView(BaseChainView):
         """.format(
             liqudation_auction_table=self.models.liqudation_auction._meta.db_table,
         )
-        with connection.cursor() as cursor:
-            cursor.execute(sql, [])
-            data = fetch_one(cursor)
+
+        data = fetch_one(sql, [])
 
         change_sql = "{} AND la.settle_time >= %s".format(sql)
-        with connection.cursor() as cursor:
-            cursor.execute(change_sql, [self.days_ago_dt.timestamp()])
-            change_data = fetch_one(cursor)
+
+        change_data = fetch_one(change_sql, [self.days_ago_dt.timestamp()])
 
         data["change"] = change_data
         return Response(data, status.HTTP_200_OK)

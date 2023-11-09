@@ -1,8 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
 
-from django.db import connection
-
 from ajna.utils.db import fetch_all
 from ajna.utils.utils import (
     date_to_timestamp,
@@ -410,9 +408,8 @@ def calculate_pool_volume_for_date(models, for_date):
     )
 
     sql_vars = [ts_from, ts_to] * 6
-    with connection.cursor() as cursor:
-        cursor.execute(sql, sql_vars)
-        volumes = fetch_all(cursor)
+
+    volumes = fetch_all(sql, sql_vars)
 
     for volume in volumes:
         if volume["total_amount"]:
