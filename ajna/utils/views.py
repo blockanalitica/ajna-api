@@ -49,9 +49,7 @@ class RawQuerySetPaginator(DefaultPaginator):
 
         query_with_limit = self._get_limit_offset_query(limit, offset)
 
-        with connection.cursor() as cursor:
-            cursor.execute(query_with_limit, self.sql_vars)
-            results = fetch_all(cursor)
+        results = fetch_all(query_with_limit, self.sql_vars)
 
         return self._get_page(results, number, self)
 
