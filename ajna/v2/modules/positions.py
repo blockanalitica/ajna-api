@@ -208,7 +208,7 @@ class EventProcessor:
                     "collateral": collateral,
                     "t0debt": t0debt,
                     "debt": debt,
-                    "t0Np": t0np,
+                    "t0np": t0np,
                     "block_number": block_number,
                     "datetime": self._block_datetimes[block_number],
                 }
