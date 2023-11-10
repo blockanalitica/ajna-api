@@ -17,6 +17,7 @@ WALLETS_AT_RISK_SQL = """
         , x.collateral_token_symbol
         , x.quote_token_symbol
         , x.threshold_price
+        , x.neutral_price
         , wt.last_activity
         , -ROUND(1 -  1 / x.health_rate, 4) AS price_change
     FROM (
@@ -27,6 +28,7 @@ WALLETS_AT_RISK_SQL = """
             , cwpt.t0debt * pt.pending_inflator AS debt
             , cwpt.collateral * ct.underlying_price AS collateral_usd
             , cwpt.t0debt * pt.pending_inflator * qt.underlying_price AS debt_usd
+            , cwpt.t0np * pt.pending_inflator AS neutral_price
             , pt.lup
             , ct.symbol AS collateral_token_symbol
             , qt.symbol AS quote_token_symbol
