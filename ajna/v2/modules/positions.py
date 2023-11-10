@@ -195,6 +195,7 @@ class EventProcessor:
                 data = results[f"{pool_address}:{wallet_address}"]
                 t0debt = wad_to_decimal(data[0])
                 collateral = wad_to_decimal(data[1])
+                t0np = wad_to_decimal(data[2])
 
                 supply = self._fetch_supply_for_wallet(
                     pool_address, updated_bucket_wallets, wallet_address, block_number
@@ -207,6 +208,7 @@ class EventProcessor:
                     "collateral": collateral,
                     "t0debt": t0debt,
                     "debt": debt,
+                    "t0Np": t0np,
                     "block_number": block_number,
                     "datetime": self._block_datetimes[block_number],
                 }
