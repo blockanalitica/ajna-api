@@ -722,7 +722,7 @@ class WalletsAtRiskView(RawSQLPaginatedChainView):
 class WalletActivityHeatmapView(BaseChainView):
     days_ago_required = False
     days_ago_default = 365
-    days_ago_options = [30, 90, 365]
+    days_ago_options = [30, 90, 180, 365]
 
     def get(self, request, address):
         sql = """
@@ -742,9 +742,5 @@ class WalletActivityHeatmapView(BaseChainView):
         dt = dt - timedelta(days=dt.weekday())
         sql_vars = [address, dt]
 
-        wallet = fetch_all(sql, sql_vars)
-
-        if not wallet:
-            raise Http404
-
-        return Response(wallet, status.HTTP_200_OK)
+        data = fetch_all(sql, sql_vars)
+        return Response(data, status.HTTP_200_OK)
