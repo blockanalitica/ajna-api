@@ -135,7 +135,6 @@ def fetch_and_save_grant_proposals(chain):
         else:
             from_block = chain.grant_fund_start_block
 
-    from_block = chain.grant_fund_start_block
     to_block = chain.get_latest_block()
 
     events = chain.get_events_for_contract(

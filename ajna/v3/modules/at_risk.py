@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 
+from ajna.constants import MAX_INFLATED_PRICE
 from ajna.utils.db import fetch_all
 
 log = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ WALLETS_AT_RISK_SQL = """
         , x.collateral_token_symbol
         , x.quote_token_symbol
         , x.threshold_price
+        , x.neutral_price
         , wt.last_activity
         , -ROUND(1 -  1 / x.health_rate, 4) AS price_change
     FROM (
@@ -27,6 +29,14 @@ WALLETS_AT_RISK_SQL = """
             , cwpt.t0debt * pt.pending_inflator AS debt
             , cwpt.collateral * ct.underlying_price AS collateral_usd
             , cwpt.t0debt * pt.pending_inflator * qt.underlying_price AS debt_usd
+            , CASE
+                WHEN NULLIF(cwpt.collateral, 0) IS NULL
+                THEN NULL
+                ELSE LEAST(
+                    cwpt.t0debt * pt.pending_inflator  / cwpt.collateral * cwpt.np_tp_ratio,
+                    %s
+                )
+              END AS neutral_price
             , pt.lup
             , ct.symbol AS collateral_token_symbol
             , qt.symbol AS quote_token_symbol
@@ -58,7 +68,7 @@ WALLETS_AT_RISK_SQL = """
 
 
 def wallets_at_risk_notification(chain):
-    sql_vars = [0]
+    sql_vars = [MAX_INFLATED_PRICE, 0]
     sql = WALLETS_AT_RISK_SQL.format(
         current_wallet_position_table=chain.current_wallet_position._meta.db_table,
         pool_table=chain.pool._meta.db_table,

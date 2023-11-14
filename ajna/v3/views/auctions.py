@@ -4,6 +4,7 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 
+from ajna.constants import MAX_INFLATED_PRICE
 from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
@@ -403,5 +404,5 @@ class AuctionsToKickView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
-        sql_vars = [0]
+        sql_vars = [MAX_INFLATED_PRICE, 0]
         return sql, sql_vars

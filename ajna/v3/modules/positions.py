@@ -195,7 +195,7 @@ class EventProcessor:
                 data = results[f"{pool_address}:{wallet_address}"]
                 t0debt = wad_to_decimal(data[0])
                 collateral = wad_to_decimal(data[1])
-
+                np_tp_ratio = wad_to_decimal(data[2])
                 supply = self._fetch_supply_for_wallet(
                     pool_address, updated_bucket_wallets, wallet_address, block_number
                 )
@@ -207,6 +207,7 @@ class EventProcessor:
                     "collateral": collateral,
                     "t0debt": t0debt,
                     "debt": debt,
+                    "np_tp_ratio": np_tp_ratio,
                     "block_number": block_number,
                     "datetime": self._block_datetimes[block_number],
                 }
@@ -333,8 +334,8 @@ class EventProcessor:
                             defaults={
                                 "data": {
                                     "amount": amount,
-                                    "quote_token_price": event.quote_token_price,
                                     "amount_usd": amount_usd,
+                                    "quote_token_price": event.quote_token_price,
                                     "lp_awarded": wad_to_decimal(
                                         event.data["lpAwarded"]
                                     ),
@@ -366,6 +367,8 @@ class EventProcessor:
                             },
                         )
             case "AddCollateral":
+                amount = wad_to_decimal(event.data["amount"])
+                amount_usd = amount * event.collateral_token_price
                 self._chain.notification.objects.get_or_create(
                     type=event.name,
                     key=event.order_index,
@@ -374,13 +377,18 @@ class EventProcessor:
                         "data": {
                             "actor": event.data["actor"],
                             "index": event.data["index"],
-                            "amount": wad_to_decimal(event.data["amount"]),
+                            "amount": amount,
+                            "amount_usd": amount_usd,
+                            "collateral_token_price": event.collateral_token_price,
                             "lpAwarded": wad_to_decimal(event.data["lpAwarded"]),
                         },
                         "datetime": event.block_datetime,
                     },
                 )
             case "Kick":
+                kick = self._chain.auction_kick.objects.get(
+                    order_index=event.order_index
+                )
                 self._chain.notification.objects.get_or_create(
                     type=event.name,
                     key=event.order_index,
@@ -391,11 +399,18 @@ class EventProcessor:
                             "debt": wad_to_decimal(event.data["debt"]),
                             "borrower": event.data["borrower"],
                             "collateral": wad_to_decimal(event.data["collateral"]),
+                            "collateral_token_price": event.collateral_token_price,
+                            "quote_token_price": event.quote_token_price,
+                            "auction_uid": kick.auction_uid,
                         },
                         "datetime": event.block_datetime,
                     },
                 )
             case "AuctionSettle":
+                settle = self._chain.auction_auction_settle.objects.get(
+                    order_index=event.order_index
+                )
+
                 self._chain.notification.objects.get_or_create(
                     type=event.name,
                     key=event.order_index,
@@ -404,6 +419,8 @@ class EventProcessor:
                         "data": {
                             "borrower": event.data["borrower"],
                             "collateral": wad_to_decimal(event.data["collateral"]),
+                            "collateral_token_price": event.collateral_token_price,
+                            "auction_uid": settle.auction_uid,
                         },
                         "datetime": event.block_datetime,
                     },
@@ -440,9 +457,9 @@ class EventProcessor:
             ).order_by("order_index")
 
             for event in events:
-                self._create_notifications(event)
                 self._process_auctions(event)
                 self._process_reserve_auctions(event)
+                self._create_notifications(event)
 
             # Update pools last_block_number to the last event block number
             # so on the next run we start from that block number onwards
