@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "ajna",
-            "0066_rename_nptpratio_v1ethereumcurrentwalletpoolposition_np_tp_ratio_and_more",
+            "0067_v1ethereumpool_collateral_token_symbol_and_more",
         ),
     ]
 

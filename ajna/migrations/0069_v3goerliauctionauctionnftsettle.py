@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("ajna", "0067_alter_v1ethereumpool_momp_and_more"),
+        ("ajna", "0068_alter_v1ethereumpool_momp_and_more"),
     ]
 
     operations = [
