@@ -65,6 +65,8 @@ class Pool(PoolBase):
     created_at_block_number = models.BigIntegerField()
     created_at_timestamp = models.BigIntegerField()
     last_block_number = models.BigIntegerField(null=True)
+    collateral_token_symbol = models.CharField(max_length=64, null=True)
+    quote_token_symbol = models.CharField(max_length=64, null=True)
 
     def __str__(self):
         return self.address

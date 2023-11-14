@@ -14,19 +14,14 @@ class NotificationsView(RawSQLPaginatedChainView):
                 , nt.data
                 , nt.datetime
                 , nt.pool_address
-                , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS quote_token_symbol
+                , p.collateral_token_symbol AS collateral_token_symbol
+                , p.quote_token_symbol AS quote_token_symbol
             FROM {notification_table} nt
             JOIN {pool_table} p
                 ON nt.pool_address = p.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
         """.format(
             notification_table=self.models.notification._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
-            token_table=self.models.token._meta.db_table,
         )
         sql_vars = []
         return sql, sql_vars
