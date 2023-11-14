@@ -22,32 +22,32 @@ SCHEDULE = {
     "fetch_market_price_task": {
         "schedule": crontab(minute="*/1"),
     },
-    # "fetch_and_save_events_for_all_pools_task": {
-    #     "schedule": crontab(minute="*/2"),
-    # },
+    "fetch_and_save_events_for_all_pools_task": {
+        "schedule": crontab(minute="*/2"),
+    },
     "fetch_erc20_pool_created_events_task": {
         "schedule": crontab(minute="*/5"),
     },
     "fetch_erc721_pool_created_events_task": {
         "schedule": crontab(minute="*/5"),
     },
-    # "fetch_erc20_pools_data_task": {
-    #     "schedule": crontab(minute="*/5"),
-    # },
-    # "fetch_erc721_pools_data_task": {
-    #     "schedule": crontab(minute="*/5"),
-    # },
-    # "process_events_for_all_pools_task": {
-    #     "schedule": crontab(minute="*/5"),
-    # },
-    # "fetch_and_save_grant_proposals_task": {
-    #     "schedule": crontab(minute="*/5"),
-    # },
-    # "save_all_pools_volume_for_yesterday_task": {
-    #     # Run 10 past midnight to make sure we get all events saved before taking
-    #     # the snapshot
-    #     "schedule": crontab(minute="10", hour="0"),
-    # },
+    "fetch_erc20_pools_data_task": {
+        "schedule": crontab(minute="*/5"),
+    },
+    "fetch_erc721_pools_data_task": {
+        "schedule": crontab(minute="*/5"),
+    },
+    "process_events_for_all_pools_task": {
+        "schedule": crontab(minute="*/5"),
+    },
+    "fetch_and_save_grant_proposals_task": {
+        "schedule": crontab(minute="*/5"),
+    },
+    "save_all_pools_volume_for_yesterday_task": {
+        # Run 10 past midnight to make sure we get all events saved before taking
+        # the snapshot
+        "schedule": crontab(minute="10", hour="0"),
+    },
 }
 
 
@@ -67,8 +67,8 @@ def fetch_erc20_pool_created_events_task():
 @app.task
 def fetch_erc721_pool_created_events_task():
     chain = Goerli()
-    erc20_manager = PoolERC721Manager(chain)
-    erc20_manager.fetch_and_save_pool_created_events()
+    erc721_manager = PoolERC721Manager(chain)
+    erc721_manager.fetch_and_save_pool_created_events()
 
 
 @app.task
@@ -81,8 +81,8 @@ def fetch_erc20_pools_data_task():
 @app.task
 def fetch_erc721_pools_data_task():
     chain = Goerli()
-    erc20_manager = PoolERC721Manager(chain)
-    erc20_manager.fetch_and_save_pools_data()
+    erc721_manager = PoolERC721Manager(chain)
+    erc721_manager.fetch_and_save_pools_data()
 
 
 @app.task

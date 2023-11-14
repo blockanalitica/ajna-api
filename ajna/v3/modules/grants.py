@@ -129,13 +129,11 @@ def fetch_and_save_grant_proposals(chain):
     from_block = cache.get(cache_key)
     if not from_block:
         last_event = chain.grant_event.objects.order_by("-order_index").first()
-
         if last_event:
             from_block = last_event.block_number + 1
         else:
             from_block = chain.grant_fund_start_block
 
-    from_block = chain.grant_fund_start_block
     to_block = chain.get_latest_block()
 
     events = chain.get_events_for_contract(

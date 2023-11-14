@@ -511,6 +511,7 @@ class WalletPoolView(BaseChainView):
                 , x.collateral_token_symbol
                 , x.quote_token_symbol
                 , x.lup
+                , x.neutral_price
                 , CASE
                     WHEN NULLIF(x.collateral, 0) IS NULL
                         OR NULLIF(x.debt, 0) IS NULL
@@ -557,6 +558,7 @@ class WalletPoolView(BaseChainView):
                     , cwp.collateral * ct.underlying_price as collateral_usd
                     , cwp.t0debt * p.pending_inflator AS debt
                     , cwp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
+                    , cwp.t0np * p.pending_inflator AS neutral_price
                     , ct.symbol AS collateral_token_symbol
                     , qt.symbol AS quote_token_symbol
                     , p.t0debt * p.pending_inflator AS pool_debt

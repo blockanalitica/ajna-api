@@ -27,7 +27,7 @@ class PoolBase(models.Model):
     htp_index = models.IntegerField()
     lup = models.DecimalField(max_digits=32, decimal_places=18)
     lup_index = models.IntegerField()
-    momp = models.DecimalField(max_digits=32, decimal_places=18)
+    momp = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     reserves = models.DecimalField(max_digits=32, decimal_places=18)
     claimable_reserves = models.DecimalField(max_digits=32, decimal_places=18)
     claimable_reserves_remaining = models.DecimalField(max_digits=32, decimal_places=18)

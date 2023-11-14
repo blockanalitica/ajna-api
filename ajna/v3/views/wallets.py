@@ -4,6 +4,7 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 
+from ajna.constants import MAX_INFLATED_PRICE
 from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
@@ -521,6 +522,12 @@ class WalletPoolView(BaseChainView):
                     WHEN NULLIF(x.collateral, 0) IS NULL
                         OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
+                    ELSE LEAST(x.debt / x.collateral * x.np_tp_ratio, %s)
+                  END AS neutral_price
+                , CASE
+                    WHEN NULLIF(x.collateral, 0) IS NULL
+                        OR NULLIF(x.debt, 0) IS NULL
+                    THEN NULL
                     ELSE
                         CASE
                             WHEN x.lup / (x.debt / x.collateral) > 1000
@@ -557,6 +564,7 @@ class WalletPoolView(BaseChainView):
                     , cwp.collateral * ct.underlying_price as collateral_usd
                     , cwp.t0debt * p.pending_inflator AS debt
                     , cwp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
+                    , cwp.np_tp_ratio
                     , ct.symbol AS collateral_token_symbol
                     , qt.symbol AS quote_token_symbol
                     , p.t0debt * p.pending_inflator AS pool_debt
@@ -587,7 +595,14 @@ class WalletPoolView(BaseChainView):
             wallet_position_table=self.models.wallet_position._meta.db_table,
         )
 
-        sql_vars = [address, pool_address, self.days_ago_dt, address, pool_address]
+        sql_vars = [
+            address,
+            pool_address,
+            self.days_ago_dt,
+            MAX_INFLATED_PRICE,
+            address,
+            pool_address,
+        ]
         wallet = fetch_one(sql, sql_vars)
 
         if not wallet:
@@ -716,7 +731,7 @@ class WalletsAtRiskView(RawSQLPaginatedChainView):
             wallet_table=self.models.wallet._meta.db_table,
         )
 
-        return sql, [price_change]
+        return sql, [MAX_INFLATED_PRICE, price_change]
 
 
 class WalletActivityHeatmapView(BaseChainView):

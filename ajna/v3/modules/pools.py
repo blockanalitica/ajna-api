@@ -308,14 +308,6 @@ class BasePoolManager:
                     (
                         self._chain.pool_info_address,
                         [
-                            "momp(address)(uint256)",
-                            pool_address,
-                        ],
-                        [f"{pool_address}:momp", None],
-                    ),
-                    (
-                        self._chain.pool_info_address,
-                        [
                             (
                                 "poolReservesInfo(address)("
                                 "(uint256,uint256,uint256,uint256,uint256))"
@@ -393,7 +385,6 @@ class BasePoolManager:
             interest_rate_info = data[f"{pool_address}:interestRateInfo"]
             debt_info = data[f"{pool_address}:debtInfo"]
             lim = data[f"{pool_address}:lenderInterestMargin"]
-            momp = data[f"{pool_address}:momp"]
             pool_reserves_info = data[f"{pool_address}:poolReservesInfo"]
             utilization_info = data[f"{pool_address}:poolUtilizationInfo"]
             inflator_info = data[f"{pool_address}:inflatorInfo"]
@@ -436,7 +427,6 @@ class BasePoolManager:
                 "htp_index": prices_info[3],
                 "lup": wad_to_decimal(prices_info[4]),
                 "lup_index": prices_info[5],
-                "momp": wad_to_decimal(momp),
                 "reserves": wad_to_decimal(pool_reserves_info[0]),
                 "claimable_reserves": wad_to_decimal(pool_reserves_info[1]),
                 "claimable_reserves_remaining": wad_to_decimal(pool_reserves_info[2]),
