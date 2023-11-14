@@ -635,21 +635,16 @@ class WalletPoolEventsView(RawSQLPaginatedChainView):
                 , pe.collateral_token_price
                 , pe.quote_token_price
                 , pe.order_index
-                , qt.symbol AS quote_token_symbol
-                , ct.symbol AS collateral_token_symbol
+                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol AS collateral_token_symbol
             FROM {pool_event_table} pe
             JOIN {pool_table} p
                 ON pe.pool_address = p.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE pe.wallet_addresses @> ARRAY[%s]::varchar[]
                 AND pe.pool_address = %s
         """.format(
             pool_event_table=self.models.pool_event._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
-            token_table=self.models.token._meta.db_table,
         )
 
         sql_vars = [address, pool_address]
