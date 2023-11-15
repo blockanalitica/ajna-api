@@ -85,13 +85,14 @@ class BasePoolManager:
 
     def token_info(self, token_address):
         if token_address not in self._token_info:
-            token = self._chain.token.objects.only("decimals", "underlying_price").get(
-                underlying_address=token_address
-            )
+            token = self._chain.token.objects.only(
+                "decimals", "underlying_price", "symbol"
+            ).get(underlying_address=token_address)
 
             info = {
                 "decimals": token.decimals,
                 "price": token.underlying_price,
+                "symbol": token.symbol,
             }
 
             self._token_info[token_address] = info
@@ -459,6 +460,9 @@ class BasePoolManager:
                     address, dt.date()
                 )
 
+                collateral_token = self.token_info(pool_data["collateral_token_address"])
+                quote_token = self.token_info(pool_data["quote_token_address"])
+
                 try:
                     pool = self._chain.pool.objects.get(address=address)
                 except self._chain.pool.DoesNotExist:
@@ -474,6 +478,8 @@ class BasePoolManager:
                         ),
                         erc=self.erc,
                         allowed_token_ids=created_event.data.get("token_ids"),
+                        collateral_token_symbol=collateral_token["symbol"],
+                        quote_token_symbol=quote_token["symbol"],
                     )
 
                 for field, value in pool_data.items():
@@ -481,9 +487,6 @@ class BasePoolManager:
 
                 pool.datetime = datetime.now()
                 pool.save()
-
-                collateral_token = self.token_info(pool.collateral_token_address)
-                quote_token = self.token_info(pool.quote_token_address)
 
                 # Add fields that we need for pool snapshot
                 pool_data["collateral_token_price"] = collateral_token["price"]
