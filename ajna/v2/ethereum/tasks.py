@@ -5,6 +5,7 @@ from celery.schedules import crontab
 
 from ajna.celery import app
 
+from ..modules.at_risk import wallets_at_risk_notification
 from ..modules.events import fetch_and_save_events_for_all_pools
 from ..modules.grants import fetch_and_save_grant_proposals
 from ..modules.pools import (
@@ -43,6 +44,9 @@ SCHEDULE = {
     # "fetch_and_save_grant_proposals_task": {
     #     "schedule": crontab(minute="*/5"),
     # },
+    "save_wallets_at_risk_notification_task": {
+        "schedule": crontab(minute="*/5"),
+    },
     "save_all_pools_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
         # the snapshot
@@ -111,3 +115,9 @@ def save_all_pools_volume_for_yesterday_task():
 def fetch_and_save_grant_proposals_task():
     chain = Ethereum()
     fetch_and_save_grant_proposals(chain)
+
+
+@app.task
+def save_wallets_at_risk_notification_task():
+    chain = Ethereum()
+    wallets_at_risk_notification(chain)
