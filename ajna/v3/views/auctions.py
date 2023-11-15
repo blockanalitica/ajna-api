@@ -33,8 +33,8 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.debt * ak.quote_token_price AS debt_usd
                 , at.collateral * ak.collateral_token_price AS collateral_usd
                 , at.pool_address
-                , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS quote_token_symbol
+                , p.collateral_token_symbol AS collateral_token_symbol
+                , p.collateral_token_symbol AS quote_token_symbol
             FROM {auction_table} at
             JOIN {auction_kick_table} ak
                 ON at.uid = ak.auction_uid
@@ -42,14 +42,9 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 ON at.pool_address = p.address
             LEFT JOIN {wallet_table} w
                 on at.borrower = w.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE at.settled = TRUE
                 AND at.settle_time >= %s
         """.format(
-            token_table=self.models.token._meta.db_table,
             auction_table=self.models.auction._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
@@ -64,7 +59,7 @@ class AuctionsSettledGraphsView(BaseChainView):
         sql = """
             SELECT
                   DATE_TRUNC(%s, at.settle_time) AS date
-                , ct.symbol AS symbol
+                , p.collateral_token_symbol AS symbol
                 , SUM(at.collateral) AS amount
                 , SUM(at.collateral * ak.collateral_token_price) AS amount_usd
             FROM {auction_table} at
@@ -72,13 +67,10 @@ class AuctionsSettledGraphsView(BaseChainView):
                 ON at.uid = ak.auction_uid
             JOIN {pool_table} p
                 ON at.pool_address = p.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
             WHERE at.settled = TRUE
                 AND at.settle_time >= %s
             GROUP BY 1, 2
         """.format(
-            token_table=self.models.token._meta.db_table,
             auction_table=self.models.auction._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
@@ -91,7 +83,7 @@ class AuctionsSettledGraphsView(BaseChainView):
         sql = """
             SELECT
                   DATE_TRUNC(%s, at.settle_time) AS date
-                , qt.symbol AS symbol
+                , p.quote_token_symbol AS symbol
                 , SUM(at.debt) AS amount
                 , SUM(at.debt * ak.quote_token_price) AS amount_usd
             FROM {auction_table} at
@@ -99,13 +91,10 @@ class AuctionsSettledGraphsView(BaseChainView):
                 ON at.uid = ak.auction_uid
             JOIN {pool_table} p
                 ON at.pool_address = p.address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE at.settled = TRUE
                 AND at.settle_time >= %s
             GROUP BY 1, 2
         """.format(
-            token_table=self.models.token._meta.db_table,
             auction_table=self.models.auction._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
@@ -174,8 +163,8 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 , at.collateral_remaining * ak.collateral_token_price AS collateral_remaining_usd
                 , at.borrower
                 , w.eoa AS borrower_eoa
-                , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS quote_token_symbol
+                , p.collateral_token_symbol AS collateral_token_symbol
+                , p.quote_token_symbol AS quote_token_symbol
                 , ak.block_datetime AS kick_time
                 , p.lup
                 , p.lup * ak.quote_token_price AS lup_usd
@@ -186,13 +175,8 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 ON at.pool_address = p.address
             LEFT JOIN {wallet_table} w
                 on at.borrower = w.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE at.settled = False
         """.format(
-            token_table=self.models.token._meta.db_table,
             auction_table=self.models.auction._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
@@ -230,10 +214,10 @@ class AuctionView(BaseChainView):
                 , ak.bond
                 , ak.bond * ak.quote_token_price AS bond_usd
                 , ak.locked
-                , ak.kick_momp
+                , ak.reference_price
                 , ak.starting_price
-                , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS quote_token_symbol
+                , p.collateral_token_symbol AS collateral_token_symbol
+                , p.quote_token_symbol AS quote_token_symbol
                 , p.lup
             FROM {auction_table} at
             LEFT JOIN {wallet_table} w
@@ -242,16 +226,11 @@ class AuctionView(BaseChainView):
                 ON at.uid = ak.auction_uid
             JOIN {pool_table} p
                 ON at.pool_address = p.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE at.uid = %s
         """.format(
             auction_table=self.models.auction._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
-            token_table=self.models.token._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
 
