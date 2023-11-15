@@ -460,7 +460,9 @@ class BasePoolManager:
                     address, dt.date()
                 )
 
-                collateral_token = self.token_info(pool_data["collateral_token_address"])
+                collateral_token = self.token_info(
+                    pool_data["collateral_token_address"]
+                )
                 quote_token = self.token_info(pool_data["quote_token_address"])
 
                 try:

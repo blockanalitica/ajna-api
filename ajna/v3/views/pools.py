@@ -439,16 +439,11 @@ class PoolEventsView(RawSQLPaginatedChainView):
         sql = """
             SELECT
                   pool.address
-                , collateral_token.symbol AS collateral_token_symbol
-                , quote_token.symbol AS quote_token_symbol
+                , pool.collateral_token_symbol AS collateral_token_symbol
+                , pool.quote_token_symbol AS quote_token_symbol
             FROM {pool_table} AS pool
-            JOIN {token_table} AS collateral_token
-                ON pool.collateral_token_address = collateral_token.underlying_address
-            JOIN {token_table} AS quote_token
-                ON pool.quote_token_address = quote_token.underlying_address
             WHERE pool.address = %s
         """.format(
-            token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
 
@@ -640,16 +635,11 @@ class PoolPositionsView(RawSQLPaginatedChainView):
         sql = """
             SELECT
                   pool.address
-                , collateral_token.symbol AS collateral_token_symbol
-                , quote_token.symbol AS quote_token_symbol
+                , pool.collateral_token_symbol AS collateral_token_symbol
+                , pool.quote_token_symbol AS quote_token_symbol
             FROM {pool_table} AS pool
-            JOIN {token_table} AS collateral_token
-                ON pool.collateral_token_address = collateral_token.underlying_address
-            JOIN {token_table} AS quote_token
-                ON pool.quote_token_address = quote_token.underlying_address
             WHERE pool.address = %s
         """.format(
-            token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
 
@@ -719,16 +709,11 @@ class BucketsListView(RawSQLPaginatedChainView):
         sql = """
             SELECT
                   pool.address
-                , collateral_token.symbol AS collateral_token_symbol
-                , quote_token.symbol AS quote_token_symbol
+                , pool.collateral_token_symbol AS collateral_token_symbol
+                , pool.quote_token_symbol AS quote_token_symbol
             FROM {pool_table} AS pool
-            JOIN {token_table} AS collateral_token
-                ON pool.collateral_token_address = collateral_token.underlying_address
-            JOIN {token_table} AS quote_token
-                ON pool.quote_token_address = quote_token.underlying_address
             WHERE pool.address = %s
         """.format(
-            token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
         )
 
@@ -989,8 +974,8 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.debt * ak.quote_token_price AS debt_usd
                 , at.collateral * ak.collateral_token_price AS collateral_usd
                 , at.pool_address
-                , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS quote_token_symbol
+                , p.collateral_token_symbol AS collateral_token_symbol
+                , p.quote_token_symbol AS quote_token_symbol
             FROM {auction_table} at
             JOIN {auction_kick_table} ak
                 ON at.uid = ak.auction_uid
@@ -998,14 +983,9 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 ON at.pool_address = p.address
             LEFT JOIN {wallet_table} w
                 on at.borrower = w.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE at.settled = TRUE
                 AND p.address = %s
         """.format(
-            token_table=self.models.token._meta.db_table,
             auction_table=self.models.auction._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
@@ -1035,8 +1015,8 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 , at.borrower
                 , w.eoa AS borrower_eoa
                 , w.address
-                , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS quote_token_symbol
+                , p.collateral_token_symbol AS collateral_token_symbol
+                , p.quote_token_symbol AS quote_token_symbol
                 , ak.block_datetime AS kick_time
                 , p.lup
                 , p.lup * ak.quote_token_price AS lup_usd
@@ -1047,14 +1027,9 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 ON at.pool_address = p.address
             LEFT JOIN {wallet_table} w
                 on at.borrower = w.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE at.settled = False
                 AND p.address = %s
         """.format(
-            token_table=self.models.token._meta.db_table,
             auction_table=self.models.auction._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             auction_kick_table=self.models.auction_kick._meta.db_table,
@@ -1102,8 +1077,8 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
                 , ra.ajna_burned
                 , rak.block_number
                 , rak.block_datetime AS kick_datetime
-                , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS quote_token_symbol
+                , p.collateral_token_symbol AS collateral_token_symbol
+                , p.quote_token_symbol AS quote_token_symbol
                 , 'active' AS type
                 , COUNT(rat.order_index) as take_count
             FROM {reserve_auction_table} ra
@@ -1113,10 +1088,6 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
                 ON rat.reserve_auction_uid = ra.uid
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE rak.block_datetime + INTERVAL '72 hours' > CURRENT_TIMESTAMP
                 AND ra.pool_address = %s
             GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
@@ -1125,7 +1096,6 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
             reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
-            token_table=self.models.token._meta.db_table,
         )
         sql_vars = [pool_address]
         return sql, sql_vars
@@ -1155,8 +1125,8 @@ class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 , rak.block_number
                 , rak.transaction_hash
                 , rak.block_datetime
-                , ct.symbol AS collateral_token_symbol
-                , qt.symbol AS quote_token_symbol
+                , p.collateral_token_symbol AS collateral_token_symbol
+                , p.quote_token_symbol AS quote_token_symbol
                 , 'expired' AS type
                 , COUNT(rat.order_index) as take_count
             FROM {reserve_auction_table} ra
@@ -1166,10 +1136,6 @@ class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 ON rat.reserve_auction_uid = ra.uid
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE rak.block_datetime + INTERVAL '72 hours' <= CURRENT_TIMESTAMP
                 AND ra.pool_address = %s
             GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
@@ -1178,7 +1144,6 @@ class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
             reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
-            token_table=self.models.token._meta.db_table,
         )
         sql_vars = [pool_address]
         return sql, sql_vars
