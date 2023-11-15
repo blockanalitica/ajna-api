@@ -114,7 +114,7 @@ def process_kick_event(chain, event):
             [
                 "auctionInfo(address)("
                 "(address,uint256,uint256,uint256,uint256,uint256,address,"
-                "address,address,bool))",
+                "address,address))",
                 event.data["borrower"],
             ],
             ["auctionInfo", None],
@@ -133,7 +133,7 @@ def process_kick_event(chain, event):
 
     mc_data = chain.multicall(calls, block_identifier=event.block_number)
 
-    kick_momp = wad_to_decimal(mc_data["auctionInfo"][4])
+    reference_price = wad_to_decimal(mc_data["auctionInfo"][4])
     starting_price = wad_to_decimal(mc_data["auctionStatus"][4])
 
     kick = chain.auction_kick.objects.create(
@@ -151,7 +151,7 @@ def process_kick_event(chain, event):
         block_datetime=event.block_datetime,
         transaction_hash=event.transaction_hash,
         kicker=kicker,
-        kick_momp=kick_momp,
+        reference_price=reference_price,
         starting_price=starting_price,
         collateral_token_price=event.collateral_token_price,
         quote_token_price=event.quote_token_price,

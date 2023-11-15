@@ -230,7 +230,7 @@ class AuctionView(BaseChainView):
                 , ak.bond
                 , ak.bond * ak.quote_token_price AS bond_usd
                 , ak.locked
-                , ak.kick_momp
+                , ak.reference_price
                 , ak.starting_price
                 , ct.symbol AS collateral_token_symbol
                 , qt.symbol AS quote_token_symbol
