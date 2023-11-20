@@ -94,6 +94,11 @@ urlpatterns = [
         name="pools-reserve-auctions-active",
     ),
     path(
+        "pools/<pool_address>/at-risk/",
+        pools.PoolAtRiskView.as_view(),
+        name="pool-at-risk",
+    ),
+    path(
         "tokens/",
         tokens.TokensView.as_view(),
         name="tokens",
