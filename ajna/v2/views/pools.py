@@ -1146,3 +1146,30 @@ class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
         )
         sql_vars = [pool_address]
         return sql, sql_vars
+
+
+class PoolAtRiskView(BaseChainView):
+    def get(self, request, pool_address):
+        sql = """
+            SELECT
+                  CASE WHEN w.price_change > 0
+                    THEN CEIL(w.price_change * 100)::int
+                    ELSE FLOOR(w.price_change * 100)::int
+                  END AS change
+                , SUM(w.collateral) AS amount
+                , SUM(w.collateral_usd) AS amount_usd
+            FROM ({}) w
+            WHERE w.pool_address = %s
+            GROUP BY 1
+            ORDER BY 1 DESC
+        """.format(
+            WALLETS_AT_RISK_SQL.format(
+                current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
+                pool_table=self.models.pool._meta.db_table,
+                token_table=self.models.token._meta.db_table,
+                wallet_table=self.models.wallet._meta.db_table,
+            )
+        )
+        sql_vars = [-0.8, pool_address]
+        at_risk = fetch_all(sql, sql_vars)
+        return Response(at_risk, status.HTTP_200_OK)
