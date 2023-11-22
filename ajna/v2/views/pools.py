@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.http import Http404
 from rest_framework import status
@@ -90,7 +90,42 @@ class PoolsView(RawSQLPaginatedChainView):
     ]
     search_fields = ["collateral_token.symbol", "quote_token.symbol"]
 
-    def get_raw_sql(self, search_filters, **kwargs):
+    def _get_new_events(self):
+        event_name = "PoolCreated"
+        date = datetime.now() - timedelta(days=1)
+        sql = """
+            SELECT
+                p.pool_address
+            FROM {pool_event_table} p
+            WHERE p.name = %s AND p.block_datetime >= %s
+        """.format(
+            pool_event_table=self.models.pool_event._meta.db_table,
+        )
+        sql_vars = [event_name, date]
+        pools = fetch_all(sql, sql_vars)
+        pools_list = []
+        for pool in pools:
+            pools_list.append(pool["pool_address"])
+
+        return pools_list
+
+    def _get_liquidation_pools(self):
+        sql = WALLETS_AT_RISK_SQL.format(
+            current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
+            pool_table=self.models.pool._meta.db_table,
+            token_table=self.models.token._meta.db_table,
+            wallet_table=self.models.wallet._meta.db_table,
+        )
+        sql_vars = [0]
+        pools = fetch_all(sql, sql_vars)
+        pools_list = []
+        for pool in pools:
+            pools_list.append(pool["pool_address"])
+
+        return pools_list
+
+    def get_raw_sql(self, search_filters, query_params, **kwargs):
+        new_events = query_params.get("filter")
         sql = POOLS_SQL.format(
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
@@ -103,6 +138,27 @@ class PoolsView(RawSQLPaginatedChainView):
             search_sql, search_vars = search_filters
             filters.append(search_sql)
             sql_vars.extend(search_vars)
+
+        if new_events == "new":
+            pools = self._get_new_events()
+            if pools:
+                filters.append("pool.address IN %s")
+                sql_vars.append(tuple(pools))
+            else:
+                filters.append("pool.address = 'xxx'")
+
+        if new_events == "arbitrage":
+            filters.append(
+                "pool.hpb * quote_token.underlying_price >= collateral_token.underlying_price"
+            )
+
+        if new_events == "liquidation":
+            pools = self._get_liquidation_pools()
+            if pools:
+                filters.append("pool.address IN %s")
+                sql_vars.append(tuple(pools))
+            else:
+                filters.append("pool.address = 'xxx'")
 
         if filters:
             sql += " WHERE {}".format(" AND ".join(filters))
