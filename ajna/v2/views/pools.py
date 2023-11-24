@@ -125,7 +125,7 @@ class PoolsView(RawSQLPaginatedChainView):
         return pools_list
 
     def get_raw_sql(self, search_filters, query_params, **kwargs):
-        new_events = query_params.get("filter")
+        query_filters = query_params.get("filter")
         sql = POOLS_SQL.format(
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
@@ -139,7 +139,7 @@ class PoolsView(RawSQLPaginatedChainView):
             filters.append(search_sql)
             sql_vars.extend(search_vars)
 
-        if new_events == "new":
+        if query_filters == "new":
             pools = self._get_new_events()
             if pools:
                 filters.append("pool.address IN %s")
@@ -147,12 +147,12 @@ class PoolsView(RawSQLPaginatedChainView):
             else:
                 filters.append("pool.address = 'xxx'")
 
-        if new_events == "arbitrage":
+        if query_filters == "arbitrage":
             filters.append(
                 "pool.hpb * quote_token.underlying_price >= collateral_token.underlying_price"
             )
 
-        if new_events == "liquidation":
+        if query_filters == "liquidation":
             pools = self._get_liquidation_pools()
             if pools:
                 filters.append("pool.address IN %s")
