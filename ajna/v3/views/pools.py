@@ -1226,6 +1226,6 @@ class PoolAtRiskView(BaseChainView):
                 wallet_table=self.models.wallet._meta.db_table,
             )
         )
-        sql_vars = [-0.8, pool_address]
+        sql_vars = [MAX_INFLATED_PRICE, -0.8, pool_address]
         at_risk = fetch_all(sql, sql_vars)
         return Response(at_risk, status.HTTP_200_OK)
