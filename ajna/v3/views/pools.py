@@ -117,7 +117,7 @@ class PoolsView(RawSQLPaginatedChainView):
             token_table=self.models.token._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
-        sql_vars = [0]
+        sql_vars = [MAX_INFLATED_PRICE, 0]
         pools = fetch_all(sql, sql_vars)
         pools_list = []
         for pool in pools:
