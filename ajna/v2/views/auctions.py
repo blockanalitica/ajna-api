@@ -33,7 +33,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.collateral * ak.collateral_token_price AS collateral_usd
                 , at.pool_address
                 , p.collateral_token_symbol AS collateral_token_symbol
-                , p.collateral_token_symbol AS quote_token_symbol
+                , p.quote_token_symbol AS quote_token_symbol
             FROM {auction_table} at
             JOIN {auction_kick_table} ak
                 ON at.uid = ak.auction_uid
