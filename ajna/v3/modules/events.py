@@ -170,7 +170,10 @@ def parse_event_data(event):
                 "currentBurnEpoch": event_data["currentBurnEpoch"],
             }
         case "ResetInterestRate":
-            pass  # TODO
+            data = {
+                "newRate": wad_to_decimal(event_data["newRate"]),
+                "oldRate": wad_to_decimal(event_data["oldRate"]),
+            }
         case "RevokeLPAllowance":
             pass  # TODO
         case "RevokeLPTransferors":
@@ -256,6 +259,7 @@ def _get_wallet_addresses(event):
             | "KickReserveAuction"
             | "ReserveAuction"
             | "UpdateInterestRate"
+            | "ResetInterestRate"
         ):
             # Skip these events as they don't touch any wallets
             pass
@@ -265,7 +269,7 @@ def _get_wallet_addresses(event):
                 event["event"],
                 extra={
                     "event": event["event"],
-                    "pool": event["address"],
+                    "pool": event["address"].lower(),
                     "block": event["blockNumber"],
                 },
             )
