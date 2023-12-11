@@ -15,7 +15,7 @@ from ..modules.pools import (
 )
 from ..modules.positions import EventProcessor
 from ..modules.prices import update_token_prices
-from .chain import Goerli, GoerliModels
+from .chain import Ethereum, EthereumModels
 
 log = logging.getLogger(__name__)
 
@@ -57,47 +57,47 @@ SCHEDULE = {
 
 @app.task
 def fetch_market_price_task():
-    models = GoerliModels()
-    update_token_prices(models, network="goerli")
+    models = EthereumModels()
+    update_token_prices(models, network="ethereum")
 
 
 @app.task
 def fetch_erc20_pool_created_events_task():
-    chain = Goerli()
+    chain = Ethereum()
     erc20_manager = PoolERC20Manager(chain)
     erc20_manager.fetch_and_save_pool_created_events()
 
 
 @app.task
 def fetch_erc721_pool_created_events_task():
-    chain = Goerli()
+    chain = Ethereum()
     erc721_manager = PoolERC721Manager(chain)
     erc721_manager.fetch_and_save_pool_created_events()
 
 
 @app.task
 def fetch_erc20_pools_data_task():
-    chain = Goerli()
+    chain = Ethereum()
     erc20_manager = PoolERC20Manager(chain)
     erc20_manager.fetch_and_save_pools_data()
 
 
 @app.task
 def fetch_erc721_pools_data_task():
-    chain = Goerli()
+    chain = Ethereum()
     erc721_manager = PoolERC721Manager(chain)
     erc721_manager.fetch_and_save_pools_data()
 
 
 @app.task
 def fetch_and_save_events_for_all_pools_task():
-    chain = Goerli()
+    chain = Ethereum()
     fetch_and_save_events_for_all_pools(chain)
 
 
 @app.task
 def process_events_for_all_pools_task():
-    chain = Goerli()
+    chain = Ethereum()
     processor = EventProcessor(chain)
     processor.process_all_events()
 
@@ -106,18 +106,18 @@ def process_events_for_all_pools_task():
 def save_all_pools_volume_for_yesterday_task():
     # This task should be ran a few minutes past midnight to make sure all events
     # are fetched and saved for the day before
-    chain = Goerli()
+    chain = Ethereum()
     yesterday = (datetime.now() - timedelta(days=1)).date()
     save_all_pools_volume_for_date(chain, yesterday)
 
 
 @app.task
 def fetch_and_save_grant_proposals_task():
-    chain = Goerli()
+    chain = Ethereum()
     fetch_and_save_grant_proposals(chain)
 
 
 @app.task
 def save_wallets_at_risk_notification_task():
-    chain = Goerli()
+    chain = Ethereum()
     wallets_at_risk_notification(chain)

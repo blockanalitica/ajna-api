@@ -58,15 +58,15 @@ class Goerli(AjnaChainMixin, EthereumGoerliChain):
         )
         self.unique_key = "v3_goerli"
 
-        self.pool_info_address = "0x08F304cBeA7FAF48C93C27ae1305E220913a571d"
-        self.erc20_pool_abi_contract = "0x5a4fb4f6a83282d62c3fc87c4dfe9a2849d987e9"
-        self.erc20_pool_factory_address = "0x14F2474fB5ea9DF82059053c4F85A8C803Ab10C9"
-        self.erc20_pool_factory_start_block = 9888337
-        self.erc721_pool_abi_contract = "0x7c79c719081d987678b1cfab5f95b48f3cec55b2"
-        self.erc721_pool_factory_address = "0xb0d1c875B240EE9f6C2c3284a31b10f1EC6De7d2"
-        self.erc721_pool_factory_start_block = 9888337
-        self.grant_fund_address = "0x17C7eb98aD29c8C07C2842C4B64342142C405aF4"
-        self.grant_fund_start_block = 9929353
+        self.pool_info_address = "0x4BBd196eee782DC8870f0eDE43c1405b5707745C"
+        self.erc20_pool_abi_contract = "0xeecf09a6b48E6aA1a2928AF9a26A8E2b56Ee30Cd"
+        self.erc20_pool_factory_address = "0x856c05F817B8A9E9e301523Ba0bFe187b83A03d7"
+        self.erc20_pool_factory_start_block = 10154011
+        self.erc721_pool_abi_contract = ""
+        self.erc721_pool_factory_address = "0xC8243DA6ab94fEC6B4fb3Ec35735FccD49e506E6"
+        self.erc721_pool_factory_start_block = 10154012
+        self.grant_fund_address = ""
+        self.grant_fund_start_block = 0
 
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)
