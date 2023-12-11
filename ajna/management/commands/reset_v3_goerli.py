@@ -13,6 +13,12 @@ class Command(BaseCommand):
             chain.unique_key
         )
         cache.delete(cache_key)
+
+        cache_key = "fetch_and_save_grant_proposals.{}.last_block_number".format(
+            chain.unique_key
+        )
+        cache.delete(cache_key)
+
         for key, model in MODEL_MAP.items():
             if key == "price_feed":
                 self.stdout.write("Skipping price_feed model: {}".format(model))
