@@ -1,6 +1,6 @@
 boto3==1.26.133
 celery==5.3.1
-chain_harvester==0.15.2
+chain_harvester==0.20.0
 django-autoslug==1.9.9
 django-bulk-load==1.2.2
 django-celery-beat==2.5.0
