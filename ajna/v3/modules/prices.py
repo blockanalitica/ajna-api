@@ -122,7 +122,7 @@ def update_token_prices(models, network="ethereum"):
         )
         if not underlying_addresses:
             return
-        prices_mapping = get_current_prices(underlying_addresses)
+        prices_mapping = get_current_prices(underlying_addresses, chain_name=network)
 
         done_addresses = set()
         for key, values in prices_mapping.items():

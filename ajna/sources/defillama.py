@@ -15,13 +15,13 @@ def fetch_price_for_timestamp(timestamp, coins):
     return data["coins"]
 
 
-def get_current_prices(addresses):
-    coins = [f"ethereum:{address}" for address in addresses]
+def get_current_prices(addresses, chain_name="ethereum"):
+    coins = [f"{chain_name}:{address}" for address in addresses]
     data = fetch_current_price(coins)
     return data
 
 
-def get_price_for_timestamp(timestamp, address):
-    coin = f"ethereum:{address}"
+def get_price_for_timestamp(timestamp, address, chain_name="ethereum"):
+    coin = f"{chain_name}:{address}"
     data = fetch_price_for_timestamp(timestamp, [coin])
     return data.get(coin)
