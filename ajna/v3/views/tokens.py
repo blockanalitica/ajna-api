@@ -32,7 +32,8 @@ class TokensView(RawSQLPaginatedChainView):
                       sub.underlying_address
                     , sub.pool_count
                     , sub.collateral_amount
-                    , sub.quote_amount
+                    , sub.lended_amount
+                    , sub.borrowed_amount
                     , pf.price AS underlying_price
                 FROM (
                     SELECT
@@ -46,10 +47,14 @@ class TokensView(RawSQLPaginatedChainView):
                           ) AS collateral_amount
                         , SUM(
                             CASE WHEN token.underlying_address = pool.quote_token_address
-                                THEN pool.quote_token_balance
-                                ELSE 0
-                            END
-                          ) AS quote_amount
+                            THEN pool.pool_size
+                            ELSE 0
+                            END) AS lended_amount
+                        , SUM(
+                            CASE WHEN token.underlying_address = pool.quote_token_address
+                            THEN pool.debt
+                            ELSE 0
+                            END) AS borrowed_amount
                     FROM {token_table} AS token
                     LEFT JOIN (
                         SELECT DISTINCT ON (ps.address)
@@ -89,13 +94,16 @@ class TokensView(RawSQLPaginatedChainView):
                 , prev.pool_count AS prev_pool_count
                 , prev.underlying_price AS prev_underlying_price
                 , GREATEST(
-                    COALESCE(
-                    ((sub.collateral_amount + sub.quote_amount) * sub.underlying_price), 0
-                  ), 0) AS tvl
+                    (sub.collateral_amount + (sub.lended_amount - sub.borrowed_amount))
+                    * sub.underlying_price
+                  , 0) AS tvl
                 , GREATEST(
-                    COALESCE(
-                    ((prev.collateral_amount + prev.quote_amount) * sub.underlying_price), 0
-                  ), 0) AS prev_tvl
+                    (prev.collateral_amount * sub.underlying_price) +
+                        (
+                        (prev.lended_amount * sub.underlying_price) -
+                        (prev.borrowed_amount * sub.underlying_price)
+                    )
+                  , 0) AS prev_tvl
             FROM(
                 SELECT
                       token.underlying_address
@@ -111,10 +119,14 @@ class TokensView(RawSQLPaginatedChainView):
                       ) AS collateral_amount
                     , SUM(
                         CASE WHEN token.underlying_address = pool.quote_token_address
-                            THEN pool.quote_token_balance
-                            ELSE 0
-                        END
-                      ) AS quote_amount
+                        THEN pool.pool_size
+                        ELSE 0
+                        END) AS lended_amount
+                    , SUM(
+                        CASE WHEN token.underlying_address = pool.quote_token_address
+                        THEN pool.debt
+                        ELSE 0
+                        END) AS borrowed_amount
                 FROM {token_table} AS token
                 LEFT JOIN {pool_table} AS pool
                     ON token.underlying_address = pool.collateral_token_address
