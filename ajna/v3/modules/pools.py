@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from eth_abi import abi
 from eth_abi.exceptions import InsufficientDataBytes
+from eth_utils import encode_hex
 from web3 import Web3
 
 from ajna.constants import ERC20, ERC721
@@ -179,7 +180,7 @@ class BasePoolManager:
 
         events = self._chain.get_events_for_contract_topics(
             self.pool_factory_address,
-            ["0x83a48fbcfc991335314e74d0496aab6a1987e992ddc85dddbcc4d6dd6ef2e9fc"],
+            ["0xee1fe091a5213b321c2662b35c0b7cd0d35d10dbcab52b3c9b8768983c67bce3"],
             from_block_number,
         )
         yield from events
@@ -289,16 +290,6 @@ class BasePoolManager:
                         [f"{pool_address}:pricesInfo", None],
                     ),
                     (
-                        pool_address,
-                        ["interestRateInfo()((uint256,uint256))"],
-                        [f"{pool_address}:interestRateInfo", None],
-                    ),
-                    (
-                        pool_address,
-                        ["debtInfo()((uint256,uint256,uint256,uint256))"],
-                        [f"{pool_address}:debtInfo", None],
-                    ),
-                    (
                         self._chain.pool_info_address,
                         [
                             "lenderInterestMargin(address)(uint256)",
@@ -329,11 +320,6 @@ class BasePoolManager:
                         [f"{pool_address}:poolUtilizationInfo", None],
                     ),
                     (
-                        pool_address,
-                        ["inflatorInfo()((uint256,uint256))"],
-                        [f"{pool_address}:inflatorInfo", None],
-                    ),
-                    (
                         self._chain.pool_info_address,
                         [
                             "borrowFeeRate(address)(uint256)",
@@ -344,10 +330,25 @@ class BasePoolManager:
                     (
                         self._chain.pool_info_address,
                         [
-                            "unutilizedDepositFeeRate(address)(uint256)",
+                            "depositFeeRate(address)(uint256)",
                             pool_address,
                         ],
-                        [f"{pool_address}:unutilizedDepositFeeRate", None],
+                        [f"{pool_address}:depositFeeRate", None],
+                    ),
+                    (
+                        pool_address,
+                        ["interestRateInfo()((uint256,uint256))"],
+                        [f"{pool_address}:interestRateInfo", None],
+                    ),
+                    (
+                        pool_address,
+                        ["debtInfo()((uint256,uint256,uint256,uint256))"],
+                        [f"{pool_address}:debtInfo", None],
+                    ),
+                    (
+                        pool_address,
+                        ["inflatorInfo()((uint256,uint256))"],
+                        [f"{pool_address}:inflatorInfo", None],
                     ),
                     (
                         pool_address,
@@ -390,7 +391,7 @@ class BasePoolManager:
             utilization_info = data[f"{pool_address}:poolUtilizationInfo"]
             inflator_info = data[f"{pool_address}:inflatorInfo"]
             borrow_fee_rate = data[f"{pool_address}:borrowFeeRate"]
-            deposit_fee_rate = data[f"{pool_address}:unutilizedDepositFeeRate"]
+            deposit_fee_rate = data[f"{pool_address}:depositFeeRate"]
             pledged_collateral = data[f"{pool_address}:pledgedCollateral"]
             reserves_info = data[f"{pool_address}:reservesInfo"]
             current_burn_epoch = data[f"{pool_address}:currentBurnEpoch"]
@@ -563,6 +564,7 @@ class PoolERC20Manager(BasePoolManager):
             )
             block_datetime = self._chain.get_block_datetime(event["blockNumber"])
             pool_data = dict(event["args"])
+            pool_data["subsetHash_"] = encode_hex(pool_data["subsetHash_"])
             pool_data["erc"] = self.erc
             pool_data["collateral_token_address"] = collateral_token_address
             pool_data["quote_token_address"] = quote_token_address.lower()
@@ -665,6 +667,7 @@ class PoolERC721Manager(BasePoolManager):
             )
             block_datetime = self._chain.get_block_datetime(event["blockNumber"])
             pool_data = dict(event["args"])
+            pool_data["subsetHash_"] = encode_hex(pool_data["subsetHash_"])
             pool_data["erc"] = self.erc
             pool_data["collateral_token_address"] = collateral_token_address
             pool_data["quote_token_address"] = quote_token_address.lower()
