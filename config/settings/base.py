@@ -249,7 +249,7 @@ CACHES = {
         ),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PARSER_CLASS": "redis.connection.HiredisParser",
+            "PARSER_CLASS": "redis.connection._HiredisParser",
             "IGNORE_EXCEPTIONS": True,
             "SOCKET_CONNECT_TIMEOUT": 1,
             "SOCKET_TIMEOUT": 1,
