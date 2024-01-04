@@ -5,7 +5,7 @@ concurrency: deploy_production
 on:
   push:
     branches:
-      - production
+      - main
 
 jobs:
   test:
