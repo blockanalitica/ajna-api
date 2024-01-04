@@ -232,11 +232,13 @@ def _get_module(version, network):
 
 def _get_path_parts(request):
     version, network = request.path.lstrip("/").rstrip("/").split("/")[:2]
-    if (
-        version not in AJNA_DEPLOYMENTS["versions"]
-        or network not in AJNA_DEPLOYMENTS["networks"]
-    ):
+
+    if version not in AJNA_DEPLOYMENTS:
         raise Http404("Invalid path")
+
+    if network not in AJNA_DEPLOYMENTS[version]:
+        raise Http404("Invalid path")
+
     return version, network
 
 
