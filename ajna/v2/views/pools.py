@@ -10,6 +10,10 @@ from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 from ..modules.at_risk import WALLETS_AT_RISK_SQL
 from ..modules.events import parse_event_data
 
+# For selecting previous value, we select between two dates, as otherwise postgres
+# will do a sequentiall scan on all snapshots instead of index scan. The reason being:
+# "If the SELECT returns more than approximately 5-10% of all rows in the table,
+# a sequential scan is much faster than an index scan."
 POOLS_SQL = """
     WITH previous AS (
         SELECT DISTINCT ON (ps.address)
@@ -23,7 +27,7 @@ POOLS_SQL = """
             , ps.collateral_token_balance
             , ps.quote_token_balance
         FROM {pool_snapshot_table} ps
-        WHERE ps.datetime <= %s
+        WHERE ps.datetime > (%s - INTERVAL '7 DAY') AND ps.datetime <= %s
         ORDER BY ps.address, ps.datetime DESC
     )
 
@@ -132,7 +136,7 @@ class PoolsView(RawSQLPaginatedChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
 
-        sql_vars = [self.days_ago_dt]
+        sql_vars = [self.days_ago_dt, self.days_ago_dt]
         filters = []
         if search_filters:
             search_sql, search_vars = search_filters

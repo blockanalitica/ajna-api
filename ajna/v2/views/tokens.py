@@ -67,7 +67,8 @@ class TokensView(RawSQLPaginatedChainView):
                             , ps.collateral_token_balance
                             , ps.quote_token_balance
                         FROM {pool_snapshot_table} ps
-                        WHERE ps.datetime <= %s
+                        WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
+                            AND ps.datetime <= %(days_ago_dt)s
                         ORDER BY ps.address, ps.datetime DESC
                     ) AS pool
                         ON token.underlying_address = pool.collateral_token_address
@@ -79,7 +80,8 @@ class TokensView(RawSQLPaginatedChainView):
                           feed.price
                         , feed.underlying_address
                     FROM {price_feed_table} feed
-                    WHERE feed.datetime <= %s
+                    WHERE feed.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
+                        AND feed.datetime <= %(days_ago_dt)s
                     ORDER BY feed.underlying_address, feed.datetime DESC
                 ) pf
                     ON pf.underlying_address = sub.underlying_address
@@ -142,7 +144,7 @@ class TokensView(RawSQLPaginatedChainView):
             price_feed_table=self.models.price_feed._meta.db_table,
         )
 
-        sql_vars = [self.days_ago_dt, self.days_ago_dt]
+        sql_vars = {"days_ago_dt": self.days_ago_dt}
         filters = []
         if search_filters:
             search_sql, search_vars = search_filters
@@ -189,11 +191,8 @@ class TokenOverviewView(BaseChainView):
     days_ago_options = [1, 7, 30, 365]
 
     def get(self, request, underlying_address):
-        sql_vars = [
-            self.days_ago_dt,
-            underlying_address,
-            underlying_address,
-        ]
+        sql_vars = {"days_ago_dt": self.days_ago_dt, "address": underlying_address}
+
         sql = """
             WITH previous AS (
                 SELECT
@@ -231,12 +230,13 @@ class TokenOverviewView(BaseChainView):
                             , ps.collateral_token_address
                             , ps.quote_token_address
                         FROM {pool_snapshot_table} ps
-                        WHERE ps.datetime <= %s
+                        WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
+                            AND ps.datetime <= %(days_ago_dt)s
                         ORDER BY ps.address, ps.datetime DESC
                     ) AS pool
                         ON token.underlying_address = pool.collateral_token_address
                             OR token.underlying_address = pool.quote_token_address
-                    WHERE token.underlying_address = %s
+                    WHERE token.underlying_address = %(address)s
                     GROUP BY 1
                 ) AS sub
             )
@@ -294,7 +294,7 @@ class TokenOverviewView(BaseChainView):
                 LEFT JOIN {pool_table} AS pool
                 ON token.underlying_address = pool.collateral_token_address
                     OR token.underlying_address = pool.quote_token_address
-                WHERE token.underlying_address = %s
+                WHERE token.underlying_address = %(address)s
                 GROUP BY 1, 2, 3
             ) AS sub
             LEFT JOIN previous AS prev
@@ -331,6 +331,7 @@ class TokenPoolsView(RawSQLPaginatedChainView):
     def get_raw_sql(self, search_filters, **kwargs):
         underlying_address = kwargs["underlying_address"]
         sql_vars = [
+            self.days_ago_dt,
             self.days_ago_dt,
             underlying_address,
             underlying_address,
@@ -383,11 +384,13 @@ class TokenArbitragePoolsView(RawSQLPaginatedChainView):
                           feed.price
                         , feed.underlying_address
                     FROM {price_feed_table} feed
-                    WHERE feed.datetime <= %s
+                    WHERE feed.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
+                        AND feed.datetime <= %(days_ago_dt)s
                     ORDER BY feed.underlying_address, feed.datetime DESC
                 ) pfc
                     ON pfc.underlying_address = pool.collateral_token_address
-                WHERE ps.datetime <= %s
+                WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
+                    AND ps.datetime <= %(days_ago_dt)s
                 ORDER BY ps.address, ps.datetime DESC
             )
 
@@ -410,7 +413,8 @@ class TokenArbitragePoolsView(RawSQLPaginatedChainView):
                 ON pool.quote_token_address = quote_token.underlying_address
             LEFT JOIN previous AS prev
                 ON pool.address = prev.address
-            WHERE (pool.collateral_token_address = %s OR pool.quote_token_address = %s)
+            WHERE (pool.collateral_token_address = %(address)s
+                OR pool.quote_token_address = %(address)s)
                 AND pool.hpb * quote_token.underlying_price >= collateral_token.underlying_price
         """.format(
             token_table=self.models.token._meta.db_table,
@@ -418,11 +422,6 @@ class TokenArbitragePoolsView(RawSQLPaginatedChainView):
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
             price_feed_table=self.models.price_feed._meta.db_table,
         )
-        sql_vars = [
-            self.days_ago_dt,
-            self.days_ago_dt,
-            underlying_address,
-            underlying_address,
-        ]
+        sql_vars = {"days_ago_dt": self.days_ago_dt, "address": underlying_address}
 
         return sql, sql_vars

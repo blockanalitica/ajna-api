@@ -12,7 +12,7 @@ class OverviewView(BaseChainView):
     days_ago_options = [1, 7, 30, 365]
 
     def get(self, request):
-        sql_vars = [self.days_ago_dt]
+        sql_vars = {"days_ago_dt": self.days_ago_dt}
         sql = """
             WITH previous AS (
                 SELECT DISTINCT ON (ps.address)
@@ -24,7 +24,8 @@ class OverviewView(BaseChainView):
                     , ps.collateral_token_balance
                     , ps.quote_token_balance
                 FROM {pool_snapshot_table} ps
-                WHERE ps.datetime <= %s
+                WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
+                    AND ps.datetime <= %(days_ago_dt)s
                 ORDER BY ps.address, ps.datetime DESC
             )
 
