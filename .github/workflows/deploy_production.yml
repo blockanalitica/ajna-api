@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: production
+          ref: main
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -48,7 +48,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: production
+          ref: main
       - name: Set up Python 3.x
         uses: actions/setup-python@v4
         with:
