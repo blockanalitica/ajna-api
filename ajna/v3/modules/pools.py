@@ -51,7 +51,7 @@ VOLUME_SQL = """
 
 
 def save_all_pools_volume_for_date(chain, dt):
-    assert type(dt) == date
+    assert isinstance(dt, date)
     sql = VOLUME_SQL.format(
         pool_event_table=chain.pool_event._meta.db_table, filters=""
     )
@@ -535,7 +535,7 @@ class PoolERC20Manager(BasePoolManager):
         super().__init__()
 
     def _calculate_volume_for_pool_for_date(self, pool_address, dt):
-        assert type(dt) == date
+        assert isinstance(dt, date)
         sql = VOLUME_SQL.format(
             pool_event_table=self._chain.pool_event._meta.db_table,
             filters="AND pool_address = %s",
@@ -626,7 +626,7 @@ class PoolERC721Manager(BasePoolManager):
         return True
 
     def _calculate_volume_for_pool_for_date(self, pool_address, dt):
-        assert type(dt) == date
+        assert isinstance(dt, date)
         sql = VOLUME_SQL.format(
             pool_event_table=self._chain.pool_event._meta.db_table,
             filters="AND pool_address = %s",
