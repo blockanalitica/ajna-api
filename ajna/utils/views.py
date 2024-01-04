@@ -189,7 +189,7 @@ class RawSQLPaginatedApiView(APIView):
             raw_sql = SQL(raw_sql)
 
         if sql_vars:
-            assert isinstance(sql_vars, list)
+            assert isinstance(sql_vars, (list, dict))
 
         count_sql, count_sql_vars = self.get_count_sql(
             search_filters=search_filters, query_params=request.GET, **kwargs
@@ -198,7 +198,7 @@ class RawSQLPaginatedApiView(APIView):
             count_sql = SQL(count_sql)
 
         if count_sql_vars:
-            assert isinstance(count_sql_vars, list)
+            assert isinstance(count_sql_vars, (list, dict))
 
         order = self.get_ordering(request)
 
