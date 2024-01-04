@@ -718,7 +718,9 @@ class PoolEventsView(RawSQLPaginatedChainView):
         return sql, sql_vars
 
 
-BORROWERS_SQL = sql = """
+BORROWERS_SQL = (
+    sql
+) = """
     SELECT
           y.borrower
         , y.debt AS debt

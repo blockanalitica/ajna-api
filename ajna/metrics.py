@@ -6,17 +6,35 @@ from django.conf import settings
 statsd_client = statsd.StatsClient(
     settings.STATSD_HOST, settings.STATSD_PORT, settings.STATSD_PREFIX
 )
-timer = statsd_client.timer
 
 
-def timerd(key):
+class Timer:
+    """Metrics wrapper for Statsd Timer Object
+
+    >>> import time
+    >>> with metrics.Timer('unique_key'):
+    ...     time.sleep(1)
+    """
+
+    def __init__(self, key):
+        self.timer = statsd_client.timer(str(key))
+        self.key = key
+
+    def __enter__(self):
+        self.timer.start()
+
+    def __exit__(self, type_, value, traceback):
+        self.timer.stop()
+
+
+def Timerd(key):
     """
     Decorator function to set up a timer around a function call.
     This is a function only decorator!
 
     Example:
     >>> import time
-    >>> @metrics.timerd('time_sleep_key')
+    >>> @metrics.Timerd('time_sleep_key')
     >>> def timed_function():
     ...     time.sleep(1)
     """
@@ -26,31 +44,12 @@ def timerd(key):
         def wrapper(*args, **kwargs):
             if not key:
                 raise Exception("Using an empty key name")
-            with timer(key):
+            with Timer(key):
                 return func(*args, **kwargs)
 
         return wrapper
 
     return decorator
-
-
-class timer:
-    """Metrics wrapper for Statsd Timer Object
-
-    >>> import time
-    >>> with metrics.timer('unique_key'):
-    ...     time.sleep(1)
-    """
-
-    def __init__(self, key):
-        self.timer = timer(str(key))
-        self.key = key
-
-    def __enter__(self):
-        self.timer.start()
-
-    def __exit__(self, type_, value, traceback):
-        self.timer.stop()
 
 
 def raw_timer(key, value):

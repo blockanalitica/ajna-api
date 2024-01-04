@@ -36,25 +36,19 @@ MODEL_MAP = {
 
 
 class EthereumModels:
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        super().__init__()
 
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)
 
 
 class Ethereum(AjnaChainMixin, EthereumMainnetChain):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__(
             rpc=settings.ETHEREUM_NODE,
             api_key=settings.ETHERSCAN_API_KEY,
             step=50000,
-            *args,
-            **kwargs,
         )
         self.unique_key = "v3_ethereum"
 
