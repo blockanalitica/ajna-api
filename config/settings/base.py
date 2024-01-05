@@ -137,6 +137,8 @@ CELERY_IMPORTS = [
     "ajna.v3.ethereum.tasks",
     "ajna.v3.base.tasks",
     "ajna.v3.arbitrum.tasks",
+    "ajna.v3.optimism.tasks",
+    "ajna.v3.polygon.tasks",
 ]
 
 # django-celery-beat configuration options
@@ -278,3 +280,5 @@ OPTIMISM_NODE = env("OPTIMISM_NODE", default="")
 ETHERSCAN_API_KEY = env("ETHERSCAN_API_KEY", default="")
 ARBISCAN_API_KEY = env("ARBISCAN_API_KEY", default="")
 BASESCAN_API_KEY = env("BASESCAN_API_KEY", default="")
+OPTIMISTIC_ETHERSCAN_API_KEY = env("OPTIMISTIC_ETHERSCAN_API_KEY", default="")
+POLYGONSCAN_API_KEY = env("POLYGONSCAN_API_KEY", default="")
