@@ -45,7 +45,7 @@ certifi==2023.7.22
     #   sentry-sdk
 cffi==1.15.1
     # via cryptography
-chain-harvester==0.20.0
+chain-harvester==0.21.0
     # via -r requirements.in
 charset-normalizer==3.2.0
     # via
@@ -94,7 +94,7 @@ django-cors-headers==4.3.1
     # via -r requirements.in
 django-debug-toolbar==4.1.0
     # via -r requirements.in
-django-environ==0.11.1
+django-environ==0.11.2
     # via -r requirements.in
 django-extensions==3.2.3
     # via -r requirements.in
@@ -116,6 +116,7 @@ eth-account==0.9.0
     # via web3
 eth-hash[pycryptodome]==0.5.2
     # via
+    #   eth-hash
     #   eth-utils
     #   web3
 eth-keyfile==0.6.1

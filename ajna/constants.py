@@ -14,7 +14,7 @@ MAX_INFLATED_PRICE = Decimal("50248449380.32561770910548855")
 AJNA_DEPLOYMENTS = {
     "v1": ["ethereum", "goerli"],
     "v2": ["ethereum", "goerli"],
-    "v3": ["ethereum", "goerli", "base"],
+    "v3": ["ethereum", "goerli", "base", "arbitrum"],
 }
 
 
