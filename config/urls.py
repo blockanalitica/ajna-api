@@ -20,6 +20,7 @@ urlpatterns = [
     path("v3/ethereum/", include("ajna.v3.ethereum.urls")),
     path("v3/base/", include("ajna.v3.base.urls")),
     path("v3/arbitrum/", include("ajna.v3.arbitrum.urls")),
+    path("v3/optimism/", include("ajna.v3.optimism.urls")),
 ]
 
 if settings.DEBUG:
