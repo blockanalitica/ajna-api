@@ -54,13 +54,13 @@ class Goerli(AjnaChainMixin, EthereumGoerliChain):
         )
         self.unique_key = "v3_goerli"
 
-        self.pool_info_address = "0x3c5cf15122903C7CabcAA49FcfC090D3A311C038"
-        self.erc20_pool_abi_contract = "0x9E3De82c3f76186FC1Dc4f7cfc7cdF6B1F2F85cC"
-        self.erc20_pool_factory_address = "0xA2d6694F24c84e428B97bF9fCD8E3e3dba3023D0"
-        self.erc20_pool_factory_start_block = 10243942
-        self.erc721_pool_abi_contract = "0x9B9E6e18FeAE6e360927817d06bDA5a52Ad0E3Ec"
-        self.erc721_pool_factory_address = "0x0CC0Ba1bC6f45513422D6BF301Bd1Cb8c78B5861"
-        self.erc721_pool_factory_start_block = 10243943
+        self.pool_info_address = "0xdE8D83e069F552fbf3EE5bF04E8C4fa53a097ee5"
+        self.erc20_pool_abi_contract = "0x9e5cA171E98Cb8F7b77EFc80858fF2079f80e114"
+        self.erc20_pool_factory_address = "0xDB61f8aD0B3ed0c5522b8FE71b80023fe9188e9e"
+        self.erc20_pool_factory_start_block = 10321610
+        self.erc721_pool_abi_contract = "0x3CC3B4AadbdBDCDda7e1DC12427587Af0F275a23"
+        self.erc721_pool_factory_address = "0x8FA83D458CDbB2FCeA66d9bc31FDa80511e0AA56"
+        self.erc721_pool_factory_start_block = 10321611
         self.grant_fund_address = ""
         self.grant_fund_start_block = 0
 
