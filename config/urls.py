@@ -21,6 +21,7 @@ urlpatterns = [
     path("v3/base/", include("ajna.v3.base.urls")),
     path("v3/arbitrum/", include("ajna.v3.arbitrum.urls")),
     path("v3/optimism/", include("ajna.v3.optimism.urls")),
+    path("v3/polygon/", include("ajna.v3.polygon.urls")),
 ]
 
 if settings.DEBUG:
