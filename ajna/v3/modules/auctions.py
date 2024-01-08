@@ -40,7 +40,7 @@ def _update_auction(chain, auction_uid, block_number, last_take_price=None):
             [
                 "auctionInfo(address)("
                 "(address,uint256,uint256,uint256,uint256,uint256,address,"
-                "address,address,bool))",
+                "address,address))",
                 auction.borrower,
             ],
             ["auctionInfo", None],
@@ -91,7 +91,7 @@ def _update_kick_locked_amount(chain, auction_uid, is_reward, locked_change):
 
 def process_kick_event(chain, event):
     try:
-        chain.auction_kick.objects.get(order_index=event.order_index)
+        kick = chain.auction_kick.objects.get(order_index=event.order_index)
     except chain.auction_kick.DoesNotExist:
         pass
     else:
