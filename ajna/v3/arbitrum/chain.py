@@ -58,10 +58,10 @@ class Arbitrum(AjnaChainMixin, ArbitrumMainnetChain):
         self.unique_key = "v3_arbitrum"
 
         self.pool_info_address = "0x08432Bb9A4D302450fFAaFD647A0A121D3a143cC"
-        self.erc20_pool_abi_contract = ""
+        self.erc20_pool_abi_contract = "0xC34ffEFE8904cfe1cE028D781A426A0527fEB666"
         self.erc20_pool_factory_address = "0x595c823EdAA612972d77aCf324C11F6284B9f5F6"
         self.erc20_pool_factory_start_block = 167209839
-        self.erc721_pool_abi_contract = ""
+        self.erc721_pool_abi_contract = "0x169a69Fc3D8db9147462eAf1ead718981436F3b7"
         self.erc721_pool_factory_address = "0xA9Ada58DD3c820b30D3bf5B490226F2ef92107bA"
         self.erc721_pool_factory_start_block = 167209865
         self.grant_fund_address = ""

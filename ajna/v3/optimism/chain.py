@@ -58,10 +58,10 @@ class Optimism(AjnaChainMixin, OptimismMainnetChain):
         self.unique_key = "v3_optimism"
 
         self.pool_info_address = "0x6293C850837d617DE66ddf7d8744E2BDbD913A90"
-        self.erc20_pool_abi_contract = ""
+        self.erc20_pool_abi_contract = "0x8c83b9890F48cC8E00eA6AD75f63A476f70CBD75"
         self.erc20_pool_factory_address = "0x43cD60250CBBC0C22663438dcf644F5162988C06"
         self.erc20_pool_factory_start_block = 114432276
-        self.erc721_pool_abi_contract = ""
+        self.erc721_pool_abi_contract = "0xFB808CFcAE29f24A87be0caF8A9E397b8495b141"
         self.erc721_pool_factory_address = "0x7F4bE0828dC1523A27f20a597d1F1bB4b5134123"
         self.erc721_pool_factory_start_block = 114432276
         self.grant_fund_address = ""

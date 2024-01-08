@@ -58,10 +58,10 @@ class Base(AjnaChainMixin, BaseMainnetChain):
         self.unique_key = "v3_base"
 
         self.pool_info_address = "0x1358e3be37C191Eb5B842F673fcB5C79Cc4F6644"
-        self.erc20_pool_abi_contract = ""
+        self.erc20_pool_abi_contract = "0x14089b85400b8910f383a00ce100959055c7ffad"
         self.erc20_pool_factory_address = "0x154FFf344f426F99E328bacf70f4Eb632210ecdc"
         self.erc20_pool_factory_start_block = 8797468
-        self.erc721_pool_abi_contract = ""
+        self.erc721_pool_abi_contract = "0xAcbEc2087b3B5D3e23641CCcc4F88db5b0D60c5E"
         self.erc721_pool_factory_address = "0xd8B6729E20d141a03eC4BcAC17F1441CD85975C3"
         self.erc721_pool_factory_start_block = 8797472
         self.grant_fund_address = ""
