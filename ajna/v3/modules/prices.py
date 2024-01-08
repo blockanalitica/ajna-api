@@ -42,9 +42,12 @@ def _handle_rhinofi_tokens(models, done_addresses):
             log.debug("Skipping {} address from rhino.fi price fetching")
             continue
 
-        conversion_price = fetch_pair_price(data["rhino_pair"])
-        price_token = models.token.objects.get(symbol=data["price_token"])
+        try:
+            price_token = models.token.objects.get(symbol=data["price_token"])
+        except models.token.DoesNotExist:
+            continue
 
+        conversion_price = fetch_pair_price(data["rhino_pair"])
         price = price_token.underlying_price * conversion_price
         _save_price_for_address(models, address, price)
 
