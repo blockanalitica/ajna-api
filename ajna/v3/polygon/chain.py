@@ -58,10 +58,10 @@ class Polygon(AjnaChainMixin, PolygonMainnetChain):
         self.unique_key = "v3_polygon"
 
         self.pool_info_address = "0x68C75c041BC36AFdce7cae2578BEe31a24888885"
-        self.erc20_pool_abi_contract = ""
+        self.erc20_pool_abi_contract = "0x0df2A72fa7Ba0F6306e84247be063800f5E1279d"
         self.erc20_pool_factory_address = "0x3D6b8B4a2AEC46961AE337F4A9EBbf283aA482AA"
         self.erc20_pool_factory_start_block = 51974039
-        self.erc721_pool_abi_contract = ""
+        self.erc721_pool_abi_contract = "0x833f2dAa69D582c81E130413dF4402b7fD4a670b"
         self.erc721_pool_factory_address = "0x1D705aa62DC4E95fd8A473476aF619AD0853E560"
         self.erc721_pool_factory_start_block = 51974039
         self.grant_fund_address = ""
