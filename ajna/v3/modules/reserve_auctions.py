@@ -27,9 +27,6 @@ def process_kick_reserve_auction_event(chain, event):
 
     claimable_reserves = wad_to_decimal(event.data["claimableReservesRemaining"])
 
-    # kicker award = claimableReserves * 0.01
-    kicker_award = claimable_reserves * Decimal("0.01")
-
     reserve_auction_uid = _generate_reserve_auction_uid(
         event.pool_address, event.data["currentBurnEpoch"]
     )
@@ -39,7 +36,6 @@ def process_kick_reserve_auction_event(chain, event):
         pool_address=event.pool_address,
         burn_epoch=event.data["currentBurnEpoch"],
         kicker=kicker,
-        kicker_award=kicker_award,
         claimable_reserves=claimable_reserves,
         starting_price=wad_to_decimal(event.data["auctionPrice"]),
         block_number=event.block_number,
