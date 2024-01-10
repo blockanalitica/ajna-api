@@ -42,6 +42,7 @@ class ReserveAuctionsActiveView(RawSQLPaginatedChainView):
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
             WHERE rak.block_datetime + INTERVAL '72 hours' > CURRENT_TIMESTAMP
+                AND ra.claimable_reserves_remaining > 0
             GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
@@ -89,6 +90,7 @@ class ReserveAuctionsExpiredView(RawSQLPaginatedChainView):
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
             WHERE rak.block_datetime + INTERVAL '72 hours' <= CURRENT_TIMESTAMP
+                OR ra.claimable_reserves_remaining = 0
             GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
