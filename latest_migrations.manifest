@@ -1,5 +1,5 @@
 admin: 0003_logentry_add_action_flag_choices
-ajna: 0077_alter_v1ethereumpool_debt_and_more
+ajna: 0078_alter_v1ethereumcurrentwalletpoolposition_debt_and_more
 auth: 0012_alter_user_first_name_max_length
 contenttypes: 0002_remove_content_type_name
 django_celery_beat: 0018_improve_crontab_helptext

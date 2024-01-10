@@ -33,7 +33,7 @@ WALLETS_AT_RISK_SQL = """
                 WHEN NULLIF(cwpt.collateral, 0) IS NULL
                 THEN NULL
                 ELSE LEAST(
-                    cwpt.t0debt * pt.pending_inflator  / cwpt.collateral * cwpt.np_tp_ratio,
+                    (cwpt.t0debt * pt.pending_inflator * 1.04) / cwpt.collateral * cwpt.np_tp_ratio,
                     %s
                 )
               END AS neutral_price
@@ -50,7 +50,7 @@ WALLETS_AT_RISK_SQL = """
                 WHEN NULLIF(cwpt.collateral, 0) IS NULL
                     OR NULLIF(cwpt.t0debt, 0) IS NULL
                 THEN NULL
-                ELSE (cwpt.t0debt * pt.pending_inflator) / cwpt.collateral
+                ELSE (cwpt.t0debt * pt.pending_inflator) / cwpt.collateral * 1.04
               END AS threshold_price
         FROM {current_wallet_position_table} cwpt
         JOIN {pool_table} pt

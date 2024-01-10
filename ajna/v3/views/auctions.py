@@ -377,11 +377,41 @@ class AuctionsToKickView(RawSQLPaginatedChainView):
     default_order = "-debt"
 
     def get_raw_sql(self, **kwargs):
-        sql = WALLETS_AT_RISK_SQL.format(
+        at_risk_sql = WALLETS_AT_RISK_SQL.format(
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
         )
+
+        sql = """
+            WITH at_risk AS (
+                {at_risk_sql}
+            ),
+
+            kicked AS (
+                SELECT
+                      at.uid
+                    , at.pool_address
+                    , at.borrower
+                FROM {auction_table} at
+                JOIN {auction_kick_table} ak
+                    ON at.uid = ak.auction_uid
+                WHERE at.settled = False
+            )
+
+            SELECT
+                ar.*
+            FROM at_risk ar
+            LEFT JOIN kicked k
+                ON k.pool_address = ar.pool_address
+                    AND k.borrower = ar.wallet_address
+            WHERE k.borrower IS NULL
+        """.format(
+            at_risk_sql=at_risk_sql,
+            auction_table=self.models.auction._meta.db_table,
+            auction_kick_table=self.models.auction_kick._meta.db_table,
+        )
+
         sql_vars = [MAX_INFLATED_PRICE, 0]
         return sql, sql_vars
