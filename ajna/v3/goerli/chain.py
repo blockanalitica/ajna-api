@@ -61,8 +61,8 @@ class Goerli(AjnaChainMixin, EthereumGoerliChain):
         self.erc721_pool_abi_contract = "0x3CC3B4AadbdBDCDda7e1DC12427587Af0F275a23"
         self.erc721_pool_factory_address = "0x8FA83D458CDbB2FCeA66d9bc31FDa80511e0AA56"
         self.erc721_pool_factory_start_block = 10321611
-        self.grant_fund_address = ""
-        self.grant_fund_start_block = 0
+        self.grant_fund_address = "0x1b8cDBDcffD4fBdC66dC8540227F007901a196C5"
+        self.grant_fund_start_block = 10327592
 
         for key, model in MODEL_MAP.items():
             setattr(self, key, model)
