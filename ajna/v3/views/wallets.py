@@ -520,7 +520,7 @@ class WalletPoolView(BaseChainView):
                     WHEN NULLIF(x.collateral, 0) IS NULL
                         OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
-                    ELSE x.debt / x.collateral
+                    ELSE x.debt / x.collateral * 1.04
                   END AS threshold_price
                 , CASE
                     WHEN NULLIF(x.collateral, 0) IS NULL
