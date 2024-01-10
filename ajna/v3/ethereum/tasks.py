@@ -41,9 +41,9 @@ SCHEDULE = {
     "process_events_for_all_pools_task": {
         "schedule": crontab(minute="*/5"),
     },
-    # "fetch_and_save_grant_proposals_task": {
-    #     "schedule": crontab(minute="*/5"),
-    # },
+    "fetch_and_save_grant_proposals_task": {
+        "schedule": crontab(minute="*/5"),
+    },
     "save_wallets_at_risk_notification_task": {
         "schedule": crontab(minute="*/5"),
     },
