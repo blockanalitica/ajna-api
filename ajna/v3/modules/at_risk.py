@@ -33,7 +33,7 @@ WALLETS_AT_RISK_SQL = """
                 WHEN NULLIF(cwpt.collateral, 0) IS NULL
                 THEN NULL
                 ELSE LEAST(
-                    cwpt.t0debt * pt.pending_inflator  / cwpt.collateral * cwpt.np_tp_ratio,
+                    (cwpt.t0debt * pt.pending_inflator * 1.04) / cwpt.collateral * cwpt.np_tp_ratio,
                     %s
                 )
               END AS neutral_price

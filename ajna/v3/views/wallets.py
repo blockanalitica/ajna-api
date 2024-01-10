@@ -526,7 +526,7 @@ class WalletPoolView(BaseChainView):
                     WHEN NULLIF(x.collateral, 0) IS NULL
                         OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
-                    ELSE LEAST(x.debt / x.collateral * x.np_tp_ratio, %s)
+                    ELSE LEAST((x.debt * 1.04) / x.collateral * x.np_tp_ratio, %s)
                   END AS neutral_price
                 , CASE
                     WHEN NULLIF(x.collateral, 0) IS NULL
