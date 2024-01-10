@@ -34,9 +34,6 @@ MODEL_MAP = {
     "reserve_auction": models.V3PolygonReserveAuction,
     "reserve_auction_kick": models.V3PolygonReserveAuctionKick,
     "reserve_auction_take": models.V3PolygonReserveAuctionTake,
-    "grant_distribution_period": models.V3PolygonGrantDistributionPeriod,
-    "grant_proposal": models.V3PolygonGrantProposal,
-    "grant_event": models.V3PolygonGrantEvent,
 }
 
 

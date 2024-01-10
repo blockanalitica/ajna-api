@@ -81,18 +81,6 @@ class V3OptimismAuctionAuctionNFTSettle(base.AuctionAuctionNFTSettle):
     pass
 
 
-class V3OptimismGrantDistributionPeriod(base.GrantDistributionPeriod):
-    pass
-
-
-class V3OptimismGrantProposal(base.GrantProposal):
-    pass
-
-
-class V3OptimismGrantEvent(base.GrantEvent):
-    pass
-
-
 class V3OptimismReserveAuction(base.ReserveAuction):
     pass
 

@@ -81,18 +81,6 @@ class V3PolygonAuctionAuctionNFTSettle(base.AuctionAuctionNFTSettle):
     pass
 
 
-class V3PolygonGrantDistributionPeriod(base.GrantDistributionPeriod):
-    pass
-
-
-class V3PolygonGrantProposal(base.GrantProposal):
-    pass
-
-
-class V3PolygonGrantEvent(base.GrantEvent):
-    pass
-
-
 class V3PolygonReserveAuction(base.ReserveAuction):
     pass
 

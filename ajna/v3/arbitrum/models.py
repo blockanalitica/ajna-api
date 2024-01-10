@@ -81,18 +81,6 @@ class V3ArbitrumAuctionAuctionNFTSettle(base.AuctionAuctionNFTSettle):
     pass
 
 
-class V3ArbitrumGrantDistributionPeriod(base.GrantDistributionPeriod):
-    pass
-
-
-class V3ArbitrumGrantProposal(base.GrantProposal):
-    pass
-
-
-class V3ArbitrumGrantEvent(base.GrantEvent):
-    pass
-
-
 class V3ArbitrumReserveAuction(base.ReserveAuction):
     pass
 
