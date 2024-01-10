@@ -128,7 +128,11 @@ def parse_event_data(event):
             }
             pass
         case "MergeOrRemoveCollateralNFT":
-            pass  # TODO
+            data = {
+                "actor": "0x67eD4b7B2072699B8E7a6FfB207c76567aAd1A3E",
+                "collateralMerged": wad_to_decimal(event_data["collateralMerged"]),
+                "toIndexLps": event_data["toIndexLps"],
+            }
         case "MoveQuoteToken":
             data = {
                 "lup": wad_to_decimal(event_data["lup"]),
