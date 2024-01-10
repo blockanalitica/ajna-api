@@ -5,4 +5,5 @@ worker_class = "gthread"
 wsgi_app = "config.wsgi:application"
 max_requests = 100000
 timeout = 60
+keepalive = 75
 worker_tmp_dir = "/dev/shm"
