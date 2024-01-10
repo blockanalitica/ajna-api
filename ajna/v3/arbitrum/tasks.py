@@ -54,7 +54,7 @@ SCHEDULE = {
 @app.task
 def fetch_market_price_task():
     models = ArbitrumModels()
-    update_token_prices(models, network="base")
+    update_token_prices(models, network="arbitrum")
 
 
 @app.task

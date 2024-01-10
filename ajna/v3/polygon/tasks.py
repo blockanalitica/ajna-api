@@ -54,7 +54,7 @@ SCHEDULE = {
 @app.task
 def fetch_market_price_task():
     models = PolygonModels()
-    update_token_prices(models, network="base")
+    update_token_prices(models, network="polygon")
 
 
 @app.task
