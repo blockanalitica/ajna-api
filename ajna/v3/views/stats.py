@@ -92,7 +92,7 @@ class HistoryView(BaseChainView):
                 FROM {pool_snapshot_table} ps
                 JOIN {token_table} AS ct
                     ON ps.collateral_token_address = ct.underlying_address
-                ORDER BY dt, ps.address, ps.datetime
+                ORDER BY dt, ps.address, ps.datetime DESC
             ) x
             GROUP BY x.dt
             ORDER BY x.dt
