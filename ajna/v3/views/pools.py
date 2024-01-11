@@ -424,8 +424,10 @@ class PoolHistoricView(BaseChainView):
                 , ps.target_utilization
                 , -ps.target_utilization - 1 + sqrt(8 * ps.target_utilization + 1)
                 AS actual_utilization_upper_bound
-                , -1.02 * ps.target_utilization + 3 - sqrt(9 - 8 * 1.02 * ps.target_utilization)
-                AS actual_utilization_lower_bound
+                , CASE WHEN 9 - 8 * 1.02 * ps.target_utilization >= 0
+                    THEN -1.02 * ps.target_utilization + 3 - sqrt(9 - 8 * 1.02 * ps.target_utilization)
+                    ELSE 0
+                  END AS actual_utilization_lower_bound
             FROM {pool_snapshot_table} ps
             WHERE ps.datetime >= %s AND ps.address = %s
             ORDER BY 1, ps.datetime DESC
