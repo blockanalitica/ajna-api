@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import (  # grants,
+from .views import (
     auctions,
     notifications,
     pools,
