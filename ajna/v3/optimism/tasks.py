@@ -43,6 +43,9 @@ SCHEDULE = {
     "save_wallets_at_risk_notification_task": {
         "schedule": crontab(minute="*/5"),
     },
+    "save_all_pools_volume_for_today_task": {
+        "schedule": crontab(minute="*/5"),
+    },
     "save_all_pools_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
         # the snapshot
@@ -105,6 +108,13 @@ def save_all_pools_volume_for_yesterday_task():
     chain = Optimism()
     yesterday = (datetime.now() - timedelta(days=1)).date()
     save_all_pools_volume_for_date(chain, yesterday)
+
+
+@app.task
+def save_all_pools_volume_for_today_task():
+    chain = Optimism()
+    dt = datetime.now().date()
+    save_all_pools_volume_for_date(chain, dt)
 
 
 @app.task
