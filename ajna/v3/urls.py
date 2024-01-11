@@ -1,8 +1,7 @@
 from django.urls import path
 
-from .views import (
+from .views import (  # grants,
     auctions,
-    grants,
     notifications,
     pools,
     reserve_auctions,
@@ -192,11 +191,6 @@ urlpatterns = [
         "notifications/",
         notifications.NotificationsView.as_view(),
         name="notifications",
-    ),
-    path(
-        "grants/",
-        grants.GrantsView.as_view(),
-        name="grants",
     ),
     path(
         "auctions/settled/",
