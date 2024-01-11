@@ -294,7 +294,7 @@ class PoolHistoricView(BaseChainView):
     """
 
     days_ago_required = False
-    days_ago_default = 7
+    days_ago_default = 30
     days_ago_options = [30, 365]
 
     def _get_tvl(self, pool_address):
@@ -1053,9 +1053,9 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
 
 
 class AuctionsActiveView(RawSQLPaginatedChainView):
-    default_order = "-collateral"
+    default_order = "-kick_time"
     ordering_fields = [
-        "collateral",
+        "collateral_remaining",
         "debt",
         "kick_time",
     ]

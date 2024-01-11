@@ -18,6 +18,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
         "debt",
         "settle_time",
     ]
+    days_ago_default = 1
     days_ago_required = True
 
     def get_raw_sql(self, **kwargs):
@@ -145,9 +146,9 @@ class AuctionsSettledOverviewView(BaseChainView):
 
 
 class AuctionsActiveView(RawSQLPaginatedChainView):
-    default_order = "-collateral"
+    default_order = "-kick_time"
     ordering_fields = [
-        "collateral",
+        "collateral_remaining",
         "debt",
         "kick_time",
     ]
