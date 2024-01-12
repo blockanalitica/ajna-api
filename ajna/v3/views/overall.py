@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import date
 from decimal import Decimal
 
 from django.urls import path
@@ -165,13 +166,13 @@ class HistoricView(DaysAgoMixin, APIView):
                 , SUM(supply_usd) AS  supply_usd
                 , SUM(debt_usd) AS debt_usd
             FROM {network_stats_daily_table}
-            WHERE date >= %s
+            WHERE date >= %s AND date < %s
             GROUP BY 1
             ORDER BY date
         """.format(
             network_stats_daily_table=V3NetworkStatsDaily._meta.db_table
         )
-        data = fetch_all(sql, [self.days_ago_dt])
+        data = fetch_all(sql, [self.days_ago_dt, date.today()])
         return Response(data, status.HTTP_200_OK)
 
 
