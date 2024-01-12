@@ -137,7 +137,7 @@ def update_token_prices(models, network):
     instances with the new prices.
     """
     if network == "goerli":
-        _handle_goerli_token_price()
+        _handle_goerli_token_price(models)
     else:
         underlying_addresses = models.token.objects.all().values_list(
             "underlying_address", flat=True
