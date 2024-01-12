@@ -160,13 +160,13 @@ class HistoricView(DaysAgoMixin, APIView):
         sql = """
             SELECT
                   date
-                , network
-                , tvl
-                , collateral_usd
-                , supply_usd
-                , debt_usd
+                , SUM(tvl) AS tvl
+                , SUM(collateral_usd) AS collateral_usd
+                , SUM(supply_usd) AS  supply_usd
+                , SUM(debt_usd) AS debt_usd
             FROM {network_stats_daily_table}
             WHERE date >= %s
+            GROUP BY 1
             ORDER BY date
         """.format(
             network_stats_daily_table=V3NetworkStatsDaily._meta.db_table

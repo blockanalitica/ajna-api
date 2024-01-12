@@ -23,32 +23,32 @@ SCHEDULE = {
     "fetch_market_price_task": {
         "schedule": crontab(minute="*/1"),
     },
-    "fetch_and_save_events_for_all_pools_task": {
-        "schedule": crontab(minute="*/2"),
-    },
     "fetch_erc20_pool_created_events_task": {
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="0-59/5"),
     },
     "fetch_erc721_pool_created_events_task": {
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="0-59/5"),
     },
     "fetch_erc20_pools_data_task": {
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="1-59/5"),
     },
     "fetch_erc721_pools_data_task": {
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="1-59/5"),
+    },
+    "fetch_and_save_events_for_all_pools_task": {
+        "schedule": crontab(minute="1-59/5"),
     },
     "process_events_for_all_pools_task": {
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="2-59/5"),
     },
     "save_wallets_at_risk_notification_task": {
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="3-59/5"),
     },
     "save_all_pools_volume_for_today_task": {
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="3-59/5"),
     },
     "save_network_stats_for_today_task": {
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="3-59/5"),
     },
     "save_all_pools_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
@@ -136,7 +136,7 @@ def save_wallets_at_risk_notification_task():
 def save_network_stats_for_today_task():
     models = PolygonModels()
     dt = date.today()
-    save_network_stats_for_date(models, dt, "ethereum")
+    save_network_stats_for_date(models, dt, "polygon")
 
 
 @app.task
@@ -145,4 +145,4 @@ def save_network_stats_for_yesterday_task():
     # are fetched and saved for the day before
     models = PolygonModels()
     yesterday = (datetime.now() - timedelta(days=1)).date()
-    save_network_stats_for_date(models, yesterday, "ethereum")
+    save_network_stats_for_date(models, yesterday, "polygon")
