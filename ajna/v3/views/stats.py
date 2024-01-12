@@ -49,13 +49,13 @@ class OverviewView(BaseChainView):
                     , pool.total_ajna_burned
                     , ct.underlying_price AS collateral_token_underlying_price
                     , qt.underlying_price AS quote_token_underlying_price
-                    , (pool.collateral_token_balance * ct.underlying_price) +
-                      (pool.quote_token_balance * qt.underlying_price) AS tvl
+                    , COALESCE(pool.collateral_token_balance * ct.underlying_price, 0) +
+                      COALESCE(pool.quote_token_balance * qt.underlying_price, 0) AS tvl
                     , prev.pledged_collateral * ct.underlying_price AS prev_pledged_collateral_usd
                     , prev.pool_size * qt.underlying_price AS prev_pool_size_usd
                     , prev.t0debt * pool.pending_inflator * qt.underlying_price  AS prev_debt_usd
-                    , (prev.collateral_token_balance * ct.underlying_price) +
-                        (prev.quote_token_balance * qt.underlying_price) AS prev_tvl
+                    , COALESCE(prev.collateral_token_balance * ct.underlying_price, 0) +
+                        COALESCE(prev.quote_token_balance * qt.underlying_price, 0) AS prev_tvl
                     , prev.total_ajna_burned AS prev_total_ajna_burned
                 FROM {pool_table} AS pool
                 JOIN {token_table} AS ct
@@ -153,8 +153,8 @@ class HistoryView(BaseChainView):
                 , SUM(x.amount) AS amount
             FROM (
                 SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      (ps.collateral_token_balance * ct.underlying_price
-                        + ps.quote_token_balance * qt.underlying_price) AS amount
+                      COALESCE(ps.collateral_token_balance * ct.underlying_price, 0)
+                        + COALESCE(ps.quote_token_balance * qt.underlying_price, 0) AS amount
                     , DATE_TRUNC('day', ps.datetime) AS dt
                 FROM {pool_snapshot_table} ps
                 JOIN {token_table} AS qt

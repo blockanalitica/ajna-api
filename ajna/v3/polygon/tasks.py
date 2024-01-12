@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from celery.schedules import crontab
 
@@ -7,6 +7,7 @@ from ajna.celery import app
 
 from ..modules.at_risk import wallets_at_risk_notification
 from ..modules.events import fetch_and_save_events_for_all_pools
+from ..modules.networks import save_network_stats_for_date
 from ..modules.pools import (
     PoolERC20Manager,
     PoolERC721Manager,
@@ -46,10 +47,18 @@ SCHEDULE = {
     "save_all_pools_volume_for_today_task": {
         "schedule": crontab(minute="*/5"),
     },
+    "save_network_stats_for_today_task": {
+        "schedule": crontab(minute="*/5"),
+    },
     "save_all_pools_volume_for_yesterday_task": {
         # Run 10 past midnight to make sure we get all events saved before taking
         # the snapshot
         "schedule": crontab(minute="10", hour="0"),
+    },
+    "save_network_stats_for_yesterday_task": {
+        # Run 11 past midnight to make sure we get all events saved before taking
+        # the snapshot
+        "schedule": crontab(minute="11", hour="0"),
     },
 }
 
@@ -121,3 +130,19 @@ def save_all_pools_volume_for_today_task():
 def save_wallets_at_risk_notification_task():
     chain = Polygon()
     wallets_at_risk_notification(chain)
+
+
+@app.task
+def save_network_stats_for_today_task():
+    models = PolygonModels()
+    dt = date.today()
+    save_network_stats_for_date(models, dt, "ethereum")
+
+
+@app.task
+def save_network_stats_for_yesterday_task():
+    # This task should be ran a few minutes past midnight to make sure all events
+    # are fetched and saved for the day before
+    models = PolygonModels()
+    yesterday = (datetime.now() - timedelta(days=1)).date()
+    save_network_stats_for_date(models, yesterday, "ethereum")
