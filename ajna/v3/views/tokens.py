@@ -93,6 +93,7 @@ class TokensView(RawSQLPaginatedChainView):
                 , sub.name
                 , sub.underlying_price
                 , sub.pool_count
+                , sub.is_estimated_price
                 , prev.pool_count AS prev_pool_count
                 , prev.underlying_price AS prev_underlying_price
                 , GREATEST(
@@ -112,6 +113,7 @@ class TokensView(RawSQLPaginatedChainView):
                     , token.symbol
                     , token.name
                     , token.underlying_price
+                    , token.is_estimated_price
                     , COUNT(pool.address) AS pool_count
                     , SUM(
                         CASE WHEN token.underlying_address = pool.collateral_token_address
@@ -133,7 +135,7 @@ class TokensView(RawSQLPaginatedChainView):
                 LEFT JOIN {pool_table} AS pool
                     ON token.underlying_address = pool.collateral_token_address
                         OR token.underlying_address = pool.quote_token_address
-                GROUP BY 1, 2, 3, 4
+                GROUP BY 1, 2, 3, 4, 5
                 ) AS sub
             LEFT JOIN previous AS prev
                 ON sub.underlying_address = prev.underlying_address
@@ -171,6 +173,7 @@ class TokenView(BaseChainView):
                 , decimals
                 , is_erc721
                 , underlying_price
+                , is_estimated_price
             FROM {token_table}
             WHERE underlying_address = %s
         """.format(

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from ajna.utils.http import retry_get_json
 
 LLAMA_COINS_API_URL = "https://coins.llama.fi/"
@@ -19,6 +21,16 @@ def get_current_prices(addresses, chain_name="ethereum"):
     coins = [f"{chain_name}:{address}" for address in addresses]
     data = fetch_current_price(coins)
     return data
+
+
+def get_current_prices_map(addresses, chain_name):
+    coins = [f"{chain_name}:{address}" for address in addresses]
+    response = fetch_current_price(coins)
+    prices = {}
+    for coin, data in response.items():
+        _, address = coin.split(":")
+        prices[address.lower()] = Decimal(str(data["price"]))
+    return prices
 
 
 def get_price_for_timestamp(timestamp, address, chain_name="ethereum"):

@@ -47,8 +47,8 @@ POOLS_SQL = """
         , collateral_token.name AS collateral_token_name
         , quote_token.symbol AS quote_token_symbol
         , quote_token.name AS quote_token_name
-        , (pool.collateral_token_balance * collateral_token.underlying_price) +
-            (pool.quote_token_balance * quote_token.underlying_price) AS tvl
+        , COALESCE(pool.collateral_token_balance * collateral_token.underlying_price, 0) +
+            COALESCE(pool.quote_token_balance * quote_token.underlying_price, 0) AS tvl
 
         , prev.pledged_collateral AS prev_pledged_collateral
         , prev.pledged_collateral * collateral_token.underlying_price AS prev_pledged_collateral_usd
@@ -59,8 +59,8 @@ POOLS_SQL = """
         , prev.total_ajna_burned AS prev_total_ajna_burned
         , prev.borrow_rate AS prev_borrow_rate
         , prev.lend_rate AS prev_lend_rate
-        , (prev.collateral_token_balance * collateral_token.underlying_price) +
-            (prev.quote_token_balance * quote_token.underlying_price) AS prev_tvl
+        , COALESCE(prev.collateral_token_balance * collateral_token.underlying_price, 0) +
+            COALESCE(prev.quote_token_balance * quote_token.underlying_price, 0) AS prev_tvl
     FROM {pool_table} AS pool
     JOIN {token_table} AS collateral_token
         ON pool.collateral_token_address = collateral_token.underlying_address
@@ -241,14 +241,15 @@ class PoolView(BaseChainView):
                 , collateral_token.symbol AS collateral_token_symbol
                 , collateral_token.name AS collateral_token_name
                 , collateral_token.underlying_price AS collateral_token_underlying_price
+                , collateral_token.is_estimated_price AS collateral_token_is_estimated_price
                 , quote_token.symbol AS quote_token_symbol
                 , quote_token.name AS quote_token_name
                 , quote_token.underlying_price AS quote_token_underlying_price
-                , (pool.collateral_token_balance * collateral_token.underlying_price) +
-                  (pool.quote_token_balance * quote_token.underlying_price) AS tvl
+                , COALESCE(pool.collateral_token_balance * collateral_token.underlying_price, 0) +
+                  COALESCE(pool.quote_token_balance * quote_token.underlying_price, 0) AS tvl
 
-                , (prev.collateral_token_balance * collateral_token.underlying_price) +
-                  (prev.quote_token_balance * quote_token.underlying_price) AS prev_tvl
+                , COALESCE(prev.collateral_token_balance * collateral_token.underlying_price, 0) +
+                  COALESCE(prev.quote_token_balance * quote_token.underlying_price, 0) AS prev_tvl
                 , prev.pledged_collateral AS prev_pledged_collateral
                 , prev.pool_size AS prev_pool_size
                 , prev.debt as prev_debt
@@ -302,8 +303,8 @@ class PoolHistoricView(BaseChainView):
         sql = """
             SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
                   DATE_TRUNC('day', ps.datetime) AS date
-                , (ps.collateral_token_balance * ps.collateral_token_price)
-                  + (quote_token_balance * ps.quote_token_price) AS amount
+                , COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0)
+                  + COALESCE(quote_token_balance * ps.quote_token_price, 0) AS amount
             FROM {pool_snapshot_table} ps
             WHERE ps.datetime >= %s AND ps.address = %s
             ORDER BY 1, ps.datetime DESC
