@@ -97,6 +97,9 @@ class Token(models.Model):
     name = models.CharField(max_length=255)
     decimals = models.BigIntegerField()
     underlying_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    is_estimated_price = models.BooleanField(
+        default=False
+    )  # True, if price was calculated based on LUP
     pool_count = models.BigIntegerField(null=True)
     total_supply = models.BigIntegerField(null=True)
     tx_count = models.BigIntegerField(null=True)
@@ -294,6 +297,9 @@ class PriceFeed(models.Model):
     timestamp = models.BigIntegerField(db_index=True)
     datetime = models.DateTimeField(null=True)
     underlying_address = models.CharField(max_length=42, db_index=True)
+    estimated = models.BooleanField(  # True, if price was calculated based on LUP
+        default=False
+    )
 
     def __str__(self):
         return self.underlying_address
