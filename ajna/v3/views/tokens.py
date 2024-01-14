@@ -67,8 +67,8 @@ class TokensView(RawSQLPaginatedChainView):
                             , ps.collateral_token_balance
                             , ps.quote_token_balance
                         FROM {pool_snapshot_table} ps
-                        WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
-                            AND ps.datetime <= %(days_ago_dt)s
+                        WHERE ps.datetime > (%s - INTERVAL '7 DAY')
+                            AND ps.datetime <= %s
                         ORDER BY ps.address, ps.datetime DESC
                     ) AS pool
                         ON token.underlying_address = pool.collateral_token_address
@@ -80,8 +80,8 @@ class TokensView(RawSQLPaginatedChainView):
                           feed.price
                         , feed.underlying_address
                     FROM {price_feed_table} feed
-                    WHERE feed.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
-                        AND feed.datetime <= %(days_ago_dt)s
+                    WHERE feed.datetime > (%s - INTERVAL '7 DAY')
+                        AND feed.datetime <= %s
                     ORDER BY feed.underlying_address, feed.datetime DESC
                 ) pf
                     ON pf.underlying_address = sub.underlying_address
@@ -146,7 +146,12 @@ class TokensView(RawSQLPaginatedChainView):
             price_feed_table=self.models.price_feed._meta.db_table,
         )
 
-        sql_vars = {"days_ago_dt": self.days_ago_dt}
+        sql_vars = [
+            self.days_ago_dt,
+            self.days_ago_dt,
+            self.days_ago_dt,
+            self.days_ago_dt,
+        ]
         filters = []
         if search_filters:
             search_sql, search_vars = search_filters
