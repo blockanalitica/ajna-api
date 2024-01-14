@@ -142,12 +142,12 @@ class BasePoolManager:
             data["symbol"]
             if data["symbol"]
             else Web3.to_text(data["symbolBytes"].strip(bytes(1)))
-        )
+        )[:63]
         name = (
             data["name"]
             if data["name"]
             else Web3.to_text(data["nameBytes"].strip(bytes(1)))
-        )
+        )[:254]
 
         self._chain.token.objects.create(
             underlying_address=token_address,
@@ -618,8 +618,8 @@ class PoolERC721Manager(BasePoolManager):
 
         self._chain.token.objects.create(
             underlying_address=token_address,
-            symbol=data["symbol"],
-            name=data["name"],
+            symbol=data["symbol"][:63],
+            name=data["name"][:254],
             decimals=18,
             erc=ERC721,
         )
