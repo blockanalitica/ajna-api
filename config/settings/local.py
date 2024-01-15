@@ -17,10 +17,7 @@ SHELL_PLUS_PRINT_SQL = False
 
 CELERY_TASK_ALWAYS_EAGER = True
 
-SHELL_PLUS_IMPORTS = [
-    "from ajna.v1.modules.pools import *",
-    "from ajna.v1.goerli.tasks import *",
-]
+SHELL_PLUS_IMPORTS = []
 
 CACHE_MIDDLEWARE_SECONDS = 0
 

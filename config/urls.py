@@ -12,8 +12,6 @@ def trigger_error(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("sentry-debug/", trigger_error),
-    path("v1/goerli/", include("ajna.v1.goerli.urls")),
-    path("v1/ethereum/", include("ajna.v1.ethereum.urls")),
     path("v2/goerli/", include("ajna.v2.goerli.urls")),
     path("v2/ethereum/", include("ajna.v2.ethereum.urls")),
     path("v3/overall/", include("ajna.v3.views.overall")),
