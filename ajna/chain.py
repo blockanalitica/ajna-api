@@ -29,9 +29,12 @@ class AjnaChainMixin:
                     "type": "function",
                 },
             ]
-            contract = self.eth.contract(
-                address=Web3.to_checksum_address(contract_address), abi=abi
-            )
+            try:
+                contract = self.eth.contract(
+                    address=Web3.to_checksum_address(contract_address), abi=abi
+                )
+            except Exception:
+                log.exception("Contract doesn't have owner (EOA) %s", contract_address)
             try:
                 address = contract.caller.owner()
             except ContractLogicError:
