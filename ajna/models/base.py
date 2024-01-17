@@ -13,7 +13,7 @@ class PoolBase(models.Model):
     inflator = models.DecimalField(max_digits=32, decimal_places=18)
     pending_inflator = models.DecimalField(max_digits=40, decimal_places=18, null=True)
     borrow_rate = models.DecimalField(max_digits=32, decimal_places=18)
-    lend_rate = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    lend_rate = models.DecimalField(max_digits=40, decimal_places=18, null=True)
     borrow_fee_rate = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     deposit_fee_rate = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     pledged_collateral = models.DecimalField(max_digits=32, decimal_places=18)
@@ -33,11 +33,11 @@ class PoolBase(models.Model):
     claimable_reserves_remaining = models.DecimalField(max_digits=32, decimal_places=18)
     burn_epoch = models.BigIntegerField()
     total_ajna_burned = models.DecimalField(max_digits=32, decimal_places=18)
-    min_debt_amount = models.DecimalField(max_digits=32, decimal_places=18)
+    min_debt_amount = models.DecimalField(max_digits=40, decimal_places=18)
     # Our calculation of utilization
     utilization = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     current_meaningful_utilization = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
+        max_digits=40, decimal_places=18, null=True
     )
     actual_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # MAU
     target_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # TU
