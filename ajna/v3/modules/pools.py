@@ -236,9 +236,6 @@ class BasePoolManager:
 
             pool_data["current_meaningful_utilization"] = utilization
             pool_data["lend_rate"] = lend_rate
-            # Total ajna burned is getting updated via reserve auctions, so at the start
-            # we set it to 0
-            pool_data["total_ajna_burned"] = Decimal("0")
 
             # Need to multiply token balance with token scale so that we get to the WAD
             # value, as not all tokens use 18 decimals
@@ -476,6 +473,7 @@ class BasePoolManager:
                         allowed_token_ids=created_event.data.get("token_ids"),
                         collateral_token_symbol=collateral_token["symbol"],
                         quote_token_symbol=quote_token["symbol"],
+                        total_ajna_burned=Decimal("0"),
                     )
 
                 for field, value in pool_data.items():
