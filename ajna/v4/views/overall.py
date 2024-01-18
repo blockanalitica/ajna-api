@@ -132,9 +132,13 @@ class OverallView(DaysAgoMixin, APIView):
         order = self._get_ordering(request)
         if order:
             if order.startswith("-"):
-                sql = SQL("{} ORDER BY {} DESC").format(SQL(sql), Identifier(order[1:]))
+                sql = SQL("{} ORDER BY {} DESC NULLS LAST").format(
+                    SQL(sql), Identifier(order[1:])
+                )
             else:
-                sql = SQL("{} ORDER BY {} ASC").format(SQL(sql), Identifier(order))
+                sql = SQL("{} ORDER BY {} ASC NULLS LAST").format(
+                    SQL(sql), Identifier(order)
+                )
 
         data = fetch_all(sql, sql_vars)
 
