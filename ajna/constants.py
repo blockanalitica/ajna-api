@@ -16,6 +16,7 @@ AJNA_DEPLOYMENTS = {
     "v3": ["ethereum", "goerli", "base", "arbitrum", "optimism", "polygon"],
 }
 
+AJNA_TOKEN_ADDRESS = "0x9a96ec9B57Fb64FbC60B423d1f4da7691Bd35079"
 
 ERC20 = "erc20"
 ERC721 = "erc721"

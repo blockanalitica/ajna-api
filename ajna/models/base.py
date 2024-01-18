@@ -823,3 +823,13 @@ class NetworkStatsDaily(models.Model):
     class Meta:
         abstract = True
         unique_together = ("network", "date")
+
+
+class OverallStats(models.Model):
+    total_ajna_burned = models.DecimalField(max_digits=32, decimal_places=18)
+    date = models.DateField(unique=True)
+
+    class Meta:
+        abstract = True
+        get_latest_by = "date"
+        ordering = ("-date",)
