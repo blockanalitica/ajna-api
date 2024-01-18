@@ -131,12 +131,16 @@ CELERY_WORKER_MAX_MEMORY_PER_CHILD = env.int(
 CELERY_IMPORTS = [
     "ajna.v2.goerli.tasks",
     "ajna.v2.ethereum.tasks",
-    "ajna.v3.goerli.tasks",
-    "ajna.v3.ethereum.tasks",
     "ajna.v3.base.tasks",
     "ajna.v3.arbitrum.tasks",
     "ajna.v3.optimism.tasks",
     "ajna.v3.polygon.tasks",
+    "ajna.v4.goerli.tasks",
+    "ajna.v4.ethereum.tasks",
+    "ajna.v4.base.tasks",
+    "ajna.v4.arbitrum.tasks",
+    "ajna.v4.optimism.tasks",
+    "ajna.v4.polygon.tasks",
 ]
 
 # django-celery-beat configuration options

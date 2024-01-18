@@ -10,11 +10,11 @@ from rest_framework.views import APIView
 
 from ajna.utils.db import fetch_all
 from ajna.utils.views import DaysAgoMixin
-from ajna.v4.ethereum.chain import EthereumModels
 
 from ..arbitrum.chain import ArbitrumModels
 from ..base.chain import BaseModels
-from ..models import V3NetworkStatsDaily, V3OverallStats
+from ..ethereum.chain import EthereumModels
+from ..models import V4NetworkStatsDaily, V4OverallStats
 from ..optimism.chain import OptimismModels
 from ..polygon.chain import PolygonModels
 
@@ -138,15 +138,15 @@ class OverallView(DaysAgoMixin, APIView):
 
         data = fetch_all(sql, sql_vars)
 
-        overall = V3OverallStats.objects.all().order_by("-date").first()
+        overall = V4OverallStats.objects.all().order_by("-date").first()
         if overall:
             total_ajna_burned = overall.total_ajna_burned
         else:
             total_ajna_burned = Decimal("0")
 
         try:
-            prev_overall = V3OverallStats.objects.get(date=self.days_ago_dt.date())
-        except V3OverallStats.DoesNotExist:
+            prev_overall = V4OverallStats.objects.get(date=self.days_ago_dt.date())
+        except V4OverallStats.DoesNotExist:
             prev_total_ajna_burned = None
         else:
             prev_total_ajna_burned = prev_overall.total_ajna_burned
@@ -185,7 +185,7 @@ class HistoricView(DaysAgoMixin, APIView):
             GROUP BY 1
             ORDER BY date
         """.format(
-            network_stats_daily_table=V3NetworkStatsDaily._meta.db_table
+            network_stats_daily_table=V4NetworkStatsDaily._meta.db_table
         )
         data = fetch_all(sql, [self.days_ago_dt, date.today()])
         return Response(data, status.HTTP_200_OK)

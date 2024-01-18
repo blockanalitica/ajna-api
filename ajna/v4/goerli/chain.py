@@ -1,3 +1,8 @@
+"""
+NOTE: v4 of goerli is the same as v3!
+They've redeployed only L2s for the v4 version.
+"""
+
 from chain_harvester.networks.ethereum.goerli import EthereumGoerliChain
 from django.conf import settings
 

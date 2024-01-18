@@ -1,3 +1,8 @@
+"""
+NOTE: v4 of ethereum is the same as v3!
+They've redeployed only L2s for the v4 version.
+"""
+
 from ...models import base
 
 
