@@ -9,6 +9,7 @@ from ..modules.at_risk import wallets_at_risk_notification
 from ..modules.events import fetch_and_save_events_for_all_pools
 from ..modules.grants import fetch_and_save_grant_proposals
 from ..modules.networks import save_network_stats_for_date
+from ..modules.overall_stats import save_overall_ajna_burned
 from ..modules.pools import (
     PoolERC20Manager,
     PoolERC721Manager,
@@ -52,6 +53,9 @@ SCHEDULE = {
         "schedule": crontab(minute="3-59/5"),
     },
     "save_network_stats_for_today_task": {
+        "schedule": crontab(minute="3-59/5"),
+    },
+    "save_overall_total_ajna_burned_task": {
         "schedule": crontab(minute="3-59/5"),
     },
     "save_all_pools_volume_for_yesterday_task": {
@@ -156,3 +160,9 @@ def save_network_stats_for_yesterday_task():
     models = EthereumModels()
     yesterday = (datetime.now() - timedelta(days=1)).date()
     save_network_stats_for_date(models, yesterday, "ethereum")
+
+
+@app.task
+def save_overall_total_ajna_burned_task():
+    chain = Ethereum()
+    save_overall_ajna_burned(chain)
