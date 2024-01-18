@@ -10,3 +10,7 @@ from ..models import base
 
 class V3NetworkStatsDaily(base.NetworkStatsDaily):
     pass
+
+
+class V3OverallStats(base.OverallStats):
+    pass

@@ -14,7 +14,7 @@ from ajna.utils.views import DaysAgoMixin
 from ..arbitrum.chain import ArbitrumModels
 from ..base.chain import BaseModels
 from ..ethereum.chain import EthereumModels
-from ..models import V3NetworkStatsDaily
+from ..models import V3NetworkStatsDaily, V3OverallStats
 from ..optimism.chain import OptimismModels
 from ..polygon.chain import PolygonModels
 
@@ -138,7 +138,22 @@ class OverallView(DaysAgoMixin, APIView):
 
         data = fetch_all(sql, sql_vars)
 
+        overall = V3OverallStats.objects.all().order_by("-date").first()
+        if overall:
+            total_ajna_burned = overall.total_ajna_burned
+        else:
+            total_ajna_burned = Decimal("0")
+
+        try:
+            prev_overall = V3OverallStats.objects.get(date=self.days_ago_dt.date())
+        except V3OverallStats.DoesNotExist:
+            prev_total_ajna_burned = None
+        else:
+            prev_total_ajna_burned = prev_overall.total_ajna_burned
+
         totals = defaultdict(Decimal)
+        totals["total_ajna_burned"] = total_ajna_burned
+        totals["prev_total_ajna_burned"] = prev_total_ajna_burned
         for row in data:
             totals["tvl"] += row["tvl"] or Decimal("0")
             totals["debt_usd"] += row["debt_usd"] or Decimal("0")
