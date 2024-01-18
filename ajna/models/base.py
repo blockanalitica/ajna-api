@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
@@ -32,7 +34,9 @@ class PoolBase(models.Model):
     claimable_reserves = models.DecimalField(max_digits=32, decimal_places=18)
     claimable_reserves_remaining = models.DecimalField(max_digits=32, decimal_places=18)
     burn_epoch = models.BigIntegerField()
-    total_ajna_burned = models.DecimalField(max_digits=32, decimal_places=18)
+    total_ajna_burned = models.DecimalField(
+        max_digits=32, decimal_places=18, default=Decimal("0")
+    )
     min_debt_amount = models.DecimalField(max_digits=40, decimal_places=18)
     # Our calculation of utilization
     utilization = models.DecimalField(max_digits=32, decimal_places=18, null=True)
