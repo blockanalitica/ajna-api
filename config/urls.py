@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views import defaults as default_views
+from django.views.generic import RedirectView
 
 
 def trigger_error(request):
@@ -14,13 +15,26 @@ urlpatterns = [
     path("sentry-debug/", trigger_error),
     path("v2/goerli/", include("ajna.v2.goerli.urls")),
     path("v2/ethereum/", include("ajna.v2.ethereum.urls")),
+    re_path(
+        r"^v3/ethereum/(?P<rest>.*)",
+        RedirectView.as_view(url="/v4/ethereum/%(rest)s", permanent=True),
+    ),
+    re_path(
+        r"^v3/goerli/(?P<rest>.*)",
+        RedirectView.as_view(url="/v4/ethereum/%(rest)s", permanent=True),
+    ),
     path("v3/overall/", include("ajna.v3.views.overall")),
-    path("v3/goerli/", include("ajna.v3.goerli.urls")),
-    path("v3/ethereum/", include("ajna.v3.ethereum.urls")),
     path("v3/base/", include("ajna.v3.base.urls")),
     path("v3/arbitrum/", include("ajna.v3.arbitrum.urls")),
     path("v3/optimism/", include("ajna.v3.optimism.urls")),
     path("v3/polygon/", include("ajna.v3.polygon.urls")),
+    path("v4/overall/", include("ajna.v4.views.overall")),
+    path("v4/goerli/", include("ajna.v4.goerli.urls")),
+    path("v4/ethereum/", include("ajna.v4.ethereum.urls")),
+    path("v4/base/", include("ajna.v4.base.urls")),
+    path("v4/arbitrum/", include("ajna.v4.arbitrum.urls")),
+    path("v4/optimism/", include("ajna.v4.optimism.urls")),
+    path("v4/polygon/", include("ajna.v4.polygon.urls")),
 ]
 
 if settings.DEBUG:

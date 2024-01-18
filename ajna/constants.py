@@ -13,7 +13,8 @@ MAX_INFLATED_PRICE = Decimal("50248449380.32561770910548855")
 
 AJNA_DEPLOYMENTS = {
     "v2": ["ethereum", "goerli"],
-    "v3": ["ethereum", "goerli", "base", "arbitrum", "optimism", "polygon"],
+    "v3": ["base", "arbitrum", "optimism", "polygon"],
+    "v4": ["ethereum", "goerli", "base", "arbitrum", "optimism", "polygon"],
 }
 
 AJNA_TOKEN_ADDRESS = "0x9a96ec9B57Fb64FbC60B423d1f4da7691Bd35079"
