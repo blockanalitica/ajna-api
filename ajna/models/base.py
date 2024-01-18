@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
