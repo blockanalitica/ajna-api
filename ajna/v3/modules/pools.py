@@ -203,14 +203,6 @@ class BasePoolManager:
                         [f"{pool_address}:depositUpToIndex", None],
                     ),
                     (
-                        pool_address,
-                        [
-                            "burnInfo(uint256)((uint256,uint256,uint256))",
-                            pool_data["burn_epoch"],
-                        ],
-                        [f"{pool_address}:burnInfo", None],
-                    ),
-                    (
                         pool_data["quote_token_address"],
                         ["balanceOf(address)(uint256)", pool_address],
                         [f"{pool_address}:quoteTokenBalance", None],
@@ -229,7 +221,6 @@ class BasePoolManager:
             meaningful_deposit = wad_to_decimal(
                 data[f"{pool_address}:depositUpToIndex"]
             )
-            burn_info = data[f"{pool_address}:burnInfo"]
             quote_token_balance = data[f"{pool_address}:quoteTokenBalance"]
             collateral_token_balance = data[f"{pool_address}:collateralTokenBalance"]
 
@@ -245,7 +236,9 @@ class BasePoolManager:
 
             pool_data["current_meaningful_utilization"] = utilization
             pool_data["lend_rate"] = lend_rate
-            pool_data["total_ajna_burned"] = wad_to_decimal(burn_info[2])
+            # Total ajna burned is getting updated via reserve auctions, so at the start
+            # we set it to 0
+            pool_data["total_ajna_burned"] = Decimal("0")
 
             # Need to multiply token balance with token scale so that we get to the WAD
             # value, as not all tokens use 18 decimals
