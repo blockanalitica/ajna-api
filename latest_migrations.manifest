@@ -1,5 +1,5 @@
 admin: 0003_logentry_add_action_flag_choices
-ajna: 0084_alter_v2ethereumpool_total_ajna_burned_and_more
+ajna: 0085_v3overallstats
 auth: 0012_alter_user_first_name_max_length
 contenttypes: 0002_remove_content_type_name
 django_celery_beat: 0018_improve_crontab_helptext
