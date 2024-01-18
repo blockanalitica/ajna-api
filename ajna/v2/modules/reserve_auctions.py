@@ -68,6 +68,8 @@ def process_reserve_auction_event(chain, event):
         # If reserve_auction_take already exists, don't process it
         return
 
+    pool = chain.pool.objects.get(address=event.pool_address)
+
     # get taker from transaction
     transaction_info = chain.eth.get_transaction(event.transaction_hash)
     taker = transaction_info["from"].lower()
@@ -87,27 +89,14 @@ def process_reserve_auction_event(chain, event):
             ["burnInfo", None],
         ),
     ]
+
     burn_data = chain.multicall(burn_data_calls, block_identifier=event.block_number)
 
-    prev_burn_data_calls = [
-        (
-            event.pool_address,
-            [
-                "burnInfo(uint256)((uint256,uint256,uint256))",
-                event.data["currentBurnEpoch"],
-            ],
-            ["burnInfo", None],
-        ),
-    ]
-    prev_burn_data = chain.multicall(
-        prev_burn_data_calls, block_identifier=event.block_number - 1
-    )
-
-    # since only one reserve auction can occur at a time, look at the difference between
-    # previous and current total ajna burned state
-    prev_total_burned = wad_to_decimal(prev_burn_data["burnInfo"][2])
     total_burned = wad_to_decimal(burn_data["burnInfo"][2])
-    ajna_burned = total_burned - prev_total_burned
+
+    # since only one reserve auction can occur at a time, look at the difference since
+    # the last reserve auction
+    ajna_burned = total_burned - pool.total_ajna_burned
 
     auction_price = wad_to_decimal(event.data["auctionPrice"])
     # event does not provide amount of quote purchased. Use auction price and ajna
@@ -135,3 +124,7 @@ def process_reserve_auction_event(chain, event):
     reserve_auction.last_take_price = take.auction_price
     reserve_auction.ajna_burned += take.ajna_burned
     reserve_auction.save()
+
+    # Update pool
+    pool.total_ajna_burned = total_burned
+    pool.save(update_fields=["total_ajna_burned"])
