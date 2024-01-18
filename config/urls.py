@@ -17,11 +17,15 @@ urlpatterns = [
     path("v2/ethereum/", include("ajna.v2.ethereum.urls")),
     re_path(
         r"^v3/ethereum/(?P<rest>.*)",
-        RedirectView.as_view(url="/v4/ethereum/%(rest)s", permanent=True),
+        RedirectView.as_view(
+            url="/v4/ethereum/%(rest)s", permanent=False, query_string=True
+        ),
     ),
     re_path(
         r"^v3/goerli/(?P<rest>.*)",
-        RedirectView.as_view(url="/v4/ethereum/%(rest)s", permanent=True),
+        RedirectView.as_view(
+            url="/v4/ethereum/%(rest)s", permanent=False, query_string=True
+        ),
     ),
     path("v3/overall/", include("ajna.v3.views.overall")),
     path("v3/base/", include("ajna.v3.base.urls")),
