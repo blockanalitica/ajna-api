@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from web3 import Web3
-from web3.exceptions import ContractLogicError
+from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 
 from ajna.constants import ERC20
 
@@ -37,8 +37,8 @@ class AjnaChainMixin:
                 log.exception("Contract doesn't have owner (EOA) %s", contract_address)
             try:
                 address = contract.caller.owner()
-            except ContractLogicError:
-                log.error("Can't find owner (EOA) of %s contract", contract_address)
+            except (ContractLogicError, BadFunctionCallOutput):
+                log.exception("Can't find owner (EOA) of %s contract", contract_address)
 
         return address.lower()
 
