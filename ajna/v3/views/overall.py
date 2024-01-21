@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from ajna.utils.db import fetch_all
 from ajna.utils.views import DaysAgoMixin
 from ajna.v4.ethereum.chain import EthereumModels
+from ajna.v4.models import V4NetworkStatsDaily
 
 from ..arbitrum.chain import ArbitrumModels
 from ..base.chain import BaseModels
@@ -175,19 +176,45 @@ class HistoricView(DaysAgoMixin, APIView):
     def get(self, request):
         sql = """
             SELECT
-                  date
-                , SUM(tvl) AS tvl
-                , SUM(collateral_usd) AS collateral_usd
-                , SUM(supply_usd) AS  supply_usd
-                , SUM(debt_usd) AS debt_usd
-            FROM {network_stats_daily_table}
-            WHERE date >= %s AND date < %s
+                x.date
+                , SUM(x.tvl) AS tvl
+                , SUM(x.collateral_usd) AS collateral_usd
+                , SUM(x.supply_usd) AS  supply_usd
+                , SUM(x.debt_usd) AS debt_usd
+            FROM (
+                SELECT
+                      date
+                    , SUM(tvl) AS tvl
+                    , SUM(collateral_usd) AS collateral_usd
+                    , SUM(supply_usd) AS  supply_usd
+                    , SUM(debt_usd) AS debt_usd
+                FROM {network_stats_daily_table}
+                WHERE date >= %(days_ago_dt)s
+                    AND date < %(today)s
+                    AND network != 'ethereum'
+                GROUP BY 1
+
+                UNION ALL
+
+                SELECT
+                      date
+                    , SUM(tvl) AS tvl
+                    , SUM(collateral_usd) AS collateral_usd
+                    , SUM(supply_usd) AS  supply_usd
+                    , SUM(debt_usd) AS debt_usd
+                FROM {network_stats_daily_v4_table}
+                WHERE date >= %(days_ago_dt)s
+                    AND date < %(today)s
+                    AND network = 'ethereum'
+                GROUP BY 1
+            ) x
             GROUP BY 1
             ORDER BY date
         """.format(
-            network_stats_daily_table=V3NetworkStatsDaily._meta.db_table
+            network_stats_daily_table=V3NetworkStatsDaily._meta.db_table,
+            network_stats_daily_v4_table=V4NetworkStatsDaily._meta.db_table,
         )
-        data = fetch_all(sql, [self.days_ago_dt, date.today()])
+        data = fetch_all(sql, {"days_ago_dt": self.days_ago_dt, "today": date.today()})
         return Response(data, status.HTTP_200_OK)
 
 
