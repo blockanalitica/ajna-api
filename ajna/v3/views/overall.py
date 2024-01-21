@@ -11,8 +11,8 @@ from rest_framework.views import APIView
 from ajna.utils.db import fetch_all
 from ajna.utils.views import DaysAgoMixin
 from ajna.v4.ethereum.chain import EthereumModels
-
 from ajna.v4.models import V4NetworkStatsDaily
+
 from ..arbitrum.chain import ArbitrumModels
 from ..base.chain import BaseModels
 from ..models import V3NetworkStatsDaily, V3OverallStats
