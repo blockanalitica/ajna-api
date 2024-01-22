@@ -541,14 +541,25 @@ class PoolERC20Manager(BasePoolManager):
         token_created = False
         events = self._fetch_new_pool_created_events()
         for event in events:
-            transaction_info = self._chain.eth.get_transaction(event["transactionHash"])
+            calls = [
+                (
+                    event["args"]["pool_"],
+                    ["collateralAddress()(address)"],
+                    ["collateralAddress", None],
+                ),
+                (
+                    event["args"]["pool_"],
+                    ["quoteTokenAddress()(address)"],
+                    ["quoteTokenAddress", None],
+                ),
+            ]
 
-            collateral_token_address, quote_token_address, _ = abi.decode(
-                ["address", "address", "uint256"], transaction_info.input[4:]
+            mc_data = self._chain.multicall(
+                calls, block_identifier=event["blockNumber"]
             )
 
-            collateral_token_address = collateral_token_address.lower()
-            quote_token_address = quote_token_address.lower()
+            collateral_token_address = mc_data["collateralAddress"].lower()
+            quote_token_address = mc_data["quoteTokenAddress"].lower()
 
             order_index = compute_order_index(
                 event["blockNumber"], event["transactionIndex"], event["logIndex"]
@@ -558,7 +569,7 @@ class PoolERC20Manager(BasePoolManager):
             pool_data["subsetHash_"] = encode_hex(pool_data["subsetHash_"])
             pool_data["erc"] = self.erc
             pool_data["collateral_token_address"] = collateral_token_address
-            pool_data["quote_token_address"] = quote_token_address.lower()
+            pool_data["quote_token_address"] = quote_token_address
 
             self._chain.pool_event.objects.create(
                 pool_address=event["args"]["pool_"].lower(),
