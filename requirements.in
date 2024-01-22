@@ -16,6 +16,7 @@ eth-abi==4.2.1
 factory-boy==3.3.0
 freezegun==1.4.0
 gunicorn==21.2.0
+hexbytes==0.3.1
 hiredis==2.3.2
 ijson==3.2.3
 ipython==8.19.0
