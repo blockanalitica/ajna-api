@@ -4,17 +4,17 @@ from datetime import date, datetime, timedelta
 from celery.schedules import crontab
 
 from ajna.celery import app
-
-from ..modules.at_risk import wallets_at_risk_notification
-from ..modules.events import fetch_and_save_events_for_all_pools
-from ..modules.networks import save_network_stats_for_date
-from ..modules.pools import (
+from ajna.v4.modules.at_risk import wallets_at_risk_notification
+from ajna.v4.modules.events import fetch_and_save_events_for_all_pools
+from ajna.v4.modules.networks import save_network_stats_for_date
+from ajna.v4.modules.pools import (
     PoolERC20Manager,
     PoolERC721Manager,
     save_all_pools_volume_for_date,
 )
-from ..modules.positions import EventProcessor
-from ..modules.prices import update_token_prices
+from ajna.v4.modules.positions import EventProcessor
+from ajna.v4.modules.prices import update_token_prices
+
 from .chain import Polygon, PolygonModels
 
 log = logging.getLogger(__name__)

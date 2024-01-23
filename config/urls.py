@@ -26,7 +26,6 @@ urlpatterns = [
             url="/v4/ethereum/%(rest)s", permanent=False, query_string=True
         ),
     ),
-    path("v3/overall/", include("ajna.v3.views.overall")),
     path("v3/base/", include("ajna.v3.base.urls")),
     path("v3/arbitrum/", include("ajna.v3.arbitrum.urls")),
     path("v3/optimism/", include("ajna.v3.optimism.urls")),

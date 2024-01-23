@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import (
+from ajna.v4.views import (
     auctions,
     notifications,
     pools,
