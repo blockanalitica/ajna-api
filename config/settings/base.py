@@ -129,7 +129,6 @@ CELERY_WORKER_MAX_MEMORY_PER_CHILD = env.int(
 
 
 CELERY_IMPORTS = [
-    "ajna.v2.goerli.tasks",
     "ajna.v2.ethereum.tasks",
     "ajna.v3.base.tasks",
     "ajna.v3.arbitrum.tasks",

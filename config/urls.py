@@ -13,7 +13,6 @@ def trigger_error(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("sentry-debug/", trigger_error),
-    path("v2/goerli/", include("ajna.v2.goerli.urls")),
     path("v2/ethereum/", include("ajna.v2.ethereum.urls")),
     re_path(
         r"^v3/ethereum/(?P<rest>.*)",
