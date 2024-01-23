@@ -485,6 +485,9 @@ class BasePoolManager:
                 # Add fields that we need for pool snapshot
                 pool_data["collateral_token_price"] = collateral_token["price"]
                 pool_data["quote_token_price"] = quote_token["price"]
+                # total_ajna_burned is updated async in another task, so for snapshot
+                # we need to fetch it from pool
+                pool_data["total_ajna_burned"] = pool.total_ajna_burned
 
                 collateralization = None
                 if (
