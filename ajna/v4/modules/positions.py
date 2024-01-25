@@ -170,7 +170,7 @@ class EventProcessor:
             try:
                 position = self._chain.current_wallet_position.objects.get(
                     pool_address=pool_address, wallet_address=wallet_address
-                ).supply
+                )
             except self._chain.current_wallet_position.DoesNotExist:
                 pass
             else:
