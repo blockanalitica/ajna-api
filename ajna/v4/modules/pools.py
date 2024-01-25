@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
+from django.core.cache import cache
 from eth_abi import abi
 from eth_abi.exceptions import InsufficientDataBytes
 from eth_utils import encode_hex
@@ -159,30 +160,44 @@ class BasePoolManager:
         return True
 
     def _fetch_new_pool_created_events(self):
-        sql = """
-            SELECT
-                pe.block_number
-            FROM {pool_event_table} pe
-            WHERE pe.name = 'PoolCreated'
-                AND pe.data->>'erc' = %s
-            ORDER BY pe.block_number DESC
-            LIMIT 1
-        """.format(
-            pool_event_table=self._chain.pool_event._meta.db_table,
+        cache_key = "fetch_new_pool_created_events.{}.{}.last_block_number".format(
+            self.erc, self._chain.unique_key
         )
 
-        data = fetch_one(sql, [self.erc])
+        from_block_number = cache.get(cache_key)
+        if not from_block_number:
+            sql = """
+                SELECT
+                    pe.block_number
+                FROM {pool_event_table} pe
+                WHERE pe.name = 'PoolCreated'
+                    AND pe.data->>'erc' = %s
+                ORDER BY pe.block_number DESC
+                LIMIT 1
+            """.format(
+                pool_event_table=self._chain.pool_event._meta.db_table,
+            )
 
-        if data:
-            from_block_number = data["block_number"] + 1
-        else:
-            from_block_number = self.pool_factory_start_block
+            data = fetch_one(sql, [self.erc])
+            if data:
+                from_block_number = data["block_number"] + 1
+            else:
+                from_block_number = self.pool_factory_start_block
+
+        to_block = self._chain.get_latest_block()
 
         events = self._chain.get_events_for_contract_topics(
             self.pool_factory_address,
             ["0xee1fe091a5213b321c2662b35c0b7cd0d35d10dbcab52b3c9b8768983c67bce3"],
             from_block_number,
+            to_block=to_block,
         )
+
+        # Set the block number up to which we've fetch the events so next run we start
+        # fetching from this block number. This immensly helps when there's been a bit
+        # of time between pool created events
+        cache.set(cache_key, to_block, timeout=None)
+
         yield from events
 
     def _fetch_and_calculate_additional_pool_data(self, pools_data, block_number=None):
