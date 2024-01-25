@@ -1,4 +1,4 @@
-om decimal import Decimal
+from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 
@@ -45,7 +45,7 @@ class Command(BaseCommand):
         for position in positions:
             supply = self._calculate_supply(chain, position)
             if supply != position.supply:
-                self.stdout.write(position.supply, supply)
+                self.stdout.write("{} {}".format(position.supply, supply))
                 position.supply = supply
                 position.save(update_fields=["supply"])
 
