@@ -1,4 +1,3 @@
-import contextlib
 import logging
 from collections import defaultdict
 from decimal import Decimal
@@ -30,7 +29,6 @@ class EventProcessor:
 
         self._block_datetimes = {}
 
-        self._wallet_supply = defaultdict(Decimal)
         self._data_to_update = defaultdict(
             lambda: defaultdict(
                 lambda: {
@@ -147,6 +145,7 @@ class EventProcessor:
     def _fetch_supply_for_wallet(
         self, pool_address, updated_bucket_wallets, wallet_address, block_number
     ):
+        supply = None
         if wallet_address in updated_bucket_wallets:
             sql = """
                 SELECT
@@ -166,16 +165,18 @@ class EventProcessor:
             )
 
             data = fetch_one(sql, [pool_address, wallet_address, block_number])
-            self._wallet_supply[wallet_address] = data["supply"]
-        elif wallet_address not in self._wallet_supply:
-            with contextlib.suppress(self._chain.current_wallet_position.DoesNotExist):
-                self._wallet_supply[
-                    wallet_address
-                ] = self._chain.current_wallet_position.objects.get(
+            supply = data["supply"]
+        else:
+            try:
+                position = self._chain.current_wallet_position.objects.get(
                     pool_address=pool_address, wallet_address=wallet_address
                 ).supply
+            except self._chain.current_wallet_position.DoesNotExist:
+                pass
+            else:
+                supply = position.supply
 
-        return self._wallet_supply[wallet_address]
+        return supply or Decimal("0")
 
     def _save_wallet_positions(self, block_number, to_update, results):
         # NOTE: this function must be called after the _save_buckets, otherwise supply
