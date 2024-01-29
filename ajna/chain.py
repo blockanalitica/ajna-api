@@ -34,11 +34,11 @@ class AjnaChainMixin:
                     address=Web3.to_checksum_address(contract_address), abi=abi
                 )
             except Exception:
-                log.exception("Contract doesn't have owner (EOA) %s", contract_address)
+                log.error("Contract doesn't have owner (EOA) %s", contract_address)
             try:
                 address = contract.caller.owner()
             except (ContractLogicError, BadFunctionCallOutput):
-                log.exception("Can't find owner (EOA) of %s contract", contract_address)
+                log.error("Can't find owner (EOA) of %s contract", contract_address)
 
         return address.lower()
 
