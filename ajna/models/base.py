@@ -103,7 +103,7 @@ class Token(models.Model):
     underlying_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     is_estimated_price = models.BooleanField(
         default=False
-    )  # True, if price was calculated based on LUP
+    )  # True, if price was calculated based on HPB
     pool_count = models.BigIntegerField(null=True)
     total_supply = models.BigIntegerField(null=True)
     tx_count = models.BigIntegerField(null=True)
