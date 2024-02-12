@@ -49,14 +49,14 @@ def _get_rhiofi_price(models, address):
 def _estimate_price_from_pools_for_token(models, address):
     sql = """
         SELECT
-            MAX(x.price) AS price
+            MIN(x.price) AS price
         FROM (
             SELECT
-                p.lup * qt.underlying_price AS price
+                p.hpb * qt.underlying_price AS price
             FROM {pool_table} AS p
             JOIN {token_table} AS qt
                 ON p.quote_token_address = qt.underlying_address
-            WHERE p.collateral_token_address = %s AND p.lup < %s
+            WHERE p.collateral_token_address = %s AND p.hpb < %s
         ) x
     """.format(
         pool_table=models.pool._meta.db_table,
