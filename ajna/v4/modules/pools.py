@@ -196,7 +196,9 @@ class BasePoolManager:
         # Set the block number up to which we've fetch the events so next run we start
         # fetching from this block number. This immensly helps when there's been a bit
         # of time between pool created events
-        cache.set(cache_key, to_block, timeout=None)
+        # We add +1 to the to_block so that next run, we fetch from that block onwards
+        # (including the from block number)
+        cache.set(cache_key, to_block + 1, timeout=None)
 
         yield from events
 

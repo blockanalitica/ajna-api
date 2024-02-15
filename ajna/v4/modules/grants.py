@@ -169,4 +169,4 @@ def fetch_and_save_grant_proposals(chain):
     # Set the block number up to which we've fetch the events so next run we start
     # fetching from this block number. This immensly helps when contract doens't get
     # many events
-    cache.set(cache_key, to_block, timeout=None)
+    cache.set(cache_key, to_block + 1, timeout=None)

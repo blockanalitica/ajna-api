@@ -466,4 +466,4 @@ def fetch_and_save_events_for_all_pools(chain):
     # Set the block number up to which we've fetch the events so next run we start
     # fetching from this block number. This immensly helps with pools which are not
     # that active.
-    cache.set(cache_key, to_block, timeout=None)
+    cache.set(cache_key, to_block + 1, timeout=None)
