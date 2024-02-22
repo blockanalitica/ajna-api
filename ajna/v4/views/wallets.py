@@ -356,7 +356,7 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                         CASE
                             WHEN x.lup / (x.debt / x.collateral) > 1000
                             THEN 1000
-                            ELSE x.lup / (x.debt / x.collateral)
+                            ELSE x.lup / (x.debt / x.collateral * 1.04)
                         END
                   END AS health_rate
                 , CASE
@@ -536,7 +536,7 @@ class WalletPoolView(BaseChainView):
                         CASE
                             WHEN x.lup / (x.debt / x.collateral) > 1000
                             THEN 1000
-                            ELSE x.lup / (x.debt / x.collateral)
+                            ELSE x.lup / (x.debt / x.collateral * 1.04)
                         END
                   END AS health_rate
                 , CASE
