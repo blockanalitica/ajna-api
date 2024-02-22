@@ -44,7 +44,7 @@ WALLETS_AT_RISK_SQL = """
                 WHEN NULLIF(cwpt.collateral, 0) IS NULL
                     OR NULLIF(cwpt.t0debt, 0) IS NULL
                 THEN NULL
-                ELSE pt.lup / ((cwpt.t0debt * pt.pending_inflator) / cwpt.collateral)
+                ELSE pt.lup / ((cwpt.t0debt * pt.pending_inflator) / cwpt.collateral * 1.04)
               END AS health_rate
             , CASE
                 WHEN NULLIF(cwpt.collateral, 0) IS NULL
