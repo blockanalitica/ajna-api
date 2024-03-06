@@ -134,7 +134,7 @@ CELERY_IMPORTS = [
     "ajna.v3.arbitrum.tasks",
     "ajna.v3.optimism.tasks",
     "ajna.v3.polygon.tasks",
-    "ajna.v4.goerli.tasks",
+    # "ajna.v4.goerli.tasks",
     "ajna.v4.ethereum.tasks",
     "ajna.v4.base.tasks",
     "ajna.v4.arbitrum.tasks",
