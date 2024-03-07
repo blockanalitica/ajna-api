@@ -141,7 +141,7 @@ CELERY_IMPORTS = [
     "ajna.v4.arbitrum.tasks",
     "ajna.v4.optimism.tasks",
     "ajna.v4.polygon.tasks",
-    # "ajna.v4.blast.tasks",
+    "ajna.v4.blast.tasks",
 ]
 
 # django-celery-beat configuration options

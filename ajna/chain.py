@@ -38,7 +38,7 @@ class AjnaChainMixin:
             try:
                 address = contract.caller.owner()
             except (ContractLogicError, BadFunctionCallOutput):
-                log.error("Can't find owner (EOA) of %s contract", contract_address)
+                log.debug("Can't find owner (EOA) of %s contract", contract_address)
 
         return address.lower()
 
