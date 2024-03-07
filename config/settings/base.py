@@ -124,7 +124,8 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = env.int(
     "CELERY_WORKER_PREFETCH_MULTIPLIER", default=1
 )
 CELERY_WORKER_MAX_MEMORY_PER_CHILD = env.int(
-    "CELERY_WORKER_MAX_MEMORY_PER_CHILD", default=256000  # 256MB
+    "CELERY_WORKER_MAX_MEMORY_PER_CHILD",
+    default=256000,  # 256MB
 )
 
 
@@ -140,6 +141,7 @@ CELERY_IMPORTS = [
     "ajna.v4.arbitrum.tasks",
     "ajna.v4.optimism.tasks",
     "ajna.v4.polygon.tasks",
+    # "ajna.v4.blast.tasks",
 ]
 
 # django-celery-beat configuration options
@@ -278,8 +280,11 @@ BASE_NODE = env("BASE_NODE", default="")
 ARBITRUM_NODE = env("ARBITRUM_NODE", default="")
 POLYGON_NODE = env("POLYGON_NODE", default="")
 OPTIMISM_NODE = env("OPTIMISM_NODE", default="")
+BLAST_NODE = env("BLAST_NODE", default="")
+
 ETHERSCAN_API_KEY = env("ETHERSCAN_API_KEY", default="")
 ARBISCAN_API_KEY = env("ARBISCAN_API_KEY", default="")
 BASESCAN_API_KEY = env("BASESCAN_API_KEY", default="")
 OPTIMISTIC_ETHERSCAN_API_KEY = env("OPTIMISTIC_ETHERSCAN_API_KEY", default="")
 POLYGONSCAN_API_KEY = env("POLYGONSCAN_API_KEY", default="")
+BLASTSCAN_API_KEY = env("BLASTSCAN_API_KEY", default="")
