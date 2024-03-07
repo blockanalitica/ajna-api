@@ -15,6 +15,7 @@ from ..arbitrum.chain import ArbitrumModels
 from ..base.chain import BaseModels
 from ..blast.chain import BlastModels
 from ..ethereum.chain import EthereumModels
+from ..gnosis.chain import GnosisModels
 from ..models import V4NetworkStatsDaily, V4OverallStats
 from ..optimism.chain import OptimismModels
 from ..polygon.chain import PolygonModels
@@ -48,6 +49,7 @@ class OverallView(DaysAgoMixin, APIView):
             "base": "Base",
             "optimism": "Optimism",
             "polygon": "Polygon PoS",
+            "gnosis": "Gnosis",
             "blast": "Blast",
         }
         chain_models_map = {
@@ -56,6 +58,7 @@ class OverallView(DaysAgoMixin, APIView):
             "base": BaseModels(),
             "optimism": OptimismModels(),
             "polygon": PolygonModels(),
+            "gnosis": GnosisModels(),
             "blast": BlastModels(),
         }
         prev_sqls = []
