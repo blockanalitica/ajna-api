@@ -51,6 +51,7 @@ class Gnosis(AjnaChainMixin, GnosisMainnetChain):
             rpc=settings.GNOSIS_NODE,
             api_key=settings.GNOSISSCAN_API_KEY,
             step=10000,
+            abis_path="abis/gnosis/",
         )
         self.unique_key = "v4_gnosis"
 
