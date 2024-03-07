@@ -37,6 +37,7 @@ urlpatterns = [
     path("v4/arbitrum/", include("ajna.v4.arbitrum.urls")),
     path("v4/optimism/", include("ajna.v4.optimism.urls")),
     path("v4/polygon/", include("ajna.v4.polygon.urls")),
+    path("v4/blast/", include("ajna.v4.blast.urls")),
 ]
 
 if settings.DEBUG:

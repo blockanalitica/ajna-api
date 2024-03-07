@@ -18,6 +18,8 @@ from ..models import V4NetworkStatsDaily, V4OverallStats
 from ..optimism.chain import OptimismModels
 from ..polygon.chain import PolygonModels
 
+# from ..blast.chain import BlastModels
+
 
 class OverallView(DaysAgoMixin, APIView):
     days_ago_required = False
@@ -47,6 +49,7 @@ class OverallView(DaysAgoMixin, APIView):
             "base": "Base",
             "optimism": "Optimism",
             "polygon": "Polygon PoS",
+            # "blast": "Blast",
         }
         chain_models_map = {
             "ethereum": EthereumModels(),
@@ -54,6 +57,7 @@ class OverallView(DaysAgoMixin, APIView):
             "base": BaseModels(),
             "optimism": OptimismModels(),
             "polygon": PolygonModels(),
+            # "blast": BlastModels(),
         }
         prev_sqls = []
         selects = []
