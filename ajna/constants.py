@@ -16,7 +16,6 @@ AJNA_DEPLOYMENTS = {
     "v3": ["base", "arbitrum", "optimism", "polygon"],
     "v4": [
         "ethereum",
-        "goerli",
         "base",
         "arbitrum",
         "optimism",

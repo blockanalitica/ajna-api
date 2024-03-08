@@ -20,18 +20,11 @@ urlpatterns = [
             url="/v4/ethereum/%(rest)s", permanent=False, query_string=True
         ),
     ),
-    re_path(
-        r"^v3/goerli/(?P<rest>.*)",
-        RedirectView.as_view(
-            url="/v4/ethereum/%(rest)s", permanent=False, query_string=True
-        ),
-    ),
     path("v3/base/", include("ajna.v3.base.urls")),
     path("v3/arbitrum/", include("ajna.v3.arbitrum.urls")),
     path("v3/optimism/", include("ajna.v3.optimism.urls")),
     path("v3/polygon/", include("ajna.v3.polygon.urls")),
     path("v4/overall/", include("ajna.v4.views.overall")),
-    path("v4/goerli/", include("ajna.v4.goerli.urls")),
     path("v4/ethereum/", include("ajna.v4.ethereum.urls")),
     path("v4/base/", include("ajna.v4.base.urls")),
     path("v4/arbitrum/", include("ajna.v4.arbitrum.urls")),
