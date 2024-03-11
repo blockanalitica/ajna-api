@@ -18,11 +18,11 @@ class OverviewView(BaseChainView):
                 SELECT DISTINCT ON (ps.address)
                       ps.address
                     , ps.total_ajna_burned
-                    , ps.pledged_collateral
-                    , ps.pool_size
-                    , ps.t0debt
-                    , ps.collateral_token_balance
-                    , ps.quote_token_balance
+                    , ps.pledged_collateral * ps.collateral_token_price AS collateral_usd
+                    , ps.pool_size * ps.quote_token_price AS pool_size_usd
+                    , ps.debt * ps.quote_token_price  AS debt_usd
+                    , COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0) +
+                        COALESCE(ps.quote_token_balance * ps.quote_token_price, 0) AS tvl
                 FROM {pool_snapshot_table} ps
                 WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
                     AND ps.datetime <= %(days_ago_dt)s
@@ -51,11 +51,10 @@ class OverviewView(BaseChainView):
                     , qt.underlying_price AS quote_token_underlying_price
                     , COALESCE(pool.collateral_token_balance * ct.underlying_price, 0) +
                       COALESCE(pool.quote_token_balance * qt.underlying_price, 0) AS tvl
-                    , prev.pledged_collateral * ct.underlying_price AS prev_pledged_collateral_usd
-                    , prev.pool_size * qt.underlying_price AS prev_pool_size_usd
-                    , prev.t0debt * pool.pending_inflator * qt.underlying_price  AS prev_debt_usd
-                    , COALESCE(prev.collateral_token_balance * ct.underlying_price, 0) +
-                        COALESCE(prev.quote_token_balance * qt.underlying_price, 0) AS prev_tvl
+                    , prev.collateral_usd AS prev_pledged_collateral_usd
+                    , prev.pool_size_usd AS prev_pool_size_usd
+                    , prev.debt_usd AS prev_debt_usd
+                    , prev.tvl AS prev_tvl
                     , prev.total_ajna_burned AS prev_total_ajna_burned
                 FROM {pool_table} AS pool
                 JOIN {token_table} AS ct
@@ -87,18 +86,15 @@ class HistoryView(BaseChainView):
                 , SUM(x.amount) AS amount
             FROM (
                 SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      ps.pledged_collateral * ct.underlying_price AS amount
+                      ps.pledged_collateral * ps.collateral_token_price AS amount
                     , DATE_TRUNC('day', ps.datetime) AS dt
                 FROM {pool_snapshot_table} ps
-                JOIN {token_table} AS ct
-                    ON ps.collateral_token_address = ct.underlying_address
                 ORDER BY dt, ps.address, ps.datetime DESC
             ) x
             GROUP BY x.dt
             ORDER BY x.dt
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            token_table=self.models.token._meta.db_table,
         )
         return sql, []
 
@@ -109,18 +105,15 @@ class HistoryView(BaseChainView):
                 , SUM(x.amount) AS amount
             FROM (
                 SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      ps.pool_size * qt.underlying_price AS amount
+                      ps.pool_size * ps.quote_token_price AS amount
                     , DATE_TRUNC('day', ps.datetime) AS dt
                 FROM {pool_snapshot_table} ps
-                JOIN {token_table} AS qt
-                    ON ps.quote_token_address = qt.underlying_address
                 ORDER BY dt, ps.address, ps.datetime DESC
             ) x
             GROUP BY x.dt
             ORDER BY x.dt
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            token_table=self.models.token._meta.db_table,
         )
         return sql, []
 
@@ -131,18 +124,15 @@ class HistoryView(BaseChainView):
                 , SUM(x.amount) AS amount
             FROM (
                 SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      ps.debt * qt.underlying_price AS amount
+                      ps.debt * ps.quote_token_price AS amount
                     , DATE_TRUNC('day', ps.datetime) AS dt
                 FROM {pool_snapshot_table} ps
-                JOIN {token_table} AS qt
-                    ON ps.quote_token_address = qt.underlying_address
                 ORDER BY dt, ps.address, ps.datetime DESC
             ) x
             GROUP BY x.dt
             ORDER BY x.dt
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            token_table=self.models.token._meta.db_table,
         )
         return sql, []
 
@@ -153,21 +143,16 @@ class HistoryView(BaseChainView):
                 , SUM(x.amount) AS amount
             FROM (
                 SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      COALESCE(ps.collateral_token_balance * ct.underlying_price, 0)
-                        + COALESCE(ps.quote_token_balance * qt.underlying_price, 0) AS amount
+                      COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0)
+                        + COALESCE(ps.quote_token_balance * ps.quote_token_price, 0) AS amount
                     , DATE_TRUNC('day', ps.datetime) AS dt
                 FROM {pool_snapshot_table} ps
-                JOIN {token_table} AS qt
-                    ON ps.quote_token_address = qt.underlying_address
-                JOIN {token_table} AS ct
-                    ON ps.collateral_token_address = ct.underlying_address
                 ORDER BY dt, ps.address, ps.datetime DESC
             ) x
             GROUP BY x.dt
             ORDER BY x.dt
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            token_table=self.models.token._meta.db_table,
         )
         return sql, []
 

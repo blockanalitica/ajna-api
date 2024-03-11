@@ -70,11 +70,11 @@ class OverallView(DaysAgoMixin, APIView):
                 {name} AS (
                     SELECT DISTINCT ON (ps.address)
                           ps.address
-                        , ps.pledged_collateral
-                        , ps.pool_size
-                        , ps.t0debt
-                        , ps.collateral_token_balance
-                        , ps.quote_token_balance
+                        , ps.pledged_collateral * ps.collateral_token_price AS collateral_usd
+                        , ps.pool_size * ps.quote_token_price AS supply_usd
+                        , ps.debt * ps.quote_token_price  AS debt_usd
+                        , COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0) +
+                            COALESCE(ps.quote_token_balance * ps.quote_token_price, 0) AS tvl
                     FROM {pool_snapshot_table} ps
                     WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
                         AND ps.datetime <= %(days_ago_dt)s
@@ -106,11 +106,10 @@ class OverallView(DaysAgoMixin, APIView):
                         , p.debt * qt.underlying_price AS debt_usd
                         , COALESCE(p.collateral_token_balance * ct.underlying_price, 0) +
                           COALESCE(p.quote_token_balance * qt.underlying_price, 0) AS tvl
-                        , prev.pledged_collateral * ct.underlying_price AS prev_collateral_usd
-                        , prev.pool_size * qt.underlying_price AS prev_supply_usd
-                        , prev.t0debt * p.pending_inflator * qt.underlying_price  AS prev_debt_usd
-                        , COALESCE(prev.collateral_token_balance * ct.underlying_price, 0) +
-                            COALESCE(prev.quote_token_balance * qt.underlying_price, 0) AS prev_tvl
+                        , prev.collateral_usd AS prev_collateral_usd
+                        , prev.supply_usd AS prev_supply_usd
+                        , prev.debt_usd AS prev_debt_usd
+                        , prev.tvl as prev_tvl
                     FROM {pool_table} AS p
                     JOIN {token_table} AS ct
                         ON p.collateral_token_address = ct.underlying_address
