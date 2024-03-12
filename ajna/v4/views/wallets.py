@@ -119,30 +119,37 @@ class WalletView(BaseChainView):
 
     def _get_current(self, address):
         sql = """
-            WITH previous AS (
+            WITH previous_pools AS (
+                SELECT DISTINCT ON (ps.address)
+                      ps.address
+                    , ps.quote_token_price
+                    , ps.collateral_token_price
+                    , ps.pending_inflator
+                FROM {pool_snapshot_table} ps
+                WHERE ps.datetime > (%s - INTERVAL '7 DAY')
+                    AND ps.datetime <= %s
+                ORDER BY ps.address, ps.datetime DESC
+            ),
+            previous AS (
                 SELECT
                       wpx.wallet_address
-                    , SUM(wpx.supply * qt.underlying_price) AS supply_usd
-                    , SUM(wpx.collateral * ct.underlying_price) AS collateral_usd
-                    , SUM(wpx.debt * qt.underlying_price) AS debt_usd
+                    , SUM(wpx.supply * p.quote_token_price) AS supply_usd
+                    , SUM(wpx.collateral * p.collateral_token_price) AS collateral_usd
+                    , SUM(wpx.t0debt * p.pending_inflator * p.quote_token_price) AS debt_usd
                 FROM (
                     SELECT DISTINCT ON (wp.pool_address)
                           wp.pool_address
                         , wp.wallet_address
                         , wp.supply
                         , wp.collateral
-                        , wp.debt
+                        , wp.t0debt
                     FROM {wallet_position_table} wp
                     WHERE wp.wallet_address = %s
                         AND wp.datetime <= %s
                     ORDER BY wp.pool_address, wp.datetime DESC
                 ) wpx
-                JOIN {pool_table} p
+                JOIN previous_pools p
                     ON wpx.pool_address = p.address
-                JOIN {token_table} AS ct
-                    ON p.collateral_token_address = ct.underlying_address
-                JOIN {token_table} AS qt
-                    ON p.quote_token_address = qt.underlying_address
                 GROUP BY 1
             )
 
@@ -186,58 +193,89 @@ class WalletView(BaseChainView):
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
             wallet_position_table=self.models.wallet_position._meta.db_table,
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
 
-        sql_vars = [address, self.days_ago_dt, address]
+        sql_vars = [
+            self.days_ago_dt,
+            self.days_ago_dt,
+            address,
+            self.days_ago_dt,
+            address,
+        ]
         wallet = fetch_one(sql, sql_vars)
         return wallet
 
     def _get_for_block(self, address, block_number):
+        date_sql = """
+            SELECT pe.block_datetime
+            FROM {pool_event_table} pe
+            WHERE pe.wallet_addresses @> ARRAY[%s]::varchar[]
+                AND pe.block_number <= %s
+            ORDER BY pe.block_datetime DESC
+            LIMIT 1
+        """.format(
+            pool_event_table=self.models.pool_event._meta.db_table,
+        )
+        date_data = fetch_one(date_sql, [address, block_number])
+        dt = date_data["block_datetime"]
+
         sql = """
-            WITH positions AS (
+            WITH previous_pools AS (
+                SELECT DISTINCT ON (ps.address)
+                      ps.address
+                    , ps.quote_token_price
+                    , ps.collateral_token_price
+                    , ps.pending_inflator
+                FROM {pool_snapshot_table} ps
+                WHERE ps.datetime > (%(dt)s - INTERVAL '7 DAY')
+                    AND ps.datetime <= %(dt)s
+                ORDER BY ps.address, ps.datetime DESC
+            ),
+
+            positions AS (
                 SELECT DISTINCT ON (wp.pool_address)
-                    *
+                      wp.wallet_address
+                    , wp.pool_address
+                    , wp.supply
+                    , wp.collateral
+                    , wp.t0debt
                 FROM {wallet_position_table} wp
-                WHERE wp.wallet_address = %s
-                    AND wp.block_number <= %s
+                WHERE wp.wallet_address = %(address)s
+                    AND wp.block_number <= %(block_number)s
                 ORDER BY wp.pool_address, wp.block_number DESC
             )
 
             SELECT
-              x.address
-            , x.last_activity
-            , x.first_activity
-            , x.supply_usd
-            , x.collateral_usd
-            , x.debt_usd
+                  x.address
+                , x.last_activity
+                , x.first_activity
+                , x.supply_usd
+                , x.collateral_usd
+                , x.debt_usd
             FROM (
                 SELECT
                       w.address
                     , w.last_activity
                     , w.first_activity
-                    , SUM(wp.supply * qt.underlying_price) AS supply_usd
-                    , SUM(wp.collateral * ct.underlying_price) AS collateral_usd
-                    , SUM(wp.t0debt * p.pending_inflator * qt.underlying_price) AS debt_usd
+                    , SUM(wp.supply * p.quote_token_price) AS supply_usd
+                    , SUM(wp.collateral * p.collateral_token_price) AS collateral_usd
+                    , SUM(wp.t0debt * p.pending_inflator * p.quote_token_price) AS debt_usd
                 FROM {wallet_table} w
                 LEFT JOIN positions AS wp
                     ON w.address = wp.wallet_address
-                JOIN {pool_table} p
+                JOIN previous_pools p
                     ON wp.pool_address = p.address
-                JOIN {token_table} AS ct
-                    ON p.collateral_token_address = ct.underlying_address
-                JOIN {token_table} AS qt
-                    ON p.quote_token_address = qt.underlying_address
-                WHERE w.address = %s
+                WHERE w.address = %(address)s
                 GROUP BY 1,2,3
             ) x
         """.format(
             wallet_table=self.models.wallet._meta.db_table,
             wallet_position_table=self.models.wallet_position._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            token_table=self.models.token._meta.db_table,
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
 
-        sql_vars = [address, block_number, address]
+        sql_vars = {"address": address, "block_number": block_number, "dt": dt}
         wallet = fetch_one(sql, sql_vars)
         return wallet
 
@@ -276,20 +314,15 @@ class WalletEventsView(RawSQLPaginatedChainView):
                 , pe.collateral_token_price
                 , pe.quote_token_price
                 , pe.order_index
-                , qt.symbol AS quote_token_symbol
-                , ct.symbol AS collateral_token_symbol
+                , p.collateral_token_symbol
+                , p.quote_token_symbol
             FROM {pool_event_table} pe
             JOIN {pool_table} p
                 ON pe.pool_address = p.address
-            JOIN {token_table} AS ct
-                ON p.collateral_token_address = ct.underlying_address
-            JOIN {token_table} AS qt
-                ON p.quote_token_address = qt.underlying_address
             WHERE pe.wallet_addresses @> ARRAY[%s]::varchar[]
         """.format(
             pool_event_table=self.models.pool_event._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
-            token_table=self.models.token._meta.db_table,
         )
 
         sql_vars = [address]
@@ -323,14 +356,30 @@ class WalletPoolsView(RawSQLPaginatedChainView):
 
     def _get_current(self, address):
         sql = """
-            WITH previous AS (
+            WITH previous_pools AS (
+                SELECT DISTINCT ON (ps.address)
+                      ps.address
+                    , ps.quote_token_price
+                    , ps.collateral_token_price
+                    , ps.pending_inflator
+                FROM {pool_snapshot_table} ps
+                WHERE ps.datetime > (%s - INTERVAL '7 DAY')
+                    AND ps.datetime <= %s
+                ORDER BY ps.address, ps.datetime DESC
+            ),
+            previous AS (
                 SELECT DISTINCT ON (wp.pool_address)
                       wp.pool_address
                     , wp.wallet_address
                     , wp.supply
+                    , wp.supply * p.quote_token_price AS supply_usd
                     , wp.collateral
-                    , wp.debt
+                    , wp.collateral * p.collateral_token_price AS collateral_usd
+                    , wp.t0debt * p.pending_inflator AS debt
+                    , wp.t0debt * p.pending_inflator * p.quote_token_price AS debt_usd
                 FROM {wallet_position_table} wp
+                LEFT JOIN previous_pools p
+                    ON p.address = wp.pool_address
                 WHERE wp.wallet_address = %s
                     AND wp.datetime <= %s
                 ORDER BY wp.pool_address, wp.datetime DESC
@@ -372,12 +421,11 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     ELSE x.supply / x.pool_size
                   END AS supply_share
                 , prev.supply AS prev_supply
-                , prev.supply * x.quote_token_price AS prev_supply_usd
+                , prev.supply_usd AS prev_supply_usd
                 , prev.collateral AS prev_collateral
-                , prev.collateral * x.collateral_token_price AS prev_collateral_usd
+                , prev.collateral_usd AS prev_collateral_usd
                 , prev.debt AS prev_debt
-                , prev.debt * x.quote_token_price AS prev_debt_uas
-
+                , prev.debt_usd AS prev_debt_usd
             FROM (
                 SELECT
                       cwp.wallet_address
@@ -413,14 +461,49 @@ class WalletPoolsView(RawSQLPaginatedChainView):
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
             wallet_position_table=self.models.wallet_position._meta.db_table,
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
 
-        sql_vars = [address, self.days_ago_dt, address]
+        sql_vars = [
+            self.days_ago_dt,
+            self.days_ago_dt,
+            address,
+            self.days_ago_dt,
+            address,
+        ]
         return sql, sql_vars
 
     def _get_for_block(self, address, block):
+        date_sql = """
+            SELECT pe.block_datetime
+            FROM {pool_event_table} pe
+            WHERE pe.wallet_addresses @> ARRAY[%s]::varchar[]
+                AND pe.block_number <= %s
+            ORDER BY pe.block_datetime DESC
+            LIMIT 1
+        """.format(
+            pool_event_table=self.models.pool_event._meta.db_table,
+        )
+        date_data = fetch_one(date_sql, [address, block])
+        dt = date_data["block_datetime"]
+
         sql = """
-            WITH positions AS (
+            WITH previous_pools AS (
+                SELECT DISTINCT ON (ps.address)
+                      ps.address
+                    , ps.quote_token_price
+                    , ps.collateral_token_price
+                    , ps.pending_inflator
+                    , ps.collateral_token_address
+                    , ps.quote_token_address
+                    , ps.debt
+                    , ps.lup
+                FROM {pool_snapshot_table} ps
+                WHERE ps.datetime > (%s - INTERVAL '7 DAY')
+                    AND ps.datetime <= %s
+                ORDER BY ps.address, ps.datetime DESC
+            ),
+            positions AS (
                 SELECT DISTINCT ON (wp.pool_address)
                     *
                 FROM {wallet_position_table} wp
@@ -448,17 +531,17 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                       wp.wallet_address
                     , wp.pool_address
                     , wp.supply
-                    , wp.supply * qt.underlying_price AS supply_usd
+                    , wp.supply * p.quote_token_price AS supply_usd
                     , wp.collateral
-                    , wp.collateral * ct.underlying_price as collateral_usd
+                    , wp.collateral * p.collateral_token_price as collateral_usd
                     , wp.t0debt * p.pending_inflator AS debt
-                    , wp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
+                    , wp.t0debt * p.pending_inflator * p.quote_token_price AS debt_usd
                     , ct.symbol AS collateral_token_symbol
                     , qt.symbol AS quote_token_symbol
-                    , p.t0debt * p.pending_inflator * qt.underlying_price AS pool_debt_usd
+                    , p.debt * p.quote_token_price AS pool_debt_usd
                     , p.lup
                 FROM positions wp
-                JOIN {pool_table} p
+                JOIN previous_pools p
                     ON wp.pool_address = p.address
                 JOIN {token_table} AS ct
                     ON p.collateral_token_address = ct.underlying_address
@@ -468,11 +551,11 @@ class WalletPoolsView(RawSQLPaginatedChainView):
             ) x
         """.format(
             wallet_position_table=self.models.wallet_position._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
 
-        sql_vars = [address, block, address]
+        sql_vars = [dt, dt, address, block, address]
         return sql, sql_vars
 
     def get_raw_sql(self, address, **kwargs):
@@ -490,16 +573,33 @@ class WalletPoolView(BaseChainView):
 
     def get(self, request, address, pool_address):
         sql = """
-            WITH previous AS (
+            WITH previous_pools AS (
+                SELECT DISTINCT ON (ps.address)
+                      ps.address
+                    , ps.quote_token_price
+                    , ps.collateral_token_price
+                    , ps.pending_inflator
+                FROM {pool_snapshot_table} ps
+                WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
+                    AND ps.datetime <= %(days_ago_dt)s
+                    AND ps.address = %(pool_address)s
+                ORDER BY ps.address, ps.datetime DESC
+            ),
+            previous AS (
                 SELECT DISTINCT ON (wp.wallet_address)
                       wp.wallet_address
                     , wp.supply
+                    , wp.supply * p.quote_token_price AS supply_usd
                     , wp.collateral
-                    , wp.debt
+                    , wp.collateral * p.collateral_token_price AS collateral_usd
+                    , wp.t0debt * p.pending_inflator AS debt
+                    , wp.t0debt * p.pending_inflator * p.quote_token_price AS debt_usd
                 FROM {wallet_position_table} wp
-                WHERE wp.wallet_address = %s
-                    AND wp.pool_address = %s
-                    AND wp.datetime <= %s
+                LEFT JOIN previous_pools p
+                    ON p.address = wp.pool_address
+                WHERE wp.wallet_address = %(address)s
+                    AND wp.pool_address = %(pool_address)s
+                    AND wp.datetime <= %(days_ago_dt)s
                 ORDER BY wp.wallet_address, wp.datetime DESC
             )
 
@@ -526,7 +626,7 @@ class WalletPoolView(BaseChainView):
                     WHEN NULLIF(x.collateral, 0) IS NULL
                         OR NULLIF(x.debt, 0) IS NULL
                     THEN NULL
-                    ELSE LEAST((x.debt * 1.04) / x.collateral * x.np_tp_ratio, %s)
+                    ELSE LEAST((x.debt * 1.04) / x.collateral * x.np_tp_ratio, %(max_price)s)
                   END AS neutral_price
                 , CASE
                     WHEN NULLIF(x.collateral, 0) IS NULL
@@ -575,11 +675,11 @@ class WalletPoolView(BaseChainView):
                     , p.lup
                     , p.pool_size
                     , prev.supply AS prev_supply
-                    , prev.supply * qt.underlying_price AS prev_supply_usd
+                    , prev.supply_usd AS prev_supply_usd
                     , prev.collateral AS prev_collateral
-                    , prev.collateral * ct.underlying_price AS prev_collateral_usd
+                    , prev.collateral_usd AS prev_collateral_usd
                     , prev.debt AS prev_debt
-                    , prev.debt * qt.underlying_price AS prev_debt_usd
+                    , prev.debt_usd AS prev_debt_usd
                 FROM {current_wallet_position_table} cwp
                 JOIN {pool_table} p
                     ON cwp.pool_address = p.address
@@ -589,24 +689,23 @@ class WalletPoolView(BaseChainView):
                     ON p.quote_token_address = qt.underlying_address
                 LEFT JOIN previous AS prev
                     ON cwp.wallet_address = prev.wallet_address
-                WHERE cwp.wallet_address = %s
-                    AND cwp.pool_address = %s
+                WHERE cwp.wallet_address = %(address)s
+                    AND cwp.pool_address = %(pool_address)s
             ) x
         """.format(
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
             wallet_position_table=self.models.wallet_position._meta.db_table,
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
         )
 
-        sql_vars = [
-            address,
-            pool_address,
-            self.days_ago_dt,
-            MAX_INFLATED_PRICE,
-            address,
-            pool_address,
-        ]
+        sql_vars = {
+            "address": address,
+            "pool_address": pool_address,
+            "days_ago_dt": self.days_ago_dt,
+            "max_price": MAX_INFLATED_PRICE,
+        }
         wallet = fetch_one(sql, sql_vars)
 
         if not wallet:

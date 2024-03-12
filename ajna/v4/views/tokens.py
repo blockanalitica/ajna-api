@@ -101,10 +101,10 @@ class TokensView(RawSQLPaginatedChainView):
                     * sub.underlying_price
                   , 0) AS tvl
                 , GREATEST(
-                    (prev.collateral_amount * sub.underlying_price) +
+                    (prev.collateral_amount * prev.underlying_price) +
                         (
-                        (prev.lended_amount * sub.underlying_price) -
-                        (prev.borrowed_amount * sub.underlying_price)
+                        (prev.lended_amount * prev.underlying_price) -
+                        (prev.borrowed_amount * prev.underlying_price)
                     )
                   , 0) AS prev_tvl
             FROM(
@@ -206,8 +206,16 @@ class TokenOverviewView(BaseChainView):
                       sub.underlying_address
                     , sub.pool_count
                     , sub.collateral_amount
+                    , sub.collateral_amount * pf.price AS collateral_amount_usd
                     , sub.lended_amount
+                    , sub.lended_amount * pf.price AS lended_amount_usd
                     , sub.borrowed_amount
+                    , sub.borrowed_amount * pf.price AS borrowed_amount_usd
+                    , (sub.collateral_amount * pf.price) +
+                        (
+                        (sub.lended_amount * pf.price) -
+                        (sub.borrowed_amount * pf.price)
+                      ) AS tvl
                 FROM (
                     SELECT
                           token.underlying_address
@@ -246,6 +254,16 @@ class TokenOverviewView(BaseChainView):
                     WHERE token.underlying_address = %(address)s
                     GROUP BY 1
                 ) AS sub
+                LEFT JOIN (
+                    SELECT DISTINCT ON (feed.underlying_address)
+                          feed.price
+                        , feed.underlying_address
+                    FROM {price_feed_table} feed
+                    WHERE feed.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
+                        AND feed.datetime <= %(days_ago_dt)s
+                    ORDER BY feed.underlying_address, feed.datetime DESC
+                ) pf
+                    ON pf.underlying_address = sub.underlying_address
             )
 
             SELECT
@@ -266,15 +284,11 @@ class TokenOverviewView(BaseChainView):
                 , prev.collateral_amount AS prev_collateral_amount
                 , prev.lended_amount AS prev_lended_amount
                 , prev.borrowed_amount AS prev_borrowed_amount
-                , prev.collateral_amount * sub.underlying_price  AS prev_collateral_amount_usd
-                , prev.lended_amount * sub.underlying_price  AS prev_lended_amount_usd
-                , prev.borrowed_amount * sub.underlying_price  AS prev_borrowed_amount_usd
+                , prev.collateral_amount_usd  AS prev_collateral_amount_usd
+                , prev.lended_amount_usd  AS prev_lended_amount_usd
+                , prev.borrowed_amount_usd  AS prev_borrowed_amount_usd
                 , GREATEST(
-                    (prev.collateral_amount * sub.underlying_price) +
-                        (
-                        (prev.lended_amount * sub.underlying_price) -
-                        (prev.borrowed_amount * sub.underlying_price)
-                    )
+                    prev.tvl
                   , 0) AS prev_tvl
             FROM(
                 SELECT
@@ -310,6 +324,7 @@ class TokenOverviewView(BaseChainView):
             token_table=self.models.token._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            price_feed_table=self.models.price_feed._meta.db_table,
         )
 
         data = fetch_one(sql, sql_vars)
