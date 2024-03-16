@@ -339,7 +339,7 @@ class WalletEventsView(RawSQLPaginatedChainView):
 
     def serialize_data(self, data):
         for row in data:
-            row["data"] = parse_event_data(row)
+            row["data"] = parse_event_data(row, self.chain)
         return data
 
 
@@ -775,7 +775,7 @@ class WalletPoolEventsView(RawSQLPaginatedChainView):
 
     def serialize_data(self, data):
         for row in data:
-            row["data"] = parse_event_data(row)
+            row["data"] = parse_event_data(row, self.chain)
         return data
 
 
