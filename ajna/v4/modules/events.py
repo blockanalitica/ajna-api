@@ -55,7 +55,7 @@ def parse_event_data(event, chain):
         case "BondWithdrawn":
             data = {
                 "kicker": event_data["kicker"].lower(),
-                "reciever": event_data["reciever"].lower(),
+                "receiver": event_data["reciever"].lower(),
                 "amount": wad_to_decimal(event_data["amount"]),
             }
         case "BucketBankruptcy":
