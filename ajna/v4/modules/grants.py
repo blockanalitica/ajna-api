@@ -100,9 +100,19 @@ def _handle_vote_cast(chain, event):
     stage = _get_distribution_period_stage(distribution_period, event.block_number)
     match stage:
         case "SCREENING":
+            if proposal.screening_votes_received is None:
+                proposal.screening_votes_received = Decimal("0")
+
             proposal.screening_votes_received += wad_to_decimal(event.data["weight"])
             proposal.save()
         case "FUNDING":
+            if proposal.funding_votes_received is None:
+                proposal.funding_votes_received = Decimal("0")
+            if proposal.funding_votes_positive is None:
+                proposal.funding_votes_positive = Decimal("0")
+            if proposal.funding_votes_negative is None:
+                proposal.funding_votes_negative = Decimal("0")
+
             weight = wad_to_decimal(event.data["weight"])
             if event.data["support"] == 1:
                 proposal.funding_votes_received += weight

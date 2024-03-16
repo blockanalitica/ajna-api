@@ -37,7 +37,7 @@ class GrantsView(RawSQLPaginatedChainView):
             WHERE gp.funding_start_block_number <= %s
                 AND gp.finalize_start_block_number > %s
                 AND gdp.end_block > %s
-            ORDER BY gp.screening_votes_received DESC
+            ORDER BY gp.screening_votes_received DESC NULLS LAST
         """.format(
             GRANTS_SQL.format(
                 grand_proposal_table=self.models.grant_proposal._meta.db_table,
@@ -53,7 +53,7 @@ class GrantsView(RawSQLPaginatedChainView):
             {}
             WHERE gp.finalize_start_block_number <= %s
                 AND gdp.end_block > %s
-            ORDER BY gp.funding_votes_received DESC
+            ORDER BY gp.funding_votes_received DESC NULLS LAST
         """.format(
             GRANTS_SQL.format(
                 grand_proposal_table=self.models.grant_proposal._meta.db_table,
