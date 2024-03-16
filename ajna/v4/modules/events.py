@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 POOL_INFO = {}
 
 
-def parse_event_data(event):
+def parse_event_data(event, chain):
     data = None
 
     event_data = event["data"]
@@ -73,7 +73,6 @@ def parse_event_data(event):
                 "bondChange": wad_to_decimal(event_data["bondChange"]),
                 "collateral": wad_to_decimal(event_data["collateral"]),
             }
-
         case "BucketTakeLPAwarded":
             data = {
                 "taker": event_data["taker"].lower(),
@@ -98,7 +97,20 @@ def parse_event_data(event):
                 "tokenIdsPledged": event_data["tokenIdsPledged"],
             }
         case "Flashloan":
-            pass  # TODO
+            try:
+                token = chain.token.objects.get(
+                    underlying_address=event_data["token"].lower()
+                )
+                symbol = token.symbol
+            except chain.token.DoesNotExist:
+                symbol = None
+                pass
+
+            data = {
+                "receiver": event_data["receiver"].lower(),
+                "amount": wad_to_decimal(event_data["amount"]),
+                "token_symbol": symbol,
+            }
         case "IncreaseLPAllowance":
             data = {
                 "indexes": event_data["indexes"],
@@ -129,7 +141,7 @@ def parse_event_data(event):
             pass
         case "MergeOrRemoveCollateralNFT":
             data = {
-                "actor": "0x67eD4b7B2072699B8E7a6FfB207c76567aAd1A3E",
+                "actor": event_data["actor"].lower(),
                 "collateralMerged": wad_to_decimal(event_data["collateralMerged"]),
                 "toIndexLps": event_data["toIndexLps"],
             }
@@ -139,7 +151,7 @@ def parse_event_data(event):
                 "to": event_data["to"],
                 "from": event_data["from"],
                 "amount": wad_to_decimal(event_data["amount"]),
-                "lender": event_data["lender"],
+                "lender": event_data["lender"].lower(),
                 "lpAwardedTo": wad_to_decimal(event_data["lpAwardedTo"]),
                 "lpRedeemedFrom": wad_to_decimal(event_data["lpRedeemedFrom"]),
             }
@@ -147,7 +159,7 @@ def parse_event_data(event):
             data = {
                 "index": event_data["index"],
                 "amount": wad_to_decimal(event_data["amount"]),
-                "claimer": event_data["claimer"],
+                "claimer": event_data["claimer"].lower(),
                 "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),
             }
         case "RemoveQuoteToken":
@@ -155,7 +167,7 @@ def parse_event_data(event):
                 "lup": wad_to_decimal(event_data["lup"]),
                 "index": event_data["index"],
                 "amount": wad_to_decimal(event_data["amount"]),
-                "lender": event_data["lender"],
+                "lender": event_data["lender"].lower(),
                 "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),
             }
         case "RepayDebt":
@@ -236,6 +248,8 @@ def _get_wallet_addresses(event):
             wallet_addresses = [event["args"]["borrower"]]
         case "DrawDebtNFT":
             wallet_addresses = [event["args"]["borrower"]]
+        case "Flashloan":
+            wallet_addresses = [event["args"]["receiver"]]
         case "IncreaseLPAllowance":
             wallet_addresses = [event["args"]["owner"], event["args"]["spender"]]
         case "Kick":
@@ -323,6 +337,7 @@ def _get_bucket_indexes(event):
             | "DrawDebtNFT"
             | "AuctionNFTSettle"
             | "MergeOrRemoveCollateralNFT"
+            | "Flashloan"
         ):
             # Skip these events as they don't touch any buckets
             pass
