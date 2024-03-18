@@ -1,3 +1,4 @@
+import logging
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -7,10 +8,13 @@ from eth_abi.exceptions import InsufficientDataBytes
 from eth_utils import encode_hex
 from web3 import Web3
 
-from ajna.constants import ERC20, ERC721
+from ajna.constants import ERC20, ERC721, ERC721_NON_SUBSET_HASH
 from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.utils import chunks, compute_order_index, datetime_to_next_full_hour
 from ajna.utils.wad import wad_to_decimal
+
+log = logging.getLogger(__name__)
+
 
 VOLUME_SQL = """
     SELECT
@@ -663,6 +667,9 @@ class PoolERC721Manager(BasePoolManager):
         token_created = False
         events = self._fetch_new_pool_created_events()
         for event in events:
+            pool_data = dict(event["args"])
+            subset_hash = encode_hex(pool_data["subsetHash_"])
+
             transaction_info = self._chain.eth.get_transaction(event["transactionHash"])
 
             try:
@@ -676,10 +683,30 @@ class PoolERC721Manager(BasePoolManager):
                     transaction_info.input[4:],
                 )
             except InsufficientDataBytes:
-                token_ids = None
-                collateral_token_address, quote_token_address, _ = abi.decode(
-                    ["address", "address", "uint256"], transaction_info.input[4:]
+                if subset_hash != ERC721_NON_SUBSET_HASH:
+                    log.error(
+                        "Can't get allowed token_ids for NFT subset pool %s",
+                        pool_data["pool_"],
+                    )
+
+                calls = [
+                    (
+                        event["args"]["pool_"],
+                        ["collateralAddress()(address)"],
+                        ["collateralAddress", None],
+                    ),
+                    (
+                        event["args"]["pool_"],
+                        ["quoteTokenAddress()(address)"],
+                        ["quoteTokenAddress", None],
+                    ),
+                ]
+
+                mc_data = self._chain.multicall(
+                    calls, block_identifier=event["blockNumber"]
                 )
+                collateral_token_address = mc_data["collateralAddress"]
+                quote_token_address = mc_data["quoteTokenAddress"]
 
             collateral_token_address = collateral_token_address.lower()
             quote_token_address = quote_token_address.lower()
@@ -689,14 +716,14 @@ class PoolERC721Manager(BasePoolManager):
             )
             block_datetime = self._chain.get_block_datetime(event["blockNumber"])
             pool_data = dict(event["args"])
-            pool_data["subsetHash_"] = encode_hex(pool_data["subsetHash_"])
+            pool_data["subsetHash_"] = subset_hash
             pool_data["erc"] = self.erc
             pool_data["collateral_token_address"] = collateral_token_address
             pool_data["quote_token_address"] = quote_token_address.lower()
             pool_data["token_ids"] = list(token_ids) if token_ids else None
 
             self._chain.pool_event.objects.create(
-                pool_address=event["args"]["pool_"].lower(),
+                pool_address=pool_data["pool_"].lower(),
                 block_number=event["blockNumber"],
                 block_datetime=block_datetime,
                 order_index=order_index,
