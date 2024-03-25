@@ -18,7 +18,8 @@ class OverviewView(BaseChainView):
                 SELECT DISTINCT ON (ps.address)
                       ps.address
                     , ps.total_ajna_burned
-                    , ps.pledged_collateral * ps.collateral_token_price AS collateral_usd
+                    , ps.pledged_collateral * ps.collateral_token_price AS pledged_collateral_usd
+                    , ps.collateral_token_balance * ps.collateral_token_price AS collateral_usd
                     , ps.pool_size * ps.quote_token_price AS pool_size_usd
                     , ps.debt * ps.quote_token_price  AS debt_usd
                     , COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0) +
@@ -33,10 +34,13 @@ class OverviewView(BaseChainView):
                   SUM(sub.tvl) AS total_tvl
                 , SUM(sub.pledged_collateral * sub.collateral_token_underlying_price)
                   AS total_pledged_collateral
+                , SUM(sub.collateral_token_balance * sub.collateral_token_underlying_price)
+                  AS total_collateral
                 , SUM(sub.pool_size * sub.quote_token_underlying_price) AS total_pool_size
                 , SUM(sub.debt * sub.quote_token_underlying_price) AS total_current_debt
                 , SUM(sub.total_ajna_burned) AS total_ajna_burned
                 , SUM(sub.prev_tvl) AS prev_total_tvl
+                , SUM(sub.prev_collateral_usd) AS prev_total_collateral
                 , SUM(sub.prev_pledged_collateral_usd) AS prev_total_pledged_collateral
                 , SUM(sub.prev_pool_size_usd) AS prev_total_pool_size
                 , SUM(sub.prev_debt_usd) AS prev_total_current_debt
@@ -44,6 +48,7 @@ class OverviewView(BaseChainView):
             FROM (
                 SELECT
                       pool.pledged_collateral
+                    , pool.collateral_token_balance
                     , pool.pool_size
                     , pool.debt
                     , pool.total_ajna_burned
@@ -51,7 +56,8 @@ class OverviewView(BaseChainView):
                     , qt.underlying_price AS quote_token_underlying_price
                     , COALESCE(pool.collateral_token_balance * ct.underlying_price, 0) +
                       COALESCE(pool.quote_token_balance * qt.underlying_price, 0) AS tvl
-                    , prev.collateral_usd AS prev_pledged_collateral_usd
+                    , prev.pledged_collateral_usd AS prev_pledged_collateral_usd
+                    , prev.collateral_usd AS prev_collateral_usd
                     , prev.pool_size_usd AS prev_pool_size_usd
                     , prev.debt_usd AS prev_debt_usd
                     , prev.tvl AS prev_tvl
@@ -80,6 +86,25 @@ class OverviewView(BaseChainView):
 
 class HistoryView(BaseChainView):
     def _get_collateral(self):
+        sql = """
+            SELECT
+                  x.dt
+                , SUM(x.amount) AS amount
+            FROM (
+                SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
+                      ps.collateral_token_balance * ps.collateral_token_price AS amount
+                    , DATE_TRUNC('day', ps.datetime) AS dt
+                FROM {pool_snapshot_table} ps
+                ORDER BY dt, ps.address, ps.datetime DESC
+            ) x
+            GROUP BY x.dt
+            ORDER BY x.dt
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+        )
+        return sql, []
+
+    def _get_pledged_collateral(self):
         sql = """
             SELECT
                   x.dt
@@ -173,6 +198,8 @@ class HistoryView(BaseChainView):
         history_type = request.GET.get("type")
 
         match history_type:
+            case "pledged_collateral":
+                sql, sql_vars = self._get_pledged_collateral()
             case "collateral":
                 sql, sql_vars = self._get_collateral()
             case "debt":

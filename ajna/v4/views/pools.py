@@ -17,6 +17,8 @@ POOLS_SQL = """
               ps.address
             , ps.pledged_collateral
             , ps.pledged_collateral * ps.collateral_token_price AS pledged_collateral_usd
+            , ps.collateral_token_balance AS collateral
+            , ps.collateral_token_balance * ps.collateral_token_balance AS collateral_usd
             , ps.pool_size
             , ps.pool_size * ps.quote_token_price AS pool_size_usd
             , ps.debt
@@ -36,9 +38,10 @@ POOLS_SQL = """
     SELECT
           pool.address
         , pool.quote_token_balance
-        , pool.collateral_token_balance
         , pool.pledged_collateral
         , pool.pledged_collateral * collateral_token.underlying_price AS pledged_collateral_usd
+        , pool.collateral_token_balance AS collateral
+        , pool.collateral_token_balance * collateral_token.underlying_price AS collateral_usd
         , pool.pool_size
         , pool.pool_size * quote_token.underlying_price AS pool_size_usd
         , pool.t0debt * pool.pending_inflator as debt
@@ -56,6 +59,8 @@ POOLS_SQL = """
             COALESCE(pool.quote_token_balance * quote_token.underlying_price, 0) AS tvl
         , prev.pledged_collateral AS prev_pledged_collateral
         , prev.pledged_collateral_usd AS prev_pledged_collateral_usd
+        , prev.collateral AS prev_collateral
+        , prev.collateral_usd AS prev_collateral_usd
         , prev.pool_size AS prev_pool_size
         , prev.pool_size_usd AS prev_pool_size_usd
         , prev.debt AS prev_debt
@@ -81,6 +86,8 @@ class PoolsView(RawSQLPaginatedChainView):
     days_ago_options = [1, 7, 30, 365]
     default_order = "-tvl"
     ordering_fields = [
+        "collateral",
+        "collateral_usd",
         "pledged_collateral",
         "pledged_collateral_usd",
         "pool_size",
@@ -187,6 +194,8 @@ class PoolView(BaseChainView):
                         ps.address
                         , ps.pledged_collateral
                         , ps.pledged_collateral * ps.collateral_token_price AS pledged_collateral_usd
+                        , ps.collateral_token_balance AS collateral
+                        , ps.collateral_token_balance * ps.collateral_token_balance AS collateral_usd
                         , ps.pool_size
                         , ps.pool_size * ps.quote_token_price AS pool_size_usd
                         , ps.t0debt
@@ -217,8 +226,9 @@ class PoolView(BaseChainView):
                 , pool.collateral_token_address
                 , pool.t0debt * pool.pending_inflator * quote_token.underlying_price as debt_usd
                 , pool.pledged_collateral
-                , pool.pledged_collateral * collateral_token.underlying_price
-                    AS pledged_collateral_usd
+                , pool.pledged_collateral * collateral_token.underlying_price AS pledged_collateral_usd
+                , pool.collateral_token_balance AS collateral
+                , pool.collateral_token_balance * collateral_token.underlying_price AS collateral_usd
                 , pool.pool_size
                 , pool.pool_size * quote_token.underlying_price AS pool_size_usd
                 , pool.lup
@@ -255,9 +265,11 @@ class PoolView(BaseChainView):
                   COALESCE(pool.quote_token_balance * quote_token.underlying_price, 0) AS tvl
                 , prev.tvl AS prev_tvl
                 , prev.pledged_collateral AS prev_pledged_collateral
+                , prev.collateral AS prev_collateral
                 , prev.pool_size AS prev_pool_size
                 , prev.debt as prev_debt
                 , prev.pledged_collateral_usd AS prev_pledged_collateral_usd
+                , prev.collateral_usd AS prev_collateral_usd
                 , prev.pool_size_usd AS prev_pool_size_usd
                 , prev.debt_usd as prev_debt_usd
                 , prev.lup as prev_lup
@@ -367,6 +379,22 @@ class PoolHistoricView(BaseChainView):
         data = fetch_all(sql, sql_vars)
         return data
 
+    def _get_collateral(self, pool_address):
+        sql_vars = [self.days_ago_dt, pool_address]
+        sql = """
+            SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime))
+                  DATE_TRUNC('day', ps.datetime) AS date
+                , ps.collateral_token_balance AS amount
+            FROM {pool_snapshot_table} ps
+            WHERE ps.datetime >= %s AND ps.address = %s
+            ORDER BY 1, ps.datetime DESC
+        """.format(
+            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+        )
+
+        data = fetch_all(sql, sql_vars)
+        return data
+
     def _get_volume(self, pool_address):
         sql_vars = [self.days_ago_dt.date(), pool_address]
         sql = """
@@ -455,6 +483,8 @@ class PoolHistoricView(BaseChainView):
                 data = self._get_debt(pool_address)
             case "pledged_collateral":
                 data = self._get_pledged_collateral(pool_address)
+            case "collateral":
+                data = self._get_collateral(pool_address)
             case "volume":
                 data = self._get_volume(pool_address)
             case "apr":
@@ -485,9 +515,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , data
             FROM {pool_event_table}
             WHERE pool_address = %s
-        """.format(
-            pool_event_table=self.models.pool_event._meta.db_table
-        )
+        """.format(pool_event_table=self.models.pool_event._meta.db_table)
 
         if event_name:
             sql = "{} AND name = %s".format(sql)
@@ -1034,9 +1062,7 @@ class BucketEventsView(RawSQLPaginatedChainView):
             FROM {pool_event_table}
             WHERE pool_address = %s
                 AND bucket_indexes @> %s
-        """.format(
-            pool_event_table=self.models.pool_event._meta.db_table
-        )
+        """.format(pool_event_table=self.models.pool_event._meta.db_table)
 
         if event_name:
             sql = "{} AND name = %s".format(sql)
