@@ -15,6 +15,12 @@ RHINOFI_MAP = {
     }
 }
 
+# Note: make sure the address is lowercase
+COINGECKO_MAP = {
+    "0x10398abc267496e49106b07dd6be13364d10dc71": "let-s-get-hai",
+    "0x20fe91f17ec9080e3cac2d688b4ecb48c5ac3a9c": "yes-money",
+}
+
 
 def _save_price_for_address(models, address, price, is_estimated_price=False):
     models.token.objects.filter(underlying_address=address).update(
@@ -80,7 +86,9 @@ def update_token_prices(models, network):
     if not underlying_addresses:
         return
 
-    price_mapping = get_current_prices_map(underlying_addresses, chain_name=network)
+    price_mapping = get_current_prices_map(
+        underlying_addresses, chain_name=network, coingecko_map=COINGECKO_MAP
+    )
     for address in underlying_addresses:
         if address in price_mapping:
             _save_price_for_address(models, address, price_mapping[address])
