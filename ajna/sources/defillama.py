@@ -23,12 +23,25 @@ def get_current_prices(addresses, chain_name="ethereum"):
     return data
 
 
-def get_current_prices_map(addresses, chain_name):
-    coins = [f"{chain_name}:{address}" for address in addresses]
+def get_current_prices_map(addresses, chain_name, coingecko_map):
+    inv_coingecko_map = {v: k for k, v in coingecko_map.items()}
+
+    coins = []
+    for address in addresses:
+        if address.lower() in coingecko_map:
+            coin = f"coingecko:{coingecko_map[address]}"
+        else:
+            coin = f"{chain_name}:{address}"
+
+        coins.append(coin)
+
     response = fetch_current_price(coins)
     prices = {}
     for coin, data in response.items():
         _, address = coin.split(":")
+        if address in inv_coingecko_map:
+            address = inv_coingecko_map[address]
+
         prices[address.lower()] = Decimal(str(data["price"]))
     return prices
 
