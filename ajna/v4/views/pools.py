@@ -515,7 +515,9 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , data
             FROM {pool_event_table}
             WHERE pool_address = %s
-        """.format(pool_event_table=self.models.pool_event._meta.db_table)
+        """.format(
+            pool_event_table=self.models.pool_event._meta.db_table
+        )
 
         if event_name:
             sql = "{} AND name = %s".format(sql)
@@ -1062,7 +1064,9 @@ class BucketEventsView(RawSQLPaginatedChainView):
             FROM {pool_event_table}
             WHERE pool_address = %s
                 AND bucket_indexes @> %s
-        """.format(pool_event_table=self.models.pool_event._meta.db_table)
+        """.format(
+            pool_event_table=self.models.pool_event._meta.db_table
+        )
 
         if event_name:
             sql = "{} AND name = %s".format(sql)
