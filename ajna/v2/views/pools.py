@@ -19,6 +19,7 @@ POOLS_SQL = """
         SELECT DISTINCT ON (ps.address)
               ps.address
             , ps.pledged_collateral
+            , ps.collateral_token_balance AS collateral
             , ps.pool_size
             , ps.t0debt * ps.pending_inflator as debt
             , ps.total_ajna_burned
@@ -37,6 +38,8 @@ POOLS_SQL = """
         , pool.collateral_token_balance
         , pool.pledged_collateral
         , pool.pledged_collateral * collateral_token.underlying_price AS pledged_collateral_usd
+        , pool.collateral_token_balance AS collateral
+        , pool.collateral_token_balance * collateral_token.underlying_price AS collateral_usd
         , pool.pool_size
         , pool.pool_size * quote_token.underlying_price AS pool_size_usd
         , pool.t0debt * pool.pending_inflator as debt
@@ -55,6 +58,8 @@ POOLS_SQL = """
 
         , prev.pledged_collateral AS prev_pledged_collateral
         , prev.pledged_collateral * collateral_token.underlying_price AS prev_pledged_collateral_usd
+        , prev.collateral AS prev_collateral
+        , prev.collateral * collateral_token.underlying_price AS prev_collateral_usd
         , prev.pool_size AS prev_pool_size
         , prev.pool_size * quote_token.underlying_price AS prev_pool_size_usd
         , prev.debt AS prev_debt
