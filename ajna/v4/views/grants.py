@@ -5,8 +5,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework import status
 from rest_framework.response import Response
-from ajna.utils.db import fetch_all
 
+from ajna.utils.db import fetch_all
 from ajna.utils.views import BaseChainView
 
 GRANTS_SQL = """
@@ -71,7 +71,6 @@ class GrantsView(BaseChainView):
         return sql, sql_vars
 
     def get(self, request):
-        print(request.GET.get("type"))
         current_block = self.chain.get_latest_block()
         if request.GET.get("type") == "finalize":
             sql, sql_vars = self._finalize_proposals(current_block)

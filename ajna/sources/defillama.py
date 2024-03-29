@@ -39,7 +39,7 @@ def get_current_prices_map(addresses, chain_name, coingecko_map):
     prices = {}
     for coin, data in response.items():
         _, address = coin.split(":")
-        if address in inv_coingecko_map:
+        if address in inv_coingecko_map:  # noqa: SIM908
             address = inv_coingecko_map[address]
 
         prices[address.lower()] = Decimal(str(data["price"]))
