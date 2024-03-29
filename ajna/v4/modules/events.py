@@ -338,6 +338,7 @@ def _get_bucket_indexes(event):
             | "AuctionNFTSettle"
             | "MergeOrRemoveCollateralNFT"
             | "Flashloan"
+            | "ResetInterestRate"
         ):
             # Skip these events as they don't touch any buckets
             pass
