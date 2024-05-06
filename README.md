@@ -44,7 +44,7 @@ To install and run Ajna API using `python manage.py`, follow these steps:
 
 1. Clone the repository: `git clone https://github.com/blockanalitica/ajna-api.git`
 2. Navigate to the project directory: `cd ajna-api`
-3. Install dependencies: `pip install -r requirements.txt -r lint-requirements.txt`
+3. Install dependencies: `poetry install`
 4. Run migrations: `python manage.py migrate`
 5. Run the development server: `python manage.py runserver`
 6. Navigate to [http://localhost:8000/](http://localhost:8000/) to access the application
@@ -90,12 +90,6 @@ Thank you for contributing to Ajna API!
 ### Code Style
 
 Ajna API follows the code style guidelines set by the [Black](https://black.readthedocs.io/en/stable/), [isort](https://pycqa.github.io/isort/), and [Flake8](https://flake8.pycqa.org/en/latest/) code formatters and linter. Before submitting a pull request, please ensure that your code is formatted and linted using these tools.
-
-You can install them using pip:
-
-```sh
-pip install -r lint-requiremets.txt
-```
 
 To format your code using Black and isort, navigate to the project directory and run:
 
