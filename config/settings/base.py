@@ -19,9 +19,7 @@ DEBUG = env.bool("AJNA_DEBUG", default=False)
 
 ALLOWED_HOSTS = [
     host
-    for host in env("AJNA_ALLOWED_HOSTS", default="localhost;0.0.0.0;127.0.0.1").split(
-        ";"
-    )
+    for host in env("AJNA_ALLOWED_HOSTS", default="localhost;0.0.0.0;127.0.0.1").split(";")
     if host
 ]
 
@@ -32,12 +30,11 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    cors
-    for cors in env("AJNA_CORS_ALLOWED_ORIGIN_REGEXES", default="").split(";")
-    if cors
+    cors for cors in env("AJNA_CORS_ALLOWED_ORIGIN_REGEXES", default="").split(";") if cors
 ]
 
-CORS_ALLOW_HEADERS = list(default_headers) + [
+CORS_ALLOW_HEADERS = [
+    *default_headers,
     "sentry-trace",
 ]
 CSRF_TRUSTED_ORIGINS = ["https://*.blockanalitica.com"]
@@ -117,12 +114,8 @@ CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 10 * 60
 CELERY_TASK_ALWAYS_EAGER = False
-CELERY_WORKER_MAX_TASKS_PER_CHILD = env.int(
-    "CELERY_WORKER_MAX_TASKS_PER_CHILD", default=1000
-)
-CELERY_WORKER_PREFETCH_MULTIPLIER = env.int(
-    "CELERY_WORKER_PREFETCH_MULTIPLIER", default=1
-)
+CELERY_WORKER_MAX_TASKS_PER_CHILD = env.int("CELERY_WORKER_MAX_TASKS_PER_CHILD", default=1000)
+CELERY_WORKER_PREFETCH_MULTIPLIER = env.int("CELERY_WORKER_PREFETCH_MULTIPLIER", default=1)
 CELERY_WORKER_MAX_MEMORY_PER_CHILD = env.int(
     "CELERY_WORKER_MAX_MEMORY_PER_CHILD",
     default=256000,  # 256MB

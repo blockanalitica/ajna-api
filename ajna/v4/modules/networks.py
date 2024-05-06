@@ -7,7 +7,8 @@ from ..models import V4NetworkStatsDaily
 
 
 def save_network_stats_for_date(models, dt, network):
-    assert isinstance(dt, date)
+    if not isinstance(dt, date):
+        raise TypeError
 
     sql = """
         SELECT

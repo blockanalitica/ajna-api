@@ -56,10 +56,10 @@ VOLUME_SQL = """
 
 
 def save_all_pools_volume_for_date(chain, dt):
-    assert isinstance(dt, date)
-    sql = VOLUME_SQL.format(
-        pool_event_table=chain.pool_event._meta.db_table, filters=""
-    )
+    if not isinstance(dt, date):
+        raise TypeError
+
+    sql = VOLUME_SQL.format(pool_event_table=chain.pool_event._meta.db_table, filters="")
 
     sql_vars = [dt]
 
@@ -91,9 +91,9 @@ class BasePoolManager:
 
     def token_info(self, token_address):
         if token_address not in self._token_info:
-            token = self._chain.token.objects.only(
-                "decimals", "underlying_price", "symbol"
-            ).get(underlying_address=token_address)
+            token = self._chain.token.objects.only("decimals", "underlying_price", "symbol").get(
+                underlying_address=token_address
+            )
 
             info = {
                 "decimals": token.decimals,
@@ -144,15 +144,11 @@ class BasePoolManager:
         data = self._chain.multicall(calls)
 
         symbol = (
-            data["symbol"]
-            if data["symbol"]
-            else Web3.to_text(data["symbolBytes"].strip(bytes(1)))
+            data["symbol"] if data["symbol"] else Web3.to_text(data["symbolBytes"].strip(bytes(1)))
         )[:63]
-        name = (
-            data["name"]
-            if data["name"]
-            else Web3.to_text(data["nameBytes"].strip(bytes(1)))
-        )[:254]
+        name = (data["name"] if data["name"] else Web3.to_text(data["nameBytes"].strip(bytes(1))))[
+            :254
+        ]
 
         self._chain.token.objects.create(
             underlying_address=token_address,
@@ -239,9 +235,7 @@ class BasePoolManager:
         data = self._chain.multicall(calls, block_identifier=block_number)
 
         for pool_address, pool_data in pools_data.items():
-            meaningful_deposit = wad_to_decimal(
-                data[f"{pool_address}:depositUpToIndex"]
-            )
+            meaningful_deposit = wad_to_decimal(data[f"{pool_address}:depositUpToIndex"])
             quote_token_balance = data[f"{pool_address}:quoteTokenBalance"]
             collateral_token_balance = data[f"{pool_address}:collateralTokenBalance"]
 
@@ -250,9 +244,7 @@ class BasePoolManager:
             if meaningful_deposit:
                 utilization = pool_data["debt"] / meaningful_deposit
                 lend_rate = (
-                    pool_data["borrow_rate"]
-                    * pool_data["lender_interest_margin"]
-                    * utilization
+                    pool_data["borrow_rate"] * pool_data["lender_interest_margin"] * utilization
                 )
 
             pool_data["current_meaningful_utilization"] = utilization
@@ -322,10 +314,7 @@ class BasePoolManager:
                     (
                         self._chain.pool_info_address,
                         [
-                            (
-                                "poolUtilizationInfo(address)("
-                                "(uint256,uint256,uint256,uint256))"
-                            ),
+                            ("poolUtilizationInfo(address)(" "(uint256,uint256,uint256,uint256))"),
                             pool_address,
                         ],
                         [f"{pool_address}:poolUtilizationInfo", None],
@@ -472,9 +461,7 @@ class BasePoolManager:
                     address, dt.date()
                 )
 
-                collateral_token = self.token_info(
-                    pool_data["collateral_token_address"]
-                )
+                collateral_token = self.token_info(pool_data["collateral_token_address"])
                 quote_token = self.token_info(pool_data["quote_token_address"])
 
                 try:
@@ -487,9 +474,7 @@ class BasePoolManager:
                     pool = self._chain.pool(
                         address=address,
                         created_at_block_number=created_event.block_number,
-                        created_at_timestamp=int(
-                            created_event.block_datetime.timestamp()
-                        ),
+                        created_at_timestamp=int(created_event.block_datetime.timestamp()),
                         erc=self.erc,
                         allowed_token_ids=created_event.data.get("token_ids"),
                         collateral_token_symbol=collateral_token["symbol"],
@@ -519,11 +504,7 @@ class BasePoolManager:
                 ):
                     collateralization = (
                         pool_data["pledged_collateral"] * collateral_token["price"]
-                    ) / (
-                        pool_data["t0debt"]
-                        * pool_data["pending_inflator"]
-                        * quote_token["price"]
-                    )
+                    ) / (pool_data["t0debt"] * pool_data["pending_inflator"] * quote_token["price"])
 
                 pool_data["collateralization"] = collateralization
 
@@ -550,7 +531,8 @@ class PoolERC20Manager(BasePoolManager):
         super().__init__()
 
     def _calculate_volume_for_pool_for_date(self, pool_address, dt):
-        assert isinstance(dt, date)
+        if not isinstance(dt, date):
+            raise TypeError
         sql = VOLUME_SQL.format(
             pool_event_table=self._chain.pool_event._meta.db_table,
             filters="AND pool_address = %s",
@@ -578,9 +560,7 @@ class PoolERC20Manager(BasePoolManager):
                 ),
             ]
 
-            mc_data = self._chain.multicall(
-                calls, block_identifier=event["blockNumber"]
-            )
+            mc_data = self._chain.multicall(calls, block_identifier=event["blockNumber"])
 
             collateral_token_address = mc_data["collateralAddress"].lower()
             quote_token_address = mc_data["quoteTokenAddress"].lower()
@@ -605,9 +585,7 @@ class PoolERC20Manager(BasePoolManager):
                 data=pool_data,
             )
 
-            collateral_token_created = self._create_erc20_token(
-                collateral_token_address
-            )
+            collateral_token_created = self._create_erc20_token(collateral_token_address)
             quote_token_created = self._create_erc20_token(quote_token_address)
 
             if collateral_token_created or quote_token_created:
@@ -652,7 +630,8 @@ class PoolERC721Manager(BasePoolManager):
         return True
 
     def _calculate_volume_for_pool_for_date(self, pool_address, dt):
-        assert isinstance(dt, date)
+        if not isinstance(dt, date):
+            raise TypeError
         sql = VOLUME_SQL.format(
             pool_event_table=self._chain.pool_event._meta.db_table,
             filters="AND pool_address = %s",
@@ -684,7 +663,7 @@ class PoolERC721Manager(BasePoolManager):
                 )
             except InsufficientDataBytes:
                 if subset_hash != ERC721_NON_SUBSET_HASH:
-                    log.error(
+                    log.exception(
                         "Can't get allowed token_ids for NFT subset pool %s",
                         pool_data["pool_"],
                     )
@@ -702,9 +681,7 @@ class PoolERC721Manager(BasePoolManager):
                     ),
                 ]
 
-                mc_data = self._chain.multicall(
-                    calls, block_identifier=event["blockNumber"]
-                )
+                mc_data = self._chain.multicall(calls, block_identifier=event["blockNumber"])
                 collateral_token_address = mc_data["collateralAddress"]
                 quote_token_address = mc_data["quoteTokenAddress"]
 
@@ -732,9 +709,7 @@ class PoolERC721Manager(BasePoolManager):
                 data=pool_data,
             )
 
-            collateral_token_created = self._create_erc721_token(
-                collateral_token_address
-            )
+            collateral_token_created = self._create_erc721_token(collateral_token_address)
             quote_token_created = self._create_erc20_token(quote_token_address)
 
             if collateral_token_created or quote_token_created:

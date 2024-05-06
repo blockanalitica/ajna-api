@@ -50,11 +50,11 @@ def _stop_timer(name, group, instance):
 
     total = time.time() - start
 
-    raw_timer("{0}.{1}".format(group, name), total * 1000)
+    raw_timer(f"{group}.{name}", total * 1000)
 
 
 def _inc_counter(name, group):
-    statsd_client.incr("{0}.{1}".format(group, name))
+    statsd_client.incr(f"{group}.{name}")
 
 
 def _send_queue_sizes_to_statsd():

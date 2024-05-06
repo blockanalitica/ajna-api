@@ -1,28 +1,5 @@
 repos:
--   repo: https://github.com/psf/black
-    rev: 23.3.0
-    hooks:
-    -   id: black
-        exclude: ^.*\b(migrations)\b.*$
-        language_version: python3.10
-
--   repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-    -   id: flake8
-        language_version: python3.10
-        additional_dependencies: 
-            - flake8-isort
-            - flake8-print
-            - flake8-bugbear
-            - flake8-comprehensions
-            - flake8-simplify
-        exclude: ^migrations/
-
--   repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-    -   id: isort
-        args: [--filter-files]
-        files: \.py$
-        language_version: python3.10
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.4.3
+      hooks:
+        - id: ruff

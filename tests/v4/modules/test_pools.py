@@ -81,6 +81,6 @@ class TestPoolERC20Manager:
         pool_data["erc"] = ERC20
         pool_data[
             "collateral_token_address"
-        ] = "0x6123b0049f904d730db3c36a31167d9d4121fa6b"
-        pool_data["quote_token_address"] = "0x6b175474e89094c44da98b954eedeac495271d0f"
+        ] = "0x6123b0049f904d730db3c36a31167d9d4121fa6b"  # noqa: S105
+        pool_data["quote_token_address"] = "0x6b175474e89094c44da98b954eedeac495271d0f"# noqa: S105
         assert event.data == pool_data

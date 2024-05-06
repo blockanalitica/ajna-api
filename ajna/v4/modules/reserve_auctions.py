@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 def _generate_reserve_auction_uid(pool_address, current_burn_epoch):
     key = "{}_{}".format(pool_address, current_burn_epoch).encode("utf-8")
-    return hashlib.md5(key).hexdigest()
+    return hashlib.md5(key).hexdigest()  # noqa: S324
 
 
 def process_kick_reserve_auction_event(chain, event):

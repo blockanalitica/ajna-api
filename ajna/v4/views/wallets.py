@@ -285,7 +285,7 @@ class WalletView(BaseChainView):
             try:
                 block = int(block)
             except ValueError:
-                raise Http404
+                raise Http404 from None
             wallet = self._get_for_block(address, block)
         else:
             wallet = self._get_current(address)
@@ -726,9 +726,7 @@ class WalletPoolHistoricView(BaseChainView):
             WHERE wp.wallet_address = %s
                 AND wp.pool_address = %s
             ORDER BY 1, wp.datetime DESC
-        """.format(
-            wallet_position_table=self.models.wallet_position._meta.db_table
-        )
+        """.format(wallet_position_table=self.models.wallet_position._meta.db_table)
 
         sql_vars = [address, pool_address]
 

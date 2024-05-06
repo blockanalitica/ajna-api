@@ -193,9 +193,11 @@ class PoolView(BaseChainView):
                     SELECT DISTINCT ON (ps.address)
                         ps.address
                         , ps.pledged_collateral
-                        , ps.pledged_collateral * ps.collateral_token_price AS pledged_collateral_usd
+                        , ps.pledged_collateral * ps.collateral_token_price
+                            AS pledged_collateral_usd
                         , ps.collateral_token_balance AS collateral
-                        , ps.collateral_token_balance * ps.collateral_token_balance AS collateral_usd
+                        , ps.collateral_token_balance * ps.collateral_token_balance
+                            AS collateral_usd
                         , ps.pool_size
                         , ps.pool_size * ps.quote_token_price AS pool_size_usd
                         , ps.t0debt
@@ -226,9 +228,11 @@ class PoolView(BaseChainView):
                 , pool.collateral_token_address
                 , pool.t0debt * pool.pending_inflator * quote_token.underlying_price as debt_usd
                 , pool.pledged_collateral
-                , pool.pledged_collateral * collateral_token.underlying_price AS pledged_collateral_usd
+                , pool.pledged_collateral * collateral_token.underlying_price
+                    AS pledged_collateral_usd
                 , pool.collateral_token_balance AS collateral
-                , pool.collateral_token_balance * collateral_token.underlying_price AS collateral_usd
+                , pool.collateral_token_balance * collateral_token.underlying_price
+                    AS collateral_usd
                 , pool.pool_size
                 , pool.pool_size * quote_token.underlying_price AS pool_size_usd
                 , pool.lup
@@ -458,7 +462,8 @@ class PoolHistoricView(BaseChainView):
                 , -ps.target_utilization - 1 + sqrt(8 * ps.target_utilization + 1)
                 AS actual_utilization_upper_bound
                 , CASE WHEN 9 - 8 * 1.02 * ps.target_utilization >= 0
-                    THEN -1.02 * ps.target_utilization + 3 - sqrt(9 - 8 * 1.02 * ps.target_utilization)
+                    THEN -1.02 * ps.target_utilization + 3 - sqrt(
+                        9 - 8 * 1.02 * ps.target_utilization)
                     ELSE 0
                   END AS actual_utilization_lower_bound
             FROM {pool_snapshot_table} ps
@@ -1049,7 +1054,7 @@ class BucketEventsView(RawSQLPaginatedChainView):
         try:
             bucket_index = int(bucket_index)
         except ValueError:
-            raise Http404
+            raise Http404 from None
 
         event_name = query_params.get("name")
         sql = """

@@ -1,4 +1,4 @@
-from config.settings.base import *  # noqa
+from config.settings.base import *  # noqa: F403
 from config.settings.base import INSTALLED_APPS, MIDDLEWARE
 
 DEBUG = True
@@ -9,9 +9,7 @@ INSTALLED_APPS += [
     "debug_toolbar",
 ]
 
-MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
-] + MIDDLEWARE
+MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware", *MIDDLEWARE]
 
 SHELL_PLUS_PRINT_SQL = False
 

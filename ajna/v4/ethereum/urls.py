@@ -2,7 +2,7 @@ import copy
 
 from django.urls import path
 
-from ..urls import urlpatterns as base_patterns  # noqa
+from ..urls import urlpatterns as base_patterns
 from ..views import grants
 
 app_name = "v3_ethereum"

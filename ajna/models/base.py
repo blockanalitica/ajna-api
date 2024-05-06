@@ -34,9 +34,7 @@ class PoolBase(models.Model):
     claimable_reserves = models.DecimalField(max_digits=32, decimal_places=18)
     claimable_reserves_remaining = models.DecimalField(max_digits=32, decimal_places=18)
     burn_epoch = models.BigIntegerField()
-    total_ajna_burned = models.DecimalField(
-        max_digits=32, decimal_places=18, default=Decimal("0")
-    )
+    total_ajna_burned = models.DecimalField(max_digits=32, decimal_places=18, default=Decimal("0"))
     min_debt_amount = models.DecimalField(max_digits=40, decimal_places=18)
     # Our calculation of utilization
     utilization = models.DecimalField(max_digits=32, decimal_places=18, null=True)
@@ -45,15 +43,9 @@ class PoolBase(models.Model):
     )
     actual_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # MAU
     target_utilization = models.DecimalField(max_digits=32, decimal_places=18)  # TU
-    total_bond_escrowed = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
-    quote_token_balance = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
-    collateral_token_balance = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    total_bond_escrowed = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    quote_token_balance = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    collateral_token_balance = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     collateral_token_address = models.CharField(max_length=42, db_index=True, null=True)
     quote_token_address = models.CharField(max_length=42, db_index=True, null=True)
     volume_today = models.DecimalField(max_digits=32, decimal_places=18, null=True)
@@ -81,9 +73,7 @@ class Pool(PoolBase):
 
 class PoolSnapshot(PoolBase):
     address = models.CharField(max_length=42, db_index=True)
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     collateralization = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
@@ -266,9 +256,7 @@ class DrawDebt(models.Model):
     transaction_hash = models.CharField(max_length=66)
     fee = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     borrow_fee_rate = models.DecimalField(max_digits=32, decimal_places=18, null=True)
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
@@ -286,9 +274,7 @@ class RepayDebt(models.Model):
     block_number = models.BigIntegerField()
     block_timestamp = models.BigIntegerField()
     transaction_hash = models.CharField(max_length=66)
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
@@ -309,7 +295,10 @@ class PriceFeed(models.Model):
         return self.underlying_address
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}: underlying_address={self.underlying_address} price={self.price}>"
+        return (
+            f"<{self.__class__.__name__}: underlying_address={self.underlying_address} "
+            "price={self.price}>"
+        )
 
     class Meta:
         abstract = True
@@ -342,12 +331,8 @@ class LiquidationAuction(models.Model):
     last_take_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     debt_remaining = models.DecimalField(max_digits=32, decimal_places=18)
 
-    collateral_underlying_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
-    debt_underlying_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_underlying_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    debt_underlying_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     collateral_token_address = models.CharField(max_length=42, null=True)
     debt_token_address = models.CharField(max_length=42, null=True)
@@ -378,9 +363,7 @@ class PoolEvent(models.Model):
     transaction_hash = models.CharField(max_length=66)
     name = models.CharField(max_length=42)
     data = models.JSONField()
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
@@ -569,9 +552,7 @@ class AuctionKick(models.Model):
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
     transaction_hash = models.CharField(max_length=66, null=True)
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
@@ -594,9 +575,7 @@ class AuctionTake(models.Model):
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
     transaction_hash = models.CharField(max_length=66, null=True)
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
@@ -620,9 +599,7 @@ class AuctionBucketTake(models.Model):
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
     transaction_hash = models.CharField(max_length=66, null=True)
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
@@ -640,9 +617,7 @@ class AuctionSettle(models.Model):
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
     transaction_hash = models.CharField(max_length=66, null=True)
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
@@ -660,9 +635,7 @@ class AuctionAuctionSettle(models.Model):
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
     transaction_hash = models.CharField(max_length=66, null=True)
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
@@ -681,9 +654,7 @@ class AuctionAuctionNFTSettle(models.Model):
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
     transaction_hash = models.CharField(max_length=66, null=True)
-    collateral_token_price = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    collateral_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_token_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
 
     class Meta:
@@ -767,18 +738,10 @@ class GrantProposal(models.Model):
     total_tokens_requested = models.DecimalField(max_digits=32, decimal_places=18)
     params = models.JSONField(encoder=DjangoJSONEncoder, null=True)
     executed = models.BooleanField(default=False)
-    screening_votes_received = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
-    funding_votes_received = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
-    funding_votes_positive = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
-    funding_votes_negative = models.DecimalField(
-        max_digits=32, decimal_places=18, null=True
-    )
+    screening_votes_received = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    funding_votes_received = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    funding_votes_positive = models.DecimalField(max_digits=32, decimal_places=18, null=True)
+    funding_votes_negative = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     funding_start_block_number = models.BigIntegerField()
     finalize_start_block_number = models.BigIntegerField()
     block_number = models.BigIntegerField()
