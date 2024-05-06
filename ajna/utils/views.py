@@ -106,7 +106,7 @@ class RawPagination(PageNumberPagination):
             msg = self.invalid_page_message.format(
                 page_number=page_number, message=str(exc)
             )
-            raise NotFound(msg)
+            raise NotFound(msg) from None
 
         if paginator.num_pages > 1 and self.template is not None:
             # The browsable API should display pagination controls.
@@ -188,8 +188,8 @@ class RawSQLPaginatedApiView(APIView):
         if not isinstance(raw_sql, Composable):
             raw_sql = SQL(raw_sql)
 
-        if sql_vars:
-            assert isinstance(sql_vars, (list, dict))
+        if sql_vars and not isinstance(sql_vars, (list, dict)):
+                raise TypeError
 
         count_sql, count_sql_vars = self.get_count_sql(
             search_filters=search_filters, query_params=request.GET, **kwargs
@@ -197,8 +197,8 @@ class RawSQLPaginatedApiView(APIView):
         if count_sql and not isinstance(count_sql, Composable):
             count_sql = SQL(count_sql)
 
-        if count_sql_vars:
-            assert isinstance(count_sql_vars, (list, dict))
+        if count_sql_vars and not isinstance(count_sql_vars, (list, dict)):
+                raise TypeError
 
         order = self.get_ordering(request)
 
@@ -264,7 +264,7 @@ class DaysAgoMixin:
                 self.days_ago = int(days_ago)
                 self.days_ago_dt = datetime.now() - timedelta(days=self.days_ago)
             except (TypeError, ValueError):
-                raise ValidationError("Wrong value for days_ago")
+                raise ValidationError("Wrong value for days_ago") from None
 
             if self.days_ago_options and self.days_ago not in self.days_ago_options:
                 raise ValidationError("Wrong value for days_ago")

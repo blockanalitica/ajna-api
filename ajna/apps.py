@@ -6,4 +6,4 @@ class AjnaConfig(AppConfig):
     name = "ajna"
 
     def ready(self):
-        import ajna.signals  # noqa
+        pass

@@ -8,7 +8,7 @@ class Command(makemigrations.Command):
     def handle(self, *app_labels, **options):
         # Generate a migrations manifest with latest migration on each app
 
-        super(Command, self).handle(*app_labels, **options)
+        super().handle(*app_labels, **options)
 
         loader = MigrationLoader(None, ignore_no_migrations=True)
         apps = sorted(loader.migrated_apps)

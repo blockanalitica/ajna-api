@@ -89,32 +89,16 @@ Thank you for contributing to Ajna API!
 
 ### Code Style
 
-Ajna API follows the code style guidelines set by the [Black](https://black.readthedocs.io/en/stable/), [isort](https://pycqa.github.io/isort/), and [Flake8](https://flake8.pycqa.org/en/latest/) code formatters and linter. Before submitting a pull request, please ensure that your code is formatted and linted using these tools.
+Ajna API follows the code style guidelines set by the [Ruff](https://github.com/astral-sh/ruff) code formatter and linter. Before submitting a pull request, please ensure that your code is formatted and linted using this tool.
 
-To format your code using Black and isort, navigate to the project directory and run:
-
-```sh
-black .
-isort .
-```
-
-This will format and sort all Python files in the project directory and its subdirectories. If you encounter any issues with Black or isort, please refer to the [official documentation](https://black.readthedocs.io/en/stable/) and [isort documentation](https://pycqa.github.io/isort/).
-
-To lint your code using Flake8, navigate to the project directory and run:
+To format your code using Ruff, navigate to the project directory and run:
 
 ```sh
-flake8 .
+ruff check --fix --show-fixes
 ```
 
-This will check all Python files in the project directory and its subdirectories for any syntax errors or style violations. If you encounter any issues with Flake8, please refer to the [official documentation](https://flake8.pycqa.org/en/latest/).
-
-To format the code, you can either run each command individually as described in the previous section, or you can navigate to the project directory and run:
-
-```sh
-black . && isort . && flake8 .
-```
-
-This command will run all of the above commands in sequence and format your code according to the project's style guide.
+This will format and sort all Python files in the project directory and its subdirectories.
+It will also check all Python files in the project directory and its subdirectories for any syntax errors or style violations.
 
 #### Using Pre-Commit for Code Quality Checks
 

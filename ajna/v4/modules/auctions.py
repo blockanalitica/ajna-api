@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 def _generate_auction_uid(pool_address, borrower, block_number):
     key = "{}_{}_{}".format(pool_address, borrower, block_number).encode("utf-8")
-    return hashlib.md5(key).hexdigest()
+    return hashlib.md5(key).hexdigest()  # noqa: S324
 
 
 def _create_auction(chain, pool_address, borrower, kick):

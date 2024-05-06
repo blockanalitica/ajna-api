@@ -47,33 +47,84 @@ pytest-mock = "3.12.0"
 pytest-sugar = "0.9.7"
 pytest = "7.4.4"
 responses = "0.24.1"
-black = "23.12.1"
-flake8-bugbear = "24.1.17"
-flake8-comprehensions = "3.14.0"
-flake8-isort = "6.1.1"
-flake8-print = "5.0.0"
-flake8 = "7.0.0"
-isort = "5.13.2"
 pre-commit = "3.6.0"
-
-[tool.black]
-target-version = ["py310"]
-extend-exclude = '''
-/(
-  # The following are specific to Black, you probably don't want those.
-  | .data
-  | .venv
-)/
-'''
-skip-numeric-underscore-normalization = true
-
-
-[tool.isort]
-profile = "black"
-skip_glob=["*/migrations/*", ".venv/*"]
+ruff = "^0.4.3"
 
 
 [tool.pytest.ini_options]
 addopts = "--ds=config.settings.test --no-migrations --capture=no --verbose"
 
 
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+indent-width = 4
+exclude = [
+  "ajna/migrations/"
+]
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+unfixable = []
+select = [
+    # flake8-2020
+    "YTT",
+    # flake8-bandit
+    "S",
+    # flake8-bugbear
+    "B",
+    # flake8-builtins
+    "A",
+    # flake8-comprehensions
+    "C4",
+    # flake8-debugger
+    "T10",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # mccabe
+    "C90",
+    # pycodestyle
+    "E", "W",
+    # pyflakes
+    "F",
+    # pygrep-hooks
+    "PGH",
+    # pyupgrade
+    "UP",
+    # ruff
+    "RUF",
+    # tryceratops
+    "TRY",
+    "T201",
+]
+ignore = [
+    "E731",
+    "TRY300",
+    "TRY003",
+    "RUF012",
+    "S108",
+    "TRY002",
+    "C901",
+    "UP038",
+    "SIM108",
+    "UP032",
+    "S608"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101",
+    "S311"
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ajna"]
+
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

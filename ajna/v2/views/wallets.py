@@ -246,7 +246,7 @@ class WalletView(BaseChainView):
             try:
                 block = int(block)
             except ValueError:
-                raise Http404
+                raise Http404 from None
             wallet = self._get_for_block(address, block)
         else:
             wallet = self._get_current(address)

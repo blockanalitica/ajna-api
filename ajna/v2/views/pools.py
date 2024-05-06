@@ -261,7 +261,8 @@ class PoolView(BaseChainView):
                 , prev.pledged_collateral AS prev_pledged_collateral
                 , prev.pool_size AS prev_pool_size
                 , prev.debt as prev_debt
-                , prev.pledged_collateral * collateral_token.underlying_price AS prev_pledged_collateral_usd
+                , prev.pledged_collateral * collateral_token.underlying_price
+                    AS prev_pledged_collateral_usd
                 , prev.pool_size * quote_token.underlying_price AS prev_pool_size_usd
                 , prev.debt * quote_token.underlying_price as prev_debt_usd
                 , prev.lup as prev_lup
@@ -984,7 +985,7 @@ class BucketEventsView(RawSQLPaginatedChainView):
         try:
             bucket_index = int(bucket_index)
         except ValueError:
-            raise Http404
+            raise Http404 from None
 
         event_name = query_params.get("name")
         sql = """
