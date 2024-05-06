@@ -58,7 +58,7 @@ pre-commit = "3.6.0"
 
 [tool.black]
 target-version = ["py310"]
-exclude=".*/migrations/.*"
+exclude=".*/migrations/.*,.venv/*"
 extend-exclude = '''
 /(
   # The following are specific to Black, you probably don't want those.
@@ -70,7 +70,7 @@ skip-numeric-underscore-normalization = true
 
 [tool.isort]
 profile = "black"
-skip_glob="*/migrations/*"
+skip_glob="*/migrations/*,.venv/*"
 
 
 [tool.pytest.ini_options]
