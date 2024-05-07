@@ -22,7 +22,7 @@ updates:
     labels:
       - "dependencies"
     groups:
-      python:
+      deps:
         applies-to: version-updates
         patterns:
         - "*"
