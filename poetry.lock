@@ -329,17 +329,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.34.103"
+version = "1.34.107"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.103-py3-none-any.whl", hash = "sha256:59b6499f1bb423dd99de6566a20d0a7cf1a5476824be3a792290fd86600e8365"},
-    {file = "boto3-1.34.103.tar.gz", hash = "sha256:58d097241f3895c4a4c80c9e606689c6e06d77f55f9f53a4cc02dee7e03938b9"},
+    {file = "boto3-1.34.107-py3-none-any.whl", hash = "sha256:a7280f54babc8e285d85d2558dd6167e4deb069e03abe43a55b643e10c03952b"},
+    {file = "boto3-1.34.107.tar.gz", hash = "sha256:2500963ddd7fee0c891db596ed73f203a62e8ee6faf1543c7a14169b1d557bc3"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.103,<1.35.0"
+botocore = ">=1.34.107,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -348,13 +348,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.103"
+version = "1.34.107"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.103-py3-none-any.whl", hash = "sha256:0330d139f18f78d38127e65361859e24ebd6a8bcba184f903c01bb999a3fa431"},
-    {file = "botocore-1.34.103.tar.gz", hash = "sha256:5f07e2c7302c0a9f469dcd08b4ddac152e9f5888b12220242c20056255010939"},
+    {file = "botocore-1.34.107-py3-none-any.whl", hash = "sha256:98bfab930391a21d24ed7a7bc86ec2ec076607318ab8de0c37d2587f73a88d89"},
+    {file = "botocore-1.34.107.tar.gz", hash = "sha256:4620286a814c3c8abc59145203650a6b2a4f538e887552fa1bc6896b6d11b28b"},
 ]
 
 [package.dependencies]
@@ -509,13 +509,13 @@ files = [
 
 [[package]]
 name = "chain-harvester"
-version = "0.23.1"
+version = "0.26.1"
 description = "A Python library designed to interface with various blockchain networks, enabling the retrieval of data."
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "chain_harvester-0.23.1-py3-none-any.whl", hash = "sha256:fd425270b76f916e20b4bdfb30a31eee2cc13ab2d9519ef6ba6f14061d574614"},
-    {file = "chain_harvester-0.23.1.tar.gz", hash = "sha256:a2b3f7763b22401bc7826c7acab1e444e789ab9391360b5b1b95ba6a1e3adc3d"},
+    {file = "chain_harvester-0.26.1-py3-none-any.whl", hash = "sha256:1111251da55529f17579b9c29f8a52a7257eb4389f50781376eeab820fedeb15"},
+    {file = "chain_harvester-0.26.1.tar.gz", hash = "sha256:5a87c63442e0949a52d4c73b74006c08e61cdac840adf2850585008940095073"},
 ]
 
 [package.dependencies]
@@ -3027,13 +3027,13 @@ crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "2.1.1"
+version = "2.2.0"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "sentry_sdk-2.1.1-py2.py3-none-any.whl", hash = "sha256:99aeb78fb76771513bd3b2829d12613130152620768d00cd3e45ac00cb17950f"},
-    {file = "sentry_sdk-2.1.1.tar.gz", hash = "sha256:95d8c0bb41c8b0bc37ab202c2c4a295bb84398ee05f4cdce55051cd75b926ec1"},
+    {file = "sentry_sdk-2.2.0-py2.py3-none-any.whl", hash = "sha256:674f58da37835ea7447fe0e34c57b4a4277fad558b0a7cb4a6c83bcb263086be"},
+    {file = "sentry_sdk-2.2.0.tar.gz", hash = "sha256:70eca103cf4c6302365a9d7cf522e7ed7720828910eb23d43ada8e50d1ecda9d"},
 ]
 
 [package.dependencies]
@@ -3270,13 +3270,13 @@ files = [
 
 [[package]]
 name = "web3"
-version = "6.18.0"
+version = "6.19.0"
 description = "web3.py"
 optional = false
 python-versions = ">=3.7.2"
 files = [
-    {file = "web3-6.18.0-py3-none-any.whl", hash = "sha256:86484a3d390a0a024002d1c1b79af27034488c470ea07693ff0f5bf109d3540b"},
-    {file = "web3-6.18.0.tar.gz", hash = "sha256:2e626a4bf151171f5dc8ad7f30c373f0416dc2aca9d8d102a63578a2413efa26"},
+    {file = "web3-6.19.0-py3-none-any.whl", hash = "sha256:fb39683d6aa7586ce0ab0be4be392f8acb62c2503958079d61b59f2a0b883718"},
+    {file = "web3-6.19.0.tar.gz", hash = "sha256:d27fbd4ac5aa70d0e0c516bd3e3b802fbe74bc159b407c34052d9301b400f757"},
 ]
 
 [package.dependencies]
@@ -3520,4 +3520,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "d2eef59d4f8e41a930067842b2ad9f389399c2e0b3088cdf87412fa433710f4d"
+content-hash = "c5db335e422318ba227ea53117cbc950a1a32007891d31d20d0319f734446036"
