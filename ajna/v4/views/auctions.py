@@ -34,8 +34,10 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.debt * ak.quote_token_price AS debt_usd
                 , at.collateral * ak.collateral_token_price AS collateral_usd
                 , at.pool_address
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
             FROM {auction_table} at
             JOIN {auction_kick_table} ak
                 ON at.uid = ak.auction_uid
@@ -164,8 +166,10 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 , at.collateral_remaining * ak.collateral_token_price AS collateral_remaining_usd
                 , at.borrower
                 , w.eoa AS borrower_eoa
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
                 , ak.block_datetime AS kick_time
                 , p.lup
                 , p.lup * ak.quote_token_price AS lup_usd
@@ -217,8 +221,10 @@ class AuctionView(BaseChainView):
                 , ak.locked
                 , ak.reference_price
                 , ak.starting_price
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
                 , p.lup
             FROM {auction_table} at
             LEFT JOIN {wallet_table} w

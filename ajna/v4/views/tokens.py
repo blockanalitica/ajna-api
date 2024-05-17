@@ -423,7 +423,9 @@ class TokenArbitragePoolsView(RawSQLPaginatedChainView):
                 , pool.hpb
                 , collateral_token.symbol AS collateral_token_symbol
                 , collateral_token.underlying_price AS collateral_token_underlying_price
+                , collateral_token.underlying_address AS collateral_token_address
                 , quote_token.symbol AS quote_token_symbol
+                , quote_token.underlying_address AS quote_token_address
                 , prev.lup AS prev_lup
                 , prev.htp AS prev_htp
                 , prev.hpb AS prev_hpb

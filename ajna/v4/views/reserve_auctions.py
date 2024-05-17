@@ -30,8 +30,10 @@ class ReserveAuctionsActiveView(RawSQLPaginatedChainView):
                 , ra.ajna_burned
                 , rak.block_number
                 , rak.block_datetime AS kick_datetime
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
                 , 'active' AS type
                 , COUNT(rat.order_index) as take_count
             FROM {reserve_auction_table} ra
@@ -43,7 +45,7 @@ class ReserveAuctionsActiveView(RawSQLPaginatedChainView):
                 ON ra.pool_address = p.address
             WHERE rak.block_datetime + INTERVAL '72 hours' > CURRENT_TIMESTAMP
                 AND ra.claimable_reserves_remaining > 0
-            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
+            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
@@ -78,8 +80,10 @@ class ReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 , rak.block_number
                 , rak.transaction_hash
                 , rak.block_datetime
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
                 , 'expired' AS type
                 , COUNT(rat.order_index) as take_count
             FROM {reserve_auction_table} ra
@@ -91,7 +95,7 @@ class ReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 ON ra.pool_address = p.address
             WHERE rak.block_datetime + INTERVAL '72 hours' <= CURRENT_TIMESTAMP
                 OR ra.claimable_reserves_remaining = 0
-            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
+            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
@@ -116,8 +120,10 @@ class ReserveAuctionView(BaseChainView):
                 , ra.ajna_burned
                 , rak.block_number
                 , rak.kicker
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
                 , COUNT(rat.order_index) as take_count
             FROM {reserve_auction_table} ra
             JOIN {reserve_auction_kick_table} rak
@@ -127,7 +133,7 @@ class ReserveAuctionView(BaseChainView):
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
             WHERE ra.uid = %s
-            GROUP BY 1,2,3,4,5,6,7,8,9,10,11
+            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,

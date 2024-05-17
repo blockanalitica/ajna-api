@@ -26,6 +26,7 @@ class WalletsView(RawSQLPaginatedChainView):
                 , w.first_activity
                 , x.in_liquidation
                 , x.tokens
+                , x.token_addresses
             FROM (
                 SELECT
                       cwp.wallet_address
@@ -33,6 +34,7 @@ class WalletsView(RawSQLPaginatedChainView):
                     , SUM(cwp.t0debt * p.pending_inflator * qt.underlying_price) AS debt_usd
                     , BOOL_OR(cwp.in_liquidation) AS in_liquidation
                     , ARRAY_AGG(DISTINCT qt.symbol) AS tokens
+                    , ARRAY_AGG(DISTINCT qt.underlying_address) AS token_addresses
                 FROM {current_wallet_position_table} cwp
                 JOIN {pool_table} p
                     ON cwp.pool_address = p.address
@@ -60,11 +62,13 @@ class WalletsView(RawSQLPaginatedChainView):
                 , w.last_activity
                 , w.first_activity
                 , x.tokens
+                , x.token_addresses
             FROM (
                 SELECT
                       cwp.wallet_address
                     , SUM(cwp.supply * qt.underlying_price) AS supply_usd
                     , ARRAY_AGG(DISTINCT qt.symbol) AS tokens
+                    , ARRAY_AGG(DISTINCT qt.underlying_address) AS token_addresses
                 FROM {current_wallet_position_table} cwp
                 JOIN {pool_table} p
                     ON cwp.pool_address = p.address
@@ -315,7 +319,9 @@ class WalletEventsView(RawSQLPaginatedChainView):
                 , pe.quote_token_price
                 , pe.order_index
                 , p.collateral_token_symbol
+                , p.collateral_token_address
                 , p.quote_token_symbol
+                , p.quote_token_address
             FROM {pool_event_table} pe
             JOIN {pool_table} p
                 ON pe.pool_address = p.address
@@ -396,7 +402,9 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                 , x.debt
                 , x.debt_usd
                 , x.collateral_token_symbol
+                , x.collateral_token_address
                 , x.quote_token_symbol
+                , x.quote_token_address
                 , CASE
                     WHEN NULLIF(x.collateral, 0) IS NULL
                         OR NULLIF(x.debt, 0) IS NULL
@@ -438,7 +446,9 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     , cwp.t0debt * p.pending_inflator AS debt
                     , cwp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
                     , ct.symbol AS collateral_token_symbol
+                    , ct.underlying_address as collateral_token_address
                     , qt.symbol AS quote_token_symbol
+                    , qt.underlying_address AS quote_token_address
                     , p.t0debt * p.pending_inflator AS pool_debt
                     , p.lup
                     , p.pool_size
@@ -522,7 +532,9 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                 , x.debt
                 , x.debt_usd
                 , x.collateral_token_symbol
+                , x.collateral_token_address
                 , x.quote_token_symbol
+                , x.quote_token_address
                 , NULL AS health_rate
                 , NULL AS debt_share
                 , NULL AS supply_share
@@ -537,7 +549,9 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                     , wp.t0debt * p.pending_inflator AS debt
                     , wp.t0debt * p.pending_inflator * p.quote_token_price AS debt_usd
                     , ct.symbol AS collateral_token_symbol
+                    , ct.underlying_address AS collateral_token_address
                     , qt.symbol AS quote_token_symbol
+                    , qt.underlying_address AS quote_token_address
                     , p.debt * p.quote_token_price AS pool_debt_usd
                     , p.lup
                 FROM positions wp
@@ -614,7 +628,9 @@ class WalletPoolView(BaseChainView):
                 , x.debt
                 , x.debt_usd
                 , x.collateral_token_symbol
+                , x.collateral_token_address
                 , x.quote_token_symbol
+                , x.quote_token_address
                 , x.lup
                 , CASE
                     WHEN NULLIF(x.collateral, 0) IS NULL
@@ -670,7 +686,9 @@ class WalletPoolView(BaseChainView):
                     , cwp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
                     , cwp.np_tp_ratio
                     , ct.symbol AS collateral_token_symbol
+                    , ct.underlying_address AS collateral_token_address
                     , qt.symbol AS quote_token_symbol
+                    , qt.underlying_address AS quote_token_address
                     , p.t0debt * p.pending_inflator AS pool_debt
                     , p.lup
                     , p.pool_size
@@ -751,8 +769,10 @@ class WalletPoolEventsView(RawSQLPaginatedChainView):
                 , pe.collateral_token_price
                 , pe.quote_token_price
                 , pe.order_index
-                , p.quote_token_symbol AS quote_token_symbol
-                , p.collateral_token_symbol AS collateral_token_symbol
+                , p.quote_token_symbol
+                , p.quote_token_address
+                , p.collateral_token_symbol
+                , p.collateral_token_address
             FROM {pool_event_table} pe
             JOIN {pool_table} p
                 ON pe.pool_address = p.address

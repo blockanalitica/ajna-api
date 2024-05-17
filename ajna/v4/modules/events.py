@@ -98,18 +98,19 @@ def parse_event_data(event, chain):
             }
         case "Flashloan":
             try:
-                token = chain.token.objects.get(
-                    underlying_address=event_data["token"].lower()
-                )
+                token = chain.token.objects.get(underlying_address=event_data["token"].lower())
                 symbol = token.symbol
+                address = token.underlying_address
             except chain.token.DoesNotExist:
                 symbol = None
+                address = None
                 pass
 
             data = {
                 "receiver": event_data["receiver"].lower(),
                 "amount": wad_to_decimal(event_data["amount"]),
                 "token_symbol": symbol,
+                "token_address": address,
             }
         case "IncreaseLPAllowance":
             data = {
@@ -386,9 +387,7 @@ def _get_pool_info(chain, pool_address):
 
 
 def fetch_and_save_events_for_all_pools(chain):
-    cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(
-        chain.unique_key
-    )
+    cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(chain.unique_key)
 
     pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
 
@@ -401,9 +400,7 @@ def fetch_and_save_events_for_all_pools(chain):
         # PoolCreated event is not created by this process, so we need to exclude
         # it in order to get the correct last block number
         last_event = (
-            chain.pool_event.objects.exclude(name="PoolCreated")
-            .order_by("-order_index")
-            .first()
+            chain.pool_event.objects.exclude(name="PoolCreated").order_by("-order_index").first()
         )
 
         if last_event:

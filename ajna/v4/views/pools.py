@@ -53,8 +53,10 @@ POOLS_SQL = """
         , pool.allowed_token_ids
         , collateral_token.symbol AS collateral_token_symbol
         , collateral_token.name AS collateral_token_name
+        , collateral_token.underlying_address AS collateral_token_address
         , quote_token.symbol AS quote_token_symbol
         , quote_token.name AS quote_token_name
+        , quote_token.underlying_address AS quote_token_address
         , COALESCE(pool.collateral_token_balance * collateral_token.underlying_price, 0) +
             COALESCE(pool.quote_token_balance * quote_token.underlying_price, 0) AS tvl
         , prev.pledged_collateral AS prev_pledged_collateral
@@ -520,9 +522,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , data
             FROM {pool_event_table}
             WHERE pool_address = %s
-        """.format(
-            pool_event_table=self.models.pool_event._meta.db_table
-        )
+        """.format(pool_event_table=self.models.pool_event._meta.db_table)
 
         if event_name:
             sql = "{} AND name = %s".format(sql)
@@ -536,8 +536,10 @@ class PoolEventsView(RawSQLPaginatedChainView):
         sql = """
             SELECT
                   pool.address
-                , pool.collateral_token_symbol AS collateral_token_symbol
-                , pool.quote_token_symbol AS quote_token_symbol
+                , pool.collateral_token_symbol
+                , pool.collateral_token_address
+                , pool.quote_token_symbol
+                , pool.quote_token_address
             FROM {pool_table} AS pool
             WHERE pool.address = %s
         """.format(
@@ -592,7 +594,9 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 , x.debt
                 , x.debt_usd
                 , x.collateral_token_symbol
+                , x.collateral_token_address
                 , x.quote_token_symbol
+                , x.quote_token_address
                 , x.prev_collateral
                 , x.prev_debt
                 , x.prev_collateral_usd
@@ -627,7 +631,9 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                     , cwp.t0debt * p.pending_inflator AS debt
                     , cwp.t0debt * p.pending_inflator * qt.underlying_price AS debt_usd
                     , ct.symbol AS collateral_token_symbol
+                    , ct.underlying_address AS collateral_token_address
                     , qt.symbol AS quote_token_symbol
+                    , qt.underlying_address AS quote_token_address
                     , p.t0debt * p.pending_inflator AS pool_debt
                     , p.lup
                     , prev.collateral AS prev_collateral
@@ -686,6 +692,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 , cwp.supply
                 , cwp.supply * qt.underlying_price AS supply_usd
                 , qt.symbol AS quote_token_symbol
+                , qt.underlying_address AS quote_token_address
                 , prev.supply AS prev_supply
                 , prev.supply * prev_pool.quote_token_price  AS prev_supply_usd
                 , CASE
@@ -812,8 +819,10 @@ class BucketsListView(RawSQLPaginatedChainView):
                 , bucket.bucket_price >= pool.lup AS is_utilized
                 , collateral_token.underlying_price AS collateral_token_underlying_price
                 , collateral_token.symbol AS collateral_token_symbol
+                , collateral_token.underlying_address AS collateral_token_address
                 , quote_token.symbol AS quote_token_symbol
                 , quote_token.underlying_price AS quote_token_underlying_price
+                , quote_token.underlying_address AS quote_token_address
             FROM {bucket_table} AS bucket
             JOIN {pool_table} AS pool
                 ON bucket.pool_address = pool.address
@@ -843,8 +852,10 @@ class BucketsListView(RawSQLPaginatedChainView):
         sql = """
             SELECT
                   pool.address
-                , pool.collateral_token_symbol AS collateral_token_symbol
-                , pool.quote_token_symbol AS quote_token_symbol
+                , pool.collateral_token_symbol
+                , pool.collateral_token_address
+                , pool.quote_token_symbol
+                , pool.quote_token_address
             FROM {pool_table} AS pool
             WHERE pool.address = %s
         """.format(
@@ -953,7 +964,9 @@ class BucketView(BaseChainView):
                 , b.bucket_price >= pool.lup AS is_utilized
                 , ct.underlying_price AS collateral_token_underlying_price
                 , ct.symbol AS collateral_token_symbol
+                , ct.underlying_address AS collateral_token_address
                 , qt.symbol AS quote_token_symbol
+                , qt.underlying_address AS quote_token_address
                 , qt.underlying_price AS quote_token_underlying_price
             FROM {bucket_table} AS b
             JOIN {pool_table} AS pool
@@ -1069,9 +1082,7 @@ class BucketEventsView(RawSQLPaginatedChainView):
             FROM {pool_event_table}
             WHERE pool_address = %s
                 AND bucket_indexes @> %s
-        """.format(
-            pool_event_table=self.models.pool_event._meta.db_table
-        )
+        """.format(pool_event_table=self.models.pool_event._meta.db_table)
 
         if event_name:
             sql = "{} AND name = %s".format(sql)
@@ -1085,6 +1096,27 @@ class BucketEventsView(RawSQLPaginatedChainView):
         for row in data:
             row["data"] = parse_event_data(row, self.chain)
         return data
+
+    def get_additional_data(self, data, pool_address, **kwargs):
+        sql = """
+            SELECT
+                  pool.address
+                , pool.collateral_token_symbol
+                , pool.collateral_token_address
+                , pool.quote_token_symbol
+                , pool.quote_token_address
+            FROM {pool_table} AS pool
+            WHERE pool.address = %s
+        """.format(
+            pool_table=self.models.pool._meta.db_table,
+        )
+
+        pool_data = fetch_one(sql, [pool_address])
+
+        if not pool_data:
+            raise Http404
+
+        return pool_data
 
 
 class AuctionsSettledView(RawSQLPaginatedChainView):
@@ -1108,8 +1140,10 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.debt * ak.quote_token_price AS debt_usd
                 , at.collateral * ak.collateral_token_price AS collateral_usd
                 , at.pool_address
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
             FROM {auction_table} at
             JOIN {auction_kick_table} ak
                 ON at.uid = ak.auction_uid
@@ -1149,8 +1183,10 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 , at.borrower
                 , w.eoa AS borrower_eoa
                 , w.address
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
                 , ak.block_datetime AS kick_time
                 , p.lup
                 , p.lup * ak.quote_token_price AS lup_usd
@@ -1241,8 +1277,10 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
                 , ra.ajna_burned
                 , rak.block_number
                 , rak.block_datetime AS kick_datetime
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
                 , 'active' AS type
                 , COUNT(rat.order_index) as take_count
             FROM {reserve_auction_table} ra
@@ -1254,7 +1292,7 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
                 ON ra.pool_address = p.address
             WHERE rak.block_datetime + INTERVAL '72 hours' > CURRENT_TIMESTAMP
                 AND ra.pool_address = %s
-            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
+            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
@@ -1289,8 +1327,10 @@ class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 , rak.block_number
                 , rak.transaction_hash
                 , rak.block_datetime
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
                 , 'expired' AS type
                 , COUNT(rat.order_index) as take_count
             FROM {reserve_auction_table} ra
@@ -1302,7 +1342,7 @@ class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 ON ra.pool_address = p.address
             WHERE rak.block_datetime + INTERVAL '72 hours' <= CURRENT_TIMESTAMP
                 AND ra.pool_address = %s
-            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
+            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,

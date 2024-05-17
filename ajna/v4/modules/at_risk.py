@@ -16,7 +16,9 @@ WALLETS_AT_RISK_SQL = """
         , x.debt_usd
         , x.lup
         , x.collateral_token_symbol
+        , x.collateral_token_address
         , x.quote_token_symbol
+        , x.quote_token_address
         , x.threshold_price
         , x.neutral_price
         , wt.last_activity
@@ -39,7 +41,9 @@ WALLETS_AT_RISK_SQL = """
               END AS neutral_price
             , pt.lup
             , ct.symbol AS collateral_token_symbol
+            , ct.underlying_address AS collateral_token_address
             , qt.symbol AS quote_token_symbol
+            , qt.underlying_address AS quote_token_address
             , CASE
                 WHEN NULLIF(cwpt.collateral, 0) IS NULL
                     OR NULLIF(cwpt.t0debt, 0) IS NULL
