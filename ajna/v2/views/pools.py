@@ -51,8 +51,10 @@ POOLS_SQL = """
         , pool.allowed_token_ids
         , collateral_token.symbol AS collateral_token_symbol
         , collateral_token.name AS collateral_token_name
+        , collateral_token.underlying_address AS collateral_token_address
         , quote_token.symbol AS quote_token_symbol
         , quote_token.name AS quote_token_name
+        , quote_token.underlying_address AS quote_token_address
         , (pool.collateral_token_balance * collateral_token.underlying_price) +
             (pool.quote_token_balance * quote_token.underlying_price) AS tvl
 
@@ -488,9 +490,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
                 , data
             FROM {pool_event_table}
             WHERE pool_address = %s
-        """.format(
-            pool_event_table=self.models.pool_event._meta.db_table
-        )
+        """.format(pool_event_table=self.models.pool_event._meta.db_table)
 
         if event_name:
             sql = "{} AND name = %s".format(sql)
@@ -1000,9 +1000,7 @@ class BucketEventsView(RawSQLPaginatedChainView):
             FROM {pool_event_table}
             WHERE pool_address = %s
                 AND bucket_indexes @> %s
-        """.format(
-            pool_event_table=self.models.pool_event._meta.db_table
-        )
+        """.format(pool_event_table=self.models.pool_event._meta.db_table)
 
         if event_name:
             sql = "{} AND name = %s".format(sql)
