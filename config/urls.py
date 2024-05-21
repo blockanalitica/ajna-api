@@ -30,6 +30,7 @@ urlpatterns = [
     path("v4/polygon/", include("ajna.v4.polygon.urls")),
     path("v4/blast/", include("ajna.v4.blast.urls")),
     path("v4/gnosis/", include("ajna.v4.gnosis.urls")),
+    path("v4/filecoin/", include("ajna.v4.filecoin.urls")),
 ]
 
 if settings.DEBUG:
