@@ -366,9 +366,7 @@ def _get_pool_info(chain, pool_address):
 
 
 def fetch_and_save_events_for_all_pools(chain):
-    cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(
-        chain.unique_key
-    )
+    cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(chain.unique_key)
 
     pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
 
@@ -381,9 +379,7 @@ def fetch_and_save_events_for_all_pools(chain):
         # PoolCreated event is not created by this process, so we need to exclude
         # it in order to get the correct last block number
         last_event = (
-            chain.pool_event.objects.exclude(name="PoolCreated")
-            .order_by("-order_index")
-            .first()
+            chain.pool_event.objects.exclude(name="PoolCreated").order_by("-order_index").first()
         )
 
         if last_event:

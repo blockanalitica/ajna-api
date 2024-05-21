@@ -62,13 +62,9 @@ def datetime_to_full_hour(dt):
 
 
 def datetime_to_next_full_hour(dt):
-    dt = dt.replace(second=0, microsecond=0, minute=0, hour=dt.hour) + timedelta(
-        hours=1
-    )
+    dt = dt.replace(second=0, microsecond=0, minute=0, hour=dt.hour) + timedelta(hours=1)
     return dt
 
 
 def compute_order_index(block_number, tx_index, log_index):
-    return "_".join(
-        (str(block_number).zfill(12), str(tx_index).zfill(6), str(log_index).zfill(6))
-    )
+    return "_".join((str(block_number).zfill(12), str(tx_index).zfill(6), str(log_index).zfill(6)))

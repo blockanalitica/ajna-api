@@ -58,9 +58,7 @@ def _handle_proposal_created(chain, event):
         if isinstance(call_data, str):
             call_data = bytes.fromhex(call_data)
 
-        recipient, tokens_requested_wad = abi.decode(
-            ["address", "uint256"], call_data[4:]
-        )
+        recipient, tokens_requested_wad = abi.decode(["address", "uint256"], call_data[4:])
         tokens_requested = wad_to_decimal(tokens_requested_wad)
         total_tokens_requested += tokens_requested
         params.append(
@@ -82,17 +80,13 @@ def _handle_proposal_created(chain, event):
         total_tokens_requested=total_tokens_requested,
         block_datetime=event.block_datetime,
         block_number=event.block_number,
-        funding_start_block_number=distribution_period.start_block
-        + SCREENING_PERIOD_LENGTH,
-        finalize_start_block_number=distribution_period.end_block
-        - CHALLENGE_PERIOD_LENGTH,
+        funding_start_block_number=distribution_period.start_block + SCREENING_PERIOD_LENGTH,
+        finalize_start_block_number=distribution_period.end_block - CHALLENGE_PERIOD_LENGTH,
     )
 
 
 def _handle_vote_cast(chain, event):
-    proposal = chain.grant_proposal.objects.get(
-        proposal_id=str(event.data["proposalId"])
-    )
+    proposal = chain.grant_proposal.objects.get(proposal_id=str(event.data["proposalId"]))
     distribution_period = chain.grant_distribution_period.objects.get(
         distribution_id=proposal.distribution_id
     )
@@ -114,17 +108,13 @@ def _handle_vote_cast(chain, event):
 
 
 def _handle_proposal_executed(chain, event):
-    proposal = chain.grant_proposal.objects.get(
-        proposal_id=str(event.data["proposalId"])
-    )
+    proposal = chain.grant_proposal.objects.get(proposal_id=str(event.data["proposalId"]))
     proposal.executed = True
     proposal.save()
 
 
 def fetch_and_save_grant_proposals(chain):
-    cache_key = "fetch_and_save_grant_proposals.{}.last_block_number".format(
-        chain.unique_key
-    )
+    cache_key = "fetch_and_save_grant_proposals.{}.last_block_number".format(chain.unique_key)
 
     from_block = cache.get(cache_key)
     if not from_block:

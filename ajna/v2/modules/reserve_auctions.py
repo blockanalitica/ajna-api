@@ -108,9 +108,7 @@ def process_reserve_auction_event(chain, event):
         reserve_auction_uid=reserve_auction.uid,
         pool_address=event.pool_address,
         taker=taker,
-        claimable_reserves_remaining=wad_to_decimal(
-            event.data["claimableReservesRemaining"]
-        ),
+        claimable_reserves_remaining=wad_to_decimal(event.data["claimableReservesRemaining"]),
         auction_price=auction_price,
         ajna_burned=ajna_burned,
         quote_purchased=quote_purchased,

@@ -22,9 +22,7 @@ class AjnaChainMixin:
                 {
                     "inputs": [],
                     "name": "owner",
-                    "outputs": [
-                        {"internalType": "address", "name": "", "type": "address"}
-                    ],
+                    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
                     "stateMutability": "view",
                     "type": "function",
                 },
@@ -60,8 +58,6 @@ class AjnaChainMixin:
 
         if block_number not in BLOCK_DATETIMES:
             block_info = self.get_block_info(block_number)
-            BLOCK_DATETIMES[block_number] = datetime.fromtimestamp(
-                block_info["timestamp"]
-            )
+            BLOCK_DATETIMES[block_number] = datetime.fromtimestamp(block_info["timestamp"])
 
         return BLOCK_DATETIMES[block_number]

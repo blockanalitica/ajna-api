@@ -16,13 +16,9 @@ RHINOFI_MAP = {
 
 
 def _save_price_for_address(models, address, price):
-    models.token.objects.filter(underlying_address=address).update(
-        underlying_price=price
-    )
+    models.token.objects.filter(underlying_address=address).update(underlying_price=price)
     try:
-        price_feed = models.price_feed.objects.filter(
-            underlying_address=address
-        ).latest()
+        price_feed = models.price_feed.objects.filter(underlying_address=address).latest()
     except models.price_feed.DoesNotExist:
         price_feed = None
 
@@ -57,9 +53,7 @@ def update_token_prices(models, network="ethereum"):
     current prices for those addresses, and then updates the corresponding token
     instances with the new prices.
     """
-    underlying_addresses = models.token.objects.all().values_list(
-        "underlying_address", flat=True
-    )
+    underlying_addresses = models.token.objects.all().values_list("underlying_address", flat=True)
     if not underlying_addresses:
         return
     prices_mapping = get_current_prices(underlying_addresses)
