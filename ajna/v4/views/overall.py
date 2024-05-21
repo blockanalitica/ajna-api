@@ -130,20 +130,14 @@ class OverallView(DaysAgoMixin, APIView):
         sql = """
             WITH {prev_sql}
             {selects}
-        """.format(
-            prev_sql=",".join(prev_sqls), selects=" UNION ".join(selects)
-        )
+        """.format(prev_sql=",".join(prev_sqls), selects=" UNION ".join(selects))
 
         order = self._get_ordering(request)
         if order:
             if order.startswith("-"):
-                sql = SQL("{} ORDER BY {} DESC NULLS LAST").format(
-                    SQL(sql), Identifier(order[1:])
-                )
+                sql = SQL("{} ORDER BY {} DESC NULLS LAST").format(SQL(sql), Identifier(order[1:]))
             else:
-                sql = SQL("{} ORDER BY {} ASC NULLS LAST").format(
-                    SQL(sql), Identifier(order)
-                )
+                sql = SQL("{} ORDER BY {} ASC NULLS LAST").format(SQL(sql), Identifier(order))
 
         data = fetch_all(sql, sql_vars)
 
@@ -193,9 +187,7 @@ class HistoricView(DaysAgoMixin, APIView):
             WHERE date >= %s AND date < %s
             GROUP BY 1
             ORDER BY date
-        """.format(
-            network_stats_daily_table=V4NetworkStatsDaily._meta.db_table
-        )
+        """.format(network_stats_daily_table=V4NetworkStatsDaily._meta.db_table)
         data = fetch_all(sql, [self.days_ago_dt, date.today()])
         return Response(data, status.HTTP_200_OK)
 

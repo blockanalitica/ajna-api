@@ -94,7 +94,7 @@ Ajna API follows the code style guidelines set by the [Ruff](https://github.com/
 To format your code using Ruff, navigate to the project directory and run:
 
 ```sh
-ruff check --fix --show-fixes
+ruff format . & ruff check --fix .
 ```
 
 This will format and sort all Python files in the project directory and its subdirectories.

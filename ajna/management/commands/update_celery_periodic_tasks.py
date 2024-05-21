@@ -26,8 +26,7 @@ class Command(BaseCommand):
                         defaults={
                             "crontab": schedule,
                             "task": task,
-                            "queue": value.get("queue")
-                            or settings.CELERY_TASK_DEFAULT_QUEUE,
+                            "queue": value.get("queue") or settings.CELERY_TASK_DEFAULT_QUEUE,
                         },
                     )
                     schedule_keys.append(task)

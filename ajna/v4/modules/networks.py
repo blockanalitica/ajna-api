@@ -29,9 +29,7 @@ def save_network_stats_for_date(models, dt, network):
                 AND ps.datetime < %s
             ORDER BY 1, ps.address, ps.datetime DESC
         ) x
-    """.format(
-        pool_snapshot_table=models.pool_snapshot._meta.db_table
-    )
+    """.format(pool_snapshot_table=models.pool_snapshot._meta.db_table)
     sql_vars = [dt, dt + timedelta(days=1)]
 
     data = fetch_one(sql, sql_vars)

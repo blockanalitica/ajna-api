@@ -48,22 +48,14 @@ class EventProcessor:
 
             match event.name:
                 case "AddQuoteToken" | "RemoveQuoteToken":
-                    pool_data["buckets"][event.data["index"]].add(
-                        event.wallet_addresses[0]
-                    )
+                    pool_data["buckets"][event.data["index"]].add(event.wallet_addresses[0])
 
                 case "MoveQuoteToken":
-                    pool_data["buckets"][event.data["from"]].add(
-                        event.wallet_addresses[0]
-                    )
-                    pool_data["buckets"][event.data["to"]].add(
-                        event.wallet_addresses[0]
-                    )
+                    pool_data["buckets"][event.data["from"]].add(event.wallet_addresses[0])
+                    pool_data["buckets"][event.data["to"]].add(event.wallet_addresses[0])
 
                 case "AddCollateral" | "RemoveCollateral" | "AddCollateralNFT":
-                    pool_data["buckets"][event.data["index"]].add(
-                        event.wallet_addresses[0]
-                    )
+                    pool_data["buckets"][event.data["index"]].add(event.wallet_addresses[0])
 
                 case "BucketTake":
                     bucket_index = event.data["index"]
@@ -77,15 +69,11 @@ class EventProcessor:
                     pool_data["buckets"][bucket_index].update(wallets)
                 case "TransferLP":
                     for bucket_index in event.data["indexes"]:
-                        pool_data["buckets"][bucket_index].update(
-                            event.wallet_addresses
-                        )
+                        pool_data["buckets"][bucket_index].update(event.wallet_addresses)
 
                 case "IncreaseLPAllowance":
                     for bucket_index in event.data["indexes"]:
-                        pool_data["buckets"][bucket_index].update(
-                            event.wallet_addresses
-                        )
+                        pool_data["buckets"][bucket_index].update(event.wallet_addresses)
 
                 case "BucketBankruptcy":
                     bucket_index = event.data["index"]
@@ -160,9 +148,7 @@ class EventProcessor:
                     ORDER BY
                         bucket_index, block_number DESC
                 ) x
-            """.format(
-                wallet_bucket_state_table=self._chain.wallet_bucket_state._meta.db_table
-            )
+            """.format(wallet_bucket_state_table=self._chain.wallet_bucket_state._meta.db_table)
 
             data = fetch_one(sql, [pool_address, wallet_address, block_number])
             supply = data["supply"]
@@ -338,9 +324,7 @@ class EventProcessor:
                                     "amount": amount,
                                     "amount_usd": amount_usd,
                                     "quote_token_price": event.quote_token_price,
-                                    "lp_awarded": wad_to_decimal(
-                                        event.data["lpAwarded"]
-                                    ),
+                                    "lp_awarded": wad_to_decimal(event.data["lpAwarded"]),
                                     "wallet_address": event.data["lender"].lower(),
                                 },
                                 "datetime": event.block_datetime,
@@ -360,9 +344,7 @@ class EventProcessor:
                                     "amount": amount,
                                     "quote_token_price": event.quote_token_price,
                                     "amount_usd": amount_usd,
-                                    "collateral": wad_to_decimal(
-                                        event.data["collateralPledged"]
-                                    ),
+                                    "collateral": wad_to_decimal(event.data["collateralPledged"]),
                                     "wallet_address": event.data["borrower"].lower(),
                                 },
                                 "datetime": event.block_datetime,
@@ -388,9 +370,7 @@ class EventProcessor:
                     },
                 )
             case "Kick":
-                kick = self._chain.auction_kick.objects.get(
-                    order_index=event.order_index
-                )
+                kick = self._chain.auction_kick.objects.get(order_index=event.order_index)
                 self._chain.notification.objects.get_or_create(
                     type=event.name,
                     key=event.order_index,
@@ -481,9 +461,7 @@ class EventProcessor:
             # and on the pool it's not updated to the last block, so in that case
             # get it from current position
             current_position = (
-                self._chain.current_wallet_position.objects.filter(
-                    pool_address=pool["address"]
-                )
+                self._chain.current_wallet_position.objects.filter(pool_address=pool["address"])
                 .order_by("-datetime")
                 .first()
             )

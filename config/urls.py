@@ -16,9 +16,7 @@ urlpatterns = [
     path("v2/ethereum/", include("ajna.v2.ethereum.urls")),
     re_path(
         r"^v3/ethereum/(?P<rest>.*)",
-        RedirectView.as_view(
-            url="/v4/ethereum/%(rest)s", permanent=False, query_string=True
-        ),
+        RedirectView.as_view(url="/v4/ethereum/%(rest)s", permanent=False, query_string=True),
     ),
     path("v3/base/", include("ajna.v3.base.urls")),
     path("v3/arbitrum/", include("ajna.v3.arbitrum.urls")),

@@ -55,28 +55,16 @@ class PoolFactory(DjangoModelFactory):
     address = factory.Faker("ethereum_address")
     created_at_block_number = factory.Faker("block_number")
     created_at_timestamp = factory.Faker("unix_time")
-    pool_size = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    pool_size = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     debt = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     t0debt = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     inflator = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
-    pending_inflator = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
-    borrow_rate = factory.Faker(
-        "pydecimal", min_value=0, max_value=100, right_digits=18
-    )
+    pending_inflator = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
+    borrow_rate = factory.Faker("pydecimal", min_value=0, max_value=100, right_digits=18)
     lend_rate = factory.Faker("pydecimal", min_value=0, max_value=100, right_digits=18)
-    borrow_fee_rate = factory.Faker(
-        "pydecimal", min_value=0, max_value=100, right_digits=18
-    )
-    deposit_fee_rate = factory.Faker(
-        "pydecimal", min_value=0, max_value=100, right_digits=18
-    )
-    pledged_collateral = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    borrow_fee_rate = factory.Faker("pydecimal", min_value=0, max_value=100, right_digits=18)
+    deposit_fee_rate = factory.Faker("pydecimal", min_value=0, max_value=100, right_digits=18)
+    pledged_collateral = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     total_interest_earned = factory.Faker(
         "pydecimal", min_value=0, max_value=10000, right_digits=18
     )
@@ -92,29 +80,19 @@ class PoolFactory(DjangoModelFactory):
     lup_index = factory.Faker("random_number", digits=3)
     momp = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     reserves = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
-    claimable_reserves = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    claimable_reserves = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     claimable_reserves_remaining = factory.Faker(
         "pydecimal", min_value=0, max_value=10000, right_digits=18
     )
     burn_epoch = factory.Faker("random_number", digits=3)
-    total_ajna_burned = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
-    min_debt_amount = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    total_ajna_burned = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
+    min_debt_amount = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     utilization = factory.Faker("random_int", min=0, max=100)
     actual_utilization = factory.Faker("random_int", min=0, max=100)
     target_utilization = factory.Faker("random_int", min=0, max=100)
-    total_bond_escrowed = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    total_bond_escrowed = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     datetime = factory.Faker("date_time_this_decade")
-    quote_token_balance = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    quote_token_balance = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     collateral_token_balance = factory.Faker(
         "pydecimal", min_value=0, max_value=10000, right_digits=18
     )
@@ -128,9 +106,7 @@ class TokenFactory(DjangoModelFactory):
     symbol = factory.Faker("cryptocurrency_code")
     decimals = factory.Faker("random_int", min=0, max=18)
     is_erc721 = factory.Faker("boolean")
-    underlying_price = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    underlying_price = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     pool_count = factory.Faker("random_number", digits=3)
     total_supply = factory.Faker("random_number", digits=3)
     tx_count = factory.Faker("random_number", digits=3)
@@ -143,16 +119,10 @@ class TokenFactory(DjangoModelFactory):
 # TODO
 class BucketFactory(DjangoModelFactory):
     bucket_index = factory.Sequence(lambda n: n)
-    bucket_price = factory.Faker(
-        "pydecimal", left_digits=3, right_digits=18, positive=True
-    )
-    exchange_rate = factory.Faker(
-        "pydecimal", left_digits=3, right_digits=18, positive=True
-    )
+    bucket_price = factory.Faker("pydecimal", left_digits=3, right_digits=18, positive=True)
+    exchange_rate = factory.Faker("pydecimal", left_digits=3, right_digits=18, positive=True)
     pool_address = factory.Faker("ethereum_address")
-    collateral = factory.Faker(
-        "pydecimal", left_digits=3, right_digits=18, positive=True
-    )
+    collateral = factory.Faker("pydecimal", left_digits=3, right_digits=18, positive=True)
     deposit = factory.Faker("pydecimal", left_digits=3, right_digits=18, positive=True)
     lpb = factory.Faker("pydecimal", left_digits=3, right_digits=18, positive=True)
 
@@ -163,9 +133,7 @@ class AddCollateralFactory(DjangoModelFactory):
     actor = factory.Faker("ethereum_address")
     index = factory.Sequence(lambda n: n)
     amount = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
-    lp_awarded = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    lp_awarded = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     block_number = factory.Faker("block_number")
     block_timestamp = factory.Faker(
         "block_timestamp", block_number=factory.SelfAttribute("..block_number")
@@ -180,9 +148,7 @@ class RemoveCollateralFactory(DjangoModelFactory):
     claimer = factory.Faker("ethereum_address")
     index = factory.Sequence(lambda n: n)
     amount = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
-    lp_redeemed = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    lp_redeemed = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     block_number = factory.Faker("block_number")
     block_timestamp = factory.Faker(
         "block_timestamp", block_number=factory.SelfAttribute("..block_number")
@@ -194,15 +160,11 @@ class RemoveCollateralFactory(DjangoModelFactory):
 class AddQuoteTokenFactory(DjangoModelFactory):
     pool_address = factory.Faker("ethereum_address")
     bucket_index = factory.Sequence(lambda n: n)
-    bucket_price = factory.Faker(
-        "pydecimal", min_value=0, max_value=1000, right_digits=18
-    )
+    bucket_price = factory.Faker("pydecimal", min_value=0, max_value=1000, right_digits=18)
     lender = factory.Faker("ethereum_address")
     index = factory.Sequence(lambda n: n)
     amount = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
-    lp_awarded = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    lp_awarded = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     lup = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     block_number = factory.Faker("block_number")
     block_timestamp = factory.Faker(
@@ -210,9 +172,7 @@ class AddQuoteTokenFactory(DjangoModelFactory):
     )
     transaction_hash = factory.Faker("transaction_hash")
     price = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
-    deposit_fee_rate = factory.Faker(
-        "pydecimal", min_value=0, max_value=100, right_digits=18
-    )
+    deposit_fee_rate = factory.Faker("pydecimal", min_value=0, max_value=100, right_digits=18)
     fee = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
 
 
@@ -222,9 +182,7 @@ class RemoveQuoteTokenFactory(DjangoModelFactory):
     lender = factory.Faker("ethereum_address")
     index = factory.Sequence(lambda n: n)
     amount = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
-    lp_redeemed = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    lp_redeemed = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     lup = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     block_number = factory.Faker("block_number")
     block_timestamp = factory.Faker(
@@ -240,12 +198,8 @@ class MoveQuoteTokenFactory(DjangoModelFactory):
     bucket_index_to = factory.Sequence(lambda n: n)
     lender = factory.Faker("ethereum_address")
     amount = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
-    lp_redeemed_from = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
-    lp_awarded_to = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    lp_redeemed_from = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
+    lp_awarded_to = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     lup = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     block_number = factory.Faker("block_number")
     block_timestamp = factory.Faker(
@@ -259,12 +213,8 @@ class DrawDebtFactory(DjangoModelFactory):
     index = factory.Faker("subgraph_hash")
     pool_address = factory.Faker("ethereum_address")
     borrower = factory.Faker("ethereum_address")
-    amount_borrowed = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
-    collateral_pledged = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    amount_borrowed = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
+    collateral_pledged = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     lup = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     block_number = factory.Faker("block_number")
     block_timestamp = factory.Faker(
@@ -272,27 +222,19 @@ class DrawDebtFactory(DjangoModelFactory):
     )
     transaction_hash = factory.Faker("transaction_hash")
     fee = factory.Faker("pydecimal", min_value=0, max_value=100, right_digits=18)
-    borrow_fee_rate = factory.Faker(
-        "pydecimal", min_value=0, max_value=100, right_digits=18
-    )
+    borrow_fee_rate = factory.Faker("pydecimal", min_value=0, max_value=100, right_digits=18)
     collateral_token_price = factory.Faker(
         "pydecimal", min_value=0, max_value=10000, right_digits=18
     )
-    quote_token_price = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    quote_token_price = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
 
 
 class RepayDebtFactory(DjangoModelFactory):
     index = factory.Faker("subgraph_hash")
     pool_address = factory.Faker("ethereum_address")
     borrower = factory.Faker("ethereum_address")
-    quote_repaid = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
-    collateral_pulled = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    quote_repaid = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
+    collateral_pulled = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     lup = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
     block_number = factory.Faker("block_number")
     block_timestamp = factory.Faker(
@@ -302,15 +244,11 @@ class RepayDebtFactory(DjangoModelFactory):
     collateral_token_price = factory.Faker(
         "pydecimal", min_value=0, max_value=10000, right_digits=18
     )
-    quote_token_price = factory.Faker(
-        "pydecimal", min_value=0, max_value=10000, right_digits=18
-    )
+    quote_token_price = factory.Faker("pydecimal", min_value=0, max_value=10000, right_digits=18)
 
 
 class GrantProposalFactory(factory.django.DjangoModelFactory):
-    uid = factory.LazyAttribute(
-        lambda o: "".join(random.choices("0123456789abcdef", k=77))
-    )
+    uid = factory.LazyAttribute(lambda o: "".join(random.choices("0123456789abcdef", k=77)))
     description = factory.Dict({"title": "foo"}, dict_factory=JSONFactory)
     executed = False
     screening_votes_received = factory.Faker(

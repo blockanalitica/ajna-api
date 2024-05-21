@@ -27,9 +27,7 @@ def _save_price_for_address(models, address, price, is_estimated_price=False):
         underlying_price=price, is_estimated_price=is_estimated_price
     )
     try:
-        price_feed = models.price_feed.objects.filter(
-            underlying_address=address
-        ).latest()
+        price_feed = models.price_feed.objects.filter(underlying_address=address).latest()
     except models.price_feed.DoesNotExist:
         price_feed = None
 
@@ -80,9 +78,7 @@ def update_token_prices(models, network):
     This function retrieves all the underlying addresses of the tokens, fetches the
     current prices for those addresses, and then updates the corresponding token
     instances with the new prices."""
-    underlying_addresses = models.token.objects.all().values_list(
-        "underlying_address", flat=True
-    )
+    underlying_addresses = models.token.objects.all().values_list("underlying_address", flat=True)
     if not underlying_addresses:
         return
 

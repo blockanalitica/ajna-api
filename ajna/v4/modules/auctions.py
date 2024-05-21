@@ -48,8 +48,7 @@ def _update_auction(chain, auction_uid, block_number, last_take_price=None):
         (
             chain.pool_info_address,
             [
-                "auctionStatus(address,address)("
-                "(uint256,uint256,uint256,bool,uint256,uint256))",
+                "auctionStatus(address,address)(" "(uint256,uint256,uint256,bool,uint256,uint256))",
                 auction.pool_address,
                 auction.borrower,
             ],
@@ -78,9 +77,7 @@ def _update_auction(chain, auction_uid, block_number, last_take_price=None):
 
 def _update_kick_locked_amount(chain, auction_uid, is_reward, locked_change):
     kick = (
-        chain.auction_kick.objects.filter(auction_uid=auction_uid)
-        .order_by("-block_number")
-        .first()
+        chain.auction_kick.objects.filter(auction_uid=auction_uid).order_by("-block_number").first()
     )
     if is_reward:
         kick.locked = kick.locked + locked_change
@@ -122,8 +119,7 @@ def process_kick_event(chain, event):
         (
             chain.pool_info_address,
             [
-                "auctionStatus(address,address)("
-                "(uint256,uint256,uint256,bool,uint256,uint256))",
+                "auctionStatus(address,address)(" "(uint256,uint256,uint256,bool,uint256,uint256))",
                 event.pool_address,
                 event.data["borrower"],
             ],
@@ -138,9 +134,7 @@ def process_kick_event(chain, event):
 
     kick = chain.auction_kick.objects.create(
         order_index=event.order_index,
-        auction_uid=_generate_auction_uid(
-            event.pool_address, borrower, event.block_number
-        ),
+        auction_uid=_generate_auction_uid(event.pool_address, borrower, event.block_number),
         pool_address=event.pool_address,
         borrower=borrower,
         debt=wad_to_decimal(event.data["debt"]),
@@ -200,9 +194,7 @@ def process_take_event(chain, event):
         quote_token_price=event.quote_token_price,
     )
 
-    _update_auction(
-        chain, auction.uid, event.block_number, last_take_price=take.auction_price
-    )
+    _update_auction(chain, auction.uid, event.block_number, last_take_price=take.auction_price)
     _update_kick_locked_amount(chain, auction.uid, take.is_reward, bond_change)
 
 
@@ -246,9 +238,7 @@ def process_bucket_take_event(chain, event):
         quote_token_price=event.quote_token_price,
     )
 
-    _update_auction(
-        chain, auction.uid, event.block_number, last_take_price=take.auction_price
-    )
+    _update_auction(chain, auction.uid, event.block_number, last_take_price=take.auction_price)
     _update_kick_locked_amount(chain, auction.uid, take.is_reward, bond_change)
 
 

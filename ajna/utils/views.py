@@ -20,9 +20,7 @@ log = logging.getLogger(__name__)
 
 
 class RawQuerySetPaginator(DefaultPaginator):
-    def __init__(
-        self, sql, count_query, per_page, orphans=0, allow_empty_first_page=True
-    ):
+    def __init__(self, sql, count_query, per_page, orphans=0, allow_empty_first_page=True):
         self.raw_sql, self.sql_vars = sql
         self.count_sql, self.count_sql_vars = count_query
         super().__init__(
@@ -59,9 +57,7 @@ class RawQuerySetPaginator(DefaultPaginator):
             count_query = self.count_sql
             count_sql_vars = self.count_sql_vars
         else:
-            count_query = SQL("SELECT COUNT(*) FROM ({}) AS count_sub_query").format(
-                self.raw_sql
-            )
+            count_query = SQL("SELECT COUNT(*) FROM ({}) AS count_sub_query").format(self.raw_sql)
             count_sql_vars = self.sql_vars
 
         with connection.cursor() as cursor:
@@ -103,9 +99,7 @@ class RawPagination(PageNumberPagination):
         try:
             self.page = paginator.page(page_number)
         except InvalidPage as exc:
-            msg = self.invalid_page_message.format(
-                page_number=page_number, message=str(exc)
-            )
+            msg = self.invalid_page_message.format(page_number=page_number, message=str(exc))
             raise NotFound(msg) from None
 
         if paginator.num_pages > 1 and self.template is not None:
@@ -135,8 +129,7 @@ class RawSQLPaginatedApiView(APIView):
 
     def get_queryset(self, **kwargs):
         raise InvalidMethod(
-            "RawSQLPaginatedApiView needs get_raw_sql to be implemented instead of "
-            "get_queryset"
+            "RawSQLPaginatedApiView needs get_raw_sql to be implemented instead of " "get_queryset"
         )
 
     def get_count_sql(self, **kwargs):
@@ -156,9 +149,7 @@ class RawSQLPaginatedApiView(APIView):
                 filters.append("{} ilike %s ESCAPE ''".format(field))
 
             search = "%{}%".format(search)
-            return "({})".format(" OR ".join(filters)), [search] * len(
-                self.search_fields
-            )
+            return "({})".format(" OR ".join(filters)), [search] * len(self.search_fields)
         return None
 
     def get_ordering(self, request):
@@ -173,9 +164,7 @@ class RawSQLPaginatedApiView(APIView):
         return self.default_order
 
     def paginate_queryset(self, queryset, count_query):
-        return self.paginator.paginate_queryset(
-            queryset, count_query, self.request, view=self
-        )
+        return self.paginator.paginate_queryset(queryset, count_query, self.request, view=self)
 
     def get_additional_data(self, data, **kwargs):
         return {}
@@ -189,7 +178,7 @@ class RawSQLPaginatedApiView(APIView):
             raw_sql = SQL(raw_sql)
 
         if sql_vars and not isinstance(sql_vars, (list, dict)):
-                raise TypeError
+            raise TypeError
 
         count_sql, count_sql_vars = self.get_count_sql(
             search_filters=search_filters, query_params=request.GET, **kwargs
@@ -198,7 +187,7 @@ class RawSQLPaginatedApiView(APIView):
             count_sql = SQL(count_sql)
 
         if count_sql_vars and not isinstance(count_sql_vars, (list, dict)):
-                raise TypeError
+            raise TypeError
 
         order = self.get_ordering(request)
 
