@@ -16,6 +16,7 @@ from ..base.chain import BaseModels
 from ..blast.chain import BlastModels
 from ..ethereum.chain import EthereumModels
 from ..gnosis.chain import GnosisModels
+from ..mode.chain import ModeModels
 from ..models import V4NetworkStatsDaily, V4OverallStats
 from ..optimism.chain import OptimismModels
 from ..polygon.chain import PolygonModels
@@ -51,6 +52,7 @@ class OverallView(DaysAgoMixin, APIView):
             "polygon": "Polygon PoS",
             "gnosis": "Gnosis",
             "blast": "Blast",
+            "mode": "Mode",
         }
         chain_models_map = {
             "ethereum": EthereumModels(),
@@ -60,6 +62,7 @@ class OverallView(DaysAgoMixin, APIView):
             "polygon": PolygonModels(),
             "gnosis": GnosisModels(),
             "blast": BlastModels(),
+            "mode": ModeModels(),
         }
         prev_sqls = []
         selects = []
