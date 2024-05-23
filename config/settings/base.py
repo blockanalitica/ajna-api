@@ -275,6 +275,7 @@ POLYGON_NODE = env("POLYGON_NODE", default="")
 OPTIMISM_NODE = env("OPTIMISM_NODE", default="")
 BLAST_NODE = env("BLAST_NODE", default="")
 GNOSIS_NODE = env("GNOSIS_NODE", default="")
+MODE_NODE = env("MODE_NODE", default="")
 
 ETHERSCAN_API_KEY = env("ETHERSCAN_API_KEY", default="")
 ARBISCAN_API_KEY = env("ARBISCAN_API_KEY", default="")
