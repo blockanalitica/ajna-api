@@ -22,6 +22,7 @@ AJNA_DEPLOYMENTS = {
         "polygon",
         "blast",
         "gnosis",
+        "mode",
     ],
 }
 
