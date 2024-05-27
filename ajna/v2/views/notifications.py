@@ -14,8 +14,10 @@ class NotificationsView(RawSQLPaginatedChainView):
                 , nt.data
                 , nt.datetime
                 , nt.pool_address
-                , p.collateral_token_symbol AS collateral_token_symbol
-                , p.quote_token_symbol AS quote_token_symbol
+                , p.collateral_token_symbol
+                , p.collateral_token_address
+                , p.quote_token_symbol
+                , p.quote_token_address
             FROM {notification_table} nt
             JOIN {pool_table} p
                 ON nt.pool_address = p.address

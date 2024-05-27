@@ -15,6 +15,7 @@ from .auctions import (
     process_settle_event,
     process_take_event,
 )
+from .discord_notifications import send_notification_for_event
 from .reserve_auctions import (
     process_kick_reserve_auction_event,
     process_reserve_auction_event,
@@ -440,7 +441,12 @@ class EventProcessor:
             for event in events:
                 self._process_auctions(event)
                 self._process_reserve_auctions(event)
+
+                # Creating and sending notifications needs to happen after processing
+                # auctions and reserve auctions as they rely on those models to be
+                # populated correctly
                 self._create_notifications(event)
+                send_notification_for_event(self._chain, event)
 
             # Update pools last_block_number to the last event block number
             # so on the next run we start from that block number onwards
