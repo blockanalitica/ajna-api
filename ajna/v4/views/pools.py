@@ -563,7 +563,12 @@ class PoolPositionsView(RawSQLPaginatedChainView):
     order_nulls_last = True
     search_fields = ["wallet_address"]
 
-    def _get_borrower_sql(self):
+    def _get_borrower_sql(self, only_closed):
+        if only_closed:
+            position_filter = "AND (cwp.t0debt = 0 AND cwp.collateral = 0)"
+        else:
+            position_filter = "AND (cwp.t0debt > 0 OR cwp.collateral > 0)"
+
         return """
             WITH previous AS (
                 SELECT DISTINCT ON (wp.wallet_address)
@@ -652,8 +657,8 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                     ON cwp.wallet_address = prev.wallet_address
                 LEFT JOIN previous_pool AS prev_pool
                     ON cwp.pool_address = prev_pool.address
-                WHERE (cwp.t0debt > 0 OR cwp.collateral > 0)
-                    AND cwp.pool_address = %s
+                WHERE cwp.pool_address = %s
+                    {position_filter}
             ) x
             LEFT JOIN {wallet_table} w
                 ON x.wallet_address = w.address
@@ -664,9 +669,15 @@ class PoolPositionsView(RawSQLPaginatedChainView):
             wallet_position_table=self.models.wallet_position._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            position_filter=position_filter,
         )
 
-    def _get_depositor_sql(self):
+    def _get_depositor_sql(self, only_closed):
+        if only_closed:
+            position_filter = "AND cwp.supply = 0"
+        else:
+            position_filter = "AND cwp.supply > 0"
+
         return """
             WITH previous AS (
                 SELECT DISTINCT ON (wp.wallet_address)
@@ -714,7 +725,8 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 ON cwp.wallet_address = w.address
             LEFT JOIN previous_pool AS prev_pool
                     ON cwp.pool_address = prev_pool.address
-            WHERE cwp.supply > 0 AND cwp.pool_address = %s
+            WHERE cwp.pool_address = %s
+                {position_filter}
         """.format(
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
@@ -722,12 +734,16 @@ class PoolPositionsView(RawSQLPaginatedChainView):
             wallet_position=self.models.wallet_position._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            position_filter=position_filter,
         )
 
     def get_raw_sql(self, pool_address, query_params, search_filters, **kwargs):
         wallet_type = query_params.get("type")
+
+        only_closed = query_params.get("closed") == "1"
+
         if wallet_type == "depositor":
-            sql = self._get_depositor_sql()
+            sql = self._get_depositor_sql(only_closed)
             self.ordering_fields = [
                 "supply",
                 "last_activity",
@@ -735,7 +751,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 "supply_share",
             ]
         else:
-            sql = self._get_borrower_sql()
+            sql = self._get_borrower_sql(only_closed)
             self.ordering_fields = [
                 "debt",
                 "collateral",
@@ -745,7 +761,6 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 "last_activity",
             ]
 
-        # sql_vars = [self.days_ago_dt, pool_address, pool_address]
         sql_vars = [
             self.days_ago_dt,
             pool_address,
