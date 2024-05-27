@@ -64,7 +64,7 @@ def _send_kick_notification(chain, event):
         title="Auction Kicked",
         description=description,
         url=url,
-        color="b45cd6",
+        color="ff3344",
     )
     embed.set_footer(text="Network: {}".format(chain.chain.capitalize()))
     embed.set_timestamp()
@@ -113,7 +113,7 @@ def _send_auction_settle_notification(chain, event):
         title="Auction Settled",
         description=description,
         url=url,
-        color="b45cd6",
+        color="2a9340",
     )
     embed.set_footer(text="Network: {}".format(chain.chain.capitalize()))
     embed.set_timestamp()
