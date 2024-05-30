@@ -19,7 +19,8 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
         "settle_time",
     ]
     days_ago_default = 1
-    days_ago_required = True
+    days_ago_required = False
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     def get_raw_sql(self, **kwargs):
         sql = """
@@ -58,6 +59,10 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
 
 
 class AuctionsSettledGraphsView(BaseChainView):
+    days_ago_default = 1
+    days_ago_required = False
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
+
     def _get_collateral_graph_data(self, from_ts, date_trunc):
         sql = """
             SELECT
@@ -124,6 +129,10 @@ class AuctionsSettledGraphsView(BaseChainView):
 
 
 class AuctionsSettledOverviewView(BaseChainView):
+    days_ago_default = 1
+    days_ago_required = False
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
+
     def get(self, request):
         sql = """
             SELECT

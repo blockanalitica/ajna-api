@@ -8,8 +8,8 @@ from ajna.utils.views import BaseChainView
 
 class OverviewView(BaseChainView):
     days_ago_required = False
-    days_ago_default = 7
-    days_ago_options = [1, 7, 30, 365]
+    days_ago_default = 1
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     def get(self, request):
         sql_vars = {"days_ago_dt": self.days_ago_dt}
@@ -85,101 +85,42 @@ class OverviewView(BaseChainView):
 
 
 class HistoryView(BaseChainView):
-    def _get_collateral(self):
-        sql = """
-            SELECT
-                  x.dt
-                , SUM(x.amount) AS amount
-            FROM (
-                SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      ps.collateral_token_balance * ps.collateral_token_price AS amount
-                    , DATE_TRUNC('day', ps.datetime) AS dt
-                FROM {pool_snapshot_table} ps
-                ORDER BY dt, ps.address, ps.datetime DESC
-            ) x
-            GROUP BY x.dt
-            ORDER BY x.dt
-        """.format(
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-        )
-        return sql, []
+    days_ago_required = False
+    days_ago_default = 30
+    days_ago_options = [30, 90, 365, 9999]
 
-    def _get_pledged_collateral(self):
-        sql = """
-            SELECT
-                  x.dt
-                , SUM(x.amount) AS amount
-            FROM (
-                SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      ps.pledged_collateral * ps.collateral_token_price AS amount
-                    , DATE_TRUNC('day', ps.datetime) AS dt
-                FROM {pool_snapshot_table} ps
-                ORDER BY dt, ps.address, ps.datetime DESC
-            ) x
-            GROUP BY x.dt
-            ORDER BY x.dt
-        """.format(
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-        )
-        return sql, []
+    def _get_from_snapshot(self, amount_select):
+        sql_vars = []
+        days_ago_filter = ""
+        if self.days_ago != 9999:
+            days_ago_filter = "WHERE pst.datetime >= %s"
+            sql_vars.append(self.days_ago_dt)
 
-    def _get_deposit(self):
         sql = """
             SELECT
-                  x.dt
-                , SUM(x.amount) AS amount
-            FROM (
-                SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      ps.pool_size * ps.quote_token_price AS amount
-                    , DATE_TRUNC('day', ps.datetime) AS dt
-                FROM {pool_snapshot_table} ps
-                ORDER BY dt, ps.address, ps.datetime DESC
-            ) x
-            GROUP BY x.dt
-            ORDER BY x.dt
+                  latest.dt
+                , {amount_select}
+            FROM {pool_snapshot_table} ps
+            JOIN (
+                SELECT
+                      DATE(pst.datetime) AS dt
+                    , pst.address
+                    , MAX(pst.datetime) AS max_datetime
+                FROM {pool_snapshot_table} pst
+                {days_ago_filter}
+                GROUP BY 1,2
+            ) latest
+            ON DATE(ps.datetime) = latest.dt
+                AND ps.address = latest.address
+                AND ps.datetime = latest.max_datetime
+            GROUP BY 1
+            ORDER BY 1
         """.format(
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            days_ago_filter=days_ago_filter,
+            amount_select=amount_select,
         )
-        return sql, []
-
-    def _get_debt(self):
-        sql = """
-            SELECT
-                  x.dt
-                , SUM(x.amount) AS amount
-            FROM (
-                SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      ps.debt * ps.quote_token_price AS amount
-                    , DATE_TRUNC('day', ps.datetime) AS dt
-                FROM {pool_snapshot_table} ps
-                ORDER BY dt, ps.address, ps.datetime DESC
-            ) x
-            GROUP BY x.dt
-            ORDER BY x.dt
-        """.format(
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-        )
-        return sql, []
-
-    def _get_tvl(self):
-        sql = """
-            SELECT
-                  x.dt
-                , SUM(x.amount) AS amount
-            FROM (
-                SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
-                      COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0)
-                        + COALESCE(ps.quote_token_balance * ps.quote_token_price, 0) AS amount
-                    , DATE_TRUNC('day', ps.datetime) AS dt
-                FROM {pool_snapshot_table} ps
-                ORDER BY dt, ps.address, ps.datetime DESC
-            ) x
-            GROUP BY x.dt
-            ORDER BY x.dt
-        """.format(
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-        )
-        return sql, []
+        return sql, sql_vars
 
     def _get_volume(self):
         sql = """
@@ -187,30 +128,40 @@ class HistoryView(BaseChainView):
                   pvs.date AS dt
                 , SUM(pvs.amount) AS amount
             FROM {pool_volume_snapshot_table} pvs
+            WHERE pvs.date >= %s
             GROUP BY pvs.date
             ORDER BY pvs.date
         """.format(
             pool_volume_snapshot_table=self.models.pool_volume_snapshot._meta.db_table,
         )
-        return sql, []
+        return sql, [self.days_ago_dt]
 
     def get(self, request):
         history_type = request.GET.get("type")
 
         match history_type:
             case "pledged_collateral":
-                sql, sql_vars = self._get_pledged_collateral()
+                amount_select = "SUM(ps.pledged_collateral * ps.collateral_token_price) AS amount"
+                sql, sql_vars = self._get_from_snapshot(amount_select)
             case "collateral":
-                sql, sql_vars = self._get_collateral()
+                amount_select = (
+                    "SUM(ps.collateral_token_balance * ps.collateral_token_price) AS amount"
+                )
+                sql, sql_vars = self._get_from_snapshot(amount_select)
             case "debt":
-                sql, sql_vars = self._get_debt()
+                amount_select = "SUM(ps.debt * ps.quote_token_price) AS amount"
+                sql, sql_vars = self._get_from_snapshot(amount_select)
             case "tvl":
-                sql, sql_vars = self._get_tvl()
+                amount_select = (
+                    "SUM(COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0) "
+                    "+ COALESCE(ps.quote_token_balance * ps.quote_token_price, 0)) AS amount"
+                )
+                sql, sql_vars = self._get_from_snapshot(amount_select)
             case "volume":
                 sql, sql_vars = self._get_volume()
             case _:  # deposit or default
-                sql, sql_vars = self._get_deposit()
+                amount_select = "SUM(ps.pool_size * ps.quote_token_price) AS amount"
+                sql, sql_vars = self._get_from_snapshot(amount_select)
 
         data = fetch_all(sql, sql_vars)
-
         return Response(data, status.HTTP_200_OK)

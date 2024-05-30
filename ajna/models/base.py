@@ -83,6 +83,10 @@ class PoolSnapshot(PoolBase):
     class Meta:
         abstract = True
         unique_together = ("address", "datetime")
+        indexes = [
+            models.Index(fields=["address", "datetime"]),
+            models.Index(fields=["datetime"]),
+        ]
 
 
 class Token(models.Model):
