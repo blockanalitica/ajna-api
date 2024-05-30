@@ -5,6 +5,7 @@ from celery.schedules import crontab
 
 from ajna.celery import app
 
+from ..modules.activity import sync_activity_snapshots
 from ..modules.at_risk import wallets_at_risk_notification
 from ..modules.events import fetch_and_save_events_for_all_pools
 from ..modules.grants import fetch_and_save_grant_proposals
@@ -28,6 +29,9 @@ SCHEDULE = {
     "fetch_and_save_grant_proposals_task": {
         "schedule": crontab(minute="*/5"),
     },
+    # "sync_activity_snapshots_task": {
+    #     "schedule": crontab(minute="*/5"),
+    # },
     "fetch_erc20_pool_created_events_task": {
         "schedule": crontab(minute="0-59/5"),
     },
@@ -166,3 +170,9 @@ def save_network_stats_for_yesterday_task():
 def save_overall_total_ajna_burned_task():
     chain = Ethereum()
     save_overall_ajna_burned(chain)
+
+
+@app.task
+def sync_activity_snapshots_task():
+    chain = Ethereum()
+    sync_activity_snapshots(chain)

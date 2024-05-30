@@ -800,3 +800,15 @@ class OverallStats(models.Model):
         abstract = True
         get_latest_by = "date"
         ordering = ("-date",)
+
+
+class ActivitySnapshot(models.Model):
+    date = models.DateField(unique=True)
+    active_wallets = models.IntegerField()
+    total_wallets = models.IntegerField()
+    new_wallets = models.IntegerField()
+    active_this_month = models.IntegerField(null=True)
+    new_this_month = models.IntegerField(null=True)
+
+    class Meta:
+        abstract = True

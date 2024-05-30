@@ -34,6 +34,7 @@ MODEL_MAP = {
     "reserve_auction": models.V4OptimismReserveAuction,
     "reserve_auction_kick": models.V4OptimismReserveAuctionKick,
     "reserve_auction_take": models.V4OptimismReserveAuctionTake,
+    "activity_snapshot": models.V4OptimismActivitySnapshot,
 }
 
 

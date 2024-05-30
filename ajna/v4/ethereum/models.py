@@ -108,3 +108,7 @@ class V3EthereumReserveAuctionKick(base.ReserveAuctionKick):
 
 class V3EthereumReserveAuctionTake(base.ReserveAuctionTake):
     pass
+
+
+class V4EthereumActivitySnapshot(base.ActivitySnapshot):
+    pass

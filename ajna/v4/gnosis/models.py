@@ -91,3 +91,7 @@ class V4GnosisReserveAuctionKick(base.ReserveAuctionKick):
 
 class V4GnosisReserveAuctionTake(base.ReserveAuctionTake):
     pass
+
+
+class V4GnosisActivitySnapshot(base.ActivitySnapshot):
+    pass

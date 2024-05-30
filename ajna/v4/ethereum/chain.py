@@ -37,6 +37,7 @@ MODEL_MAP = {
     "grant_distribution_period": models.V3EthereumGrantDistributionPeriod,
     "grant_proposal": models.V3EthereumGrantProposal,
     "grant_event": models.V3EthereumGrantEvent,
+    "activity_snapshot": models.V4EthereumActivitySnapshot,
 }
 
 

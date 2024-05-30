@@ -91,3 +91,7 @@ class V4OptimismReserveAuctionKick(base.ReserveAuctionKick):
 
 class V4OptimismReserveAuctionTake(base.ReserveAuctionTake):
     pass
+
+
+class V4OptimismActivitySnapshot(base.ActivitySnapshot):
+    pass
