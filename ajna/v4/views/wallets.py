@@ -118,8 +118,8 @@ class WalletsView(RawSQLPaginatedChainView):
 
 class WalletView(BaseChainView):
     days_ago_required = False
-    days_ago_default = 7
-    days_ago_options = [1, 7, 30, 365]
+    days_ago_default = 1
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     def _get_current(self, address):
         sql = """
@@ -350,6 +350,9 @@ class WalletEventsView(RawSQLPaginatedChainView):
 
 
 class WalletPoolsView(RawSQLPaginatedChainView):
+    days_ago_required = False
+    days_ago_default = 7
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
     default_order = "-debt"
     ordering_fields = [
         "supply",
@@ -583,7 +586,7 @@ class WalletPoolsView(RawSQLPaginatedChainView):
 class WalletPoolView(BaseChainView):
     days_ago_required = False
     days_ago_default = 1
-    days_ago_options = [1, 7, 30, 365]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     def get(self, request, address, pool_address):
         sql = """

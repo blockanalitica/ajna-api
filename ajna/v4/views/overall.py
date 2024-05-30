@@ -24,8 +24,8 @@ from ..polygon.chain import PolygonModels
 
 class OverallView(DaysAgoMixin, APIView):
     days_ago_required = False
-    days_ago_default = 7
-    days_ago_options = [1, 7, 30, 365]
+    days_ago_default = 1
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     default_order = "-tvl"
     ordering_fields = ["tvl", "collateral_usd", "supply_usd", "debt_usd"]
@@ -176,7 +176,7 @@ class OverallView(DaysAgoMixin, APIView):
 class HistoricView(DaysAgoMixin, APIView):
     days_ago_required = False
     days_ago_default = 30
-    days_ago_options = [30, 365]
+    days_ago_options = [30, 90, 365, 9999]
 
     def get(self, request):
         sql = """
