@@ -85,7 +85,7 @@ class PoolsView(RawSQLPaginatedChainView):
     order_nulls_last = True
     days_ago_required = False
     days_ago_default = 1
-    days_ago_options = [1, 7, 30, 90, 9999]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
     default_order = "-tvl"
     ordering_fields = [
         "collateral",
@@ -181,7 +181,7 @@ class PoolsView(RawSQLPaginatedChainView):
 class PoolView(BaseChainView):
     days_ago_required = False
     days_ago_default = 1
-    days_ago_options = [1, 7, 30, 90, 9999]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     def get(self, request, pool_address):
         sql_vars = [
@@ -318,7 +318,7 @@ class PoolHistoricView(BaseChainView):
 
     days_ago_required = False
     days_ago_default = 30
-    days_ago_options = [30, 90, 9999]
+    days_ago_options = [30, 90, 365, 9999]
 
     def _get_tvl(self, pool_address):
         sql_vars = [self.days_ago_dt, pool_address]
@@ -562,7 +562,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
 class PoolPositionsView(RawSQLPaginatedChainView):
     days_ago_required = False
     days_ago_default = 1
-    days_ago_options = [1, 7, 30, 90, 9999]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
     order_nulls_last = True
     search_fields = ["wallet_address"]
 

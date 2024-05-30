@@ -9,7 +9,7 @@ from ajna.utils.views import BaseChainView
 class OverviewView(BaseChainView):
     days_ago_required = False
     days_ago_default = 1
-    days_ago_options = [1, 7, 30, 90, 9999]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     def get(self, request):
         sql_vars = {"days_ago_dt": self.days_ago_dt}
@@ -87,7 +87,7 @@ class OverviewView(BaseChainView):
 class HistoryView(BaseChainView):
     days_ago_required = False
     days_ago_default = 30
-    days_ago_options = [30, 90, 9999]
+    days_ago_options = [30, 90, 365, 9999]
 
     def _get_from_snapshot(self, amount_select):
         sql_vars = []

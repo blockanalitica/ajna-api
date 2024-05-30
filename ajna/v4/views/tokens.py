@@ -12,7 +12,7 @@ class TokensView(RawSQLPaginatedChainView):
     order_nulls_last = True
     days_ago_required = False
     days_ago_default = 1
-    days_ago_options = [1, 7, 30, 90, 9999]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
     default_order = "-tvl"
     ordering_fields = [
         "symbol",
@@ -167,7 +167,7 @@ class TokensView(RawSQLPaginatedChainView):
 class TokenView(BaseChainView):
     days_ago_required = False
     days_ago_default = 7
-    days_ago_options = [1, 7, 30, 90, 9999]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     def get(self, request, underlying_address):
         sql = """
@@ -196,7 +196,7 @@ class TokenView(BaseChainView):
 class TokenOverviewView(BaseChainView):
     days_ago_required = False
     days_ago_default = 7
-    days_ago_options = [1, 7, 30, 90, 9999]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     def get(self, request, underlying_address):
         sql_vars = {"days_ago_dt": self.days_ago_dt, "address": underlying_address}
@@ -338,7 +338,7 @@ class TokenOverviewView(BaseChainView):
 class TokenPoolsView(RawSQLPaginatedChainView):
     days_ago_required = False
     days_ago_default = 7
-    days_ago_options = [1, 7, 30, 90, 9999]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
     default_order = "-tvl"
     ordering_fields = [
         "pledged_collateral",
@@ -376,7 +376,7 @@ class TokenPoolsView(RawSQLPaginatedChainView):
 class TokenArbitragePoolsView(RawSQLPaginatedChainView):
     days_ago_required = False
     days_ago_default = 7
-    days_ago_options = [1, 7, 30, 90, 9999]
+    days_ago_options = [1, 7, 30, 90, 365, 9999]
     default_order = "-collateral_token_underlying_price"
     ordering_fields = [
         "lup",
