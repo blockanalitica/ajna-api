@@ -29,9 +29,9 @@ SCHEDULE = {
     "fetch_and_save_grant_proposals_task": {
         "schedule": crontab(minute="*/5"),
     },
-    # "sync_activity_snapshots_task": {
-    #     "schedule": crontab(minute="*/5"),
-    # },
+    "sync_activity_snapshots_task": {
+        "schedule": crontab(minute="*/5"),
+    },
     "fetch_erc20_pool_created_events_task": {
         "schedule": crontab(minute="0-59/5"),
     },
