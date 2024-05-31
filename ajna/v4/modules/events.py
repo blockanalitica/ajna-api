@@ -13,6 +13,16 @@ log = logging.getLogger(__name__)
 POOL_INFO = {}
 
 
+def _get_bucket_price(chain, pool_address, bucket_index):
+    try:
+        bucket = chain.bucket.objects.get(pool_address=pool_address, bucket_index=bucket_index)
+    except chain.bucket.DoesNotExist:
+        bucket_price = None
+    else:
+        bucket_price = bucket.bucket_price
+    return bucket_price
+
+
 def parse_event_data(event, chain):
     data = None
 
@@ -24,6 +34,9 @@ def parse_event_data(event, chain):
         case "AddCollateral":
             data = {
                 "index": event_data["index"],
+                "bucket_price": _get_bucket_price(
+                    chain, event["pool_address"], event_data["index"]
+                ),
                 "amount": wad_to_decimal(event_data["amount"]),
                 "actor": event_data["actor"].lower(),
                 "lpAwarded": wad_to_decimal(event_data["lpAwarded"]),
@@ -34,6 +47,9 @@ def parse_event_data(event, chain):
             data = {
                 "lup": wad_to_decimal(event_data["lup"]),
                 "index": event_data["index"],
+                "bucket_price": _get_bucket_price(
+                    chain, event["pool_address"], event_data["index"]
+                ),
                 "amount": wad_to_decimal(event_data["amount"]),
                 "lender": event_data["lender"].lower(),
                 "lpAwarded": wad_to_decimal(event_data["lpAwarded"]),
@@ -61,12 +77,18 @@ def parse_event_data(event, chain):
         case "BucketBankruptcy":
             data = {
                 "index": event_data["index"],
+                "bucket_price": _get_bucket_price(
+                    chain, event["pool_address"], event_data["index"]
+                ),
                 "lpForfeited": wad_to_decimal(event_data["lpForfeited"]),
             }
             pass
         case "BucketTake":
             data = {
                 "index": event_data["index"],
+                "bucket_price": _get_bucket_price(
+                    chain, event["pool_address"], event_data["index"]
+                ),
                 "amount": wad_to_decimal(event_data["amount"]),
                 "borrower": event_data["borrower"].lower(),
                 "isReward": event_data["isReward"],
@@ -160,6 +182,9 @@ def parse_event_data(event, chain):
             data = {
                 "index": event_data["index"],
                 "amount": wad_to_decimal(event_data["amount"]),
+                "bucket_price": _get_bucket_price(
+                    chain, event["pool_address"], event_data["index"]
+                ),
                 "claimer": event_data["claimer"].lower(),
                 "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),
             }
@@ -167,6 +192,9 @@ def parse_event_data(event, chain):
             data = {
                 "lup": wad_to_decimal(event_data["lup"]),
                 "index": event_data["index"],
+                "bucket_price": _get_bucket_price(
+                    chain, event["pool_address"], event_data["index"]
+                ),
                 "amount": wad_to_decimal(event_data["amount"]),
                 "lender": event_data["lender"].lower(),
                 "lpRedeemed": wad_to_decimal(event_data["lpRedeemed"]),

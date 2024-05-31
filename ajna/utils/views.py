@@ -72,9 +72,9 @@ class RawQuerySetPaginator(DefaultPaginator):
 
 class RawPagination(PageNumberPagination):
     django_paginator_class = RawQuerySetPaginator
-    page_size = 100
+    page_size = 20
     page_size_query_param = "p_size"
-    max_page_size = 1000
+    max_page_size = 100
     page_query_param = "p"
 
     def get_paginated_response(self, results, additional_data):
