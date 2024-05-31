@@ -128,6 +128,7 @@ class ReserveAuctionView(BaseChainView):
                 , ra.burn_epoch
                 , ra.ajna_burned
                 , rak.block_number
+                , rak.block_datetime AS kick_datetime
                 , rak.kicker
                 , p.collateral_token_symbol
                 , p.collateral_token_address
@@ -142,7 +143,7 @@ class ReserveAuctionView(BaseChainView):
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
             WHERE ra.uid = %s
-            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
+            GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14
         """.format(
             reserve_auction_table=self.models.reserve_auction._meta.db_table,
             reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
@@ -155,6 +156,9 @@ class ReserveAuctionView(BaseChainView):
         if not data:
             raise Http404
 
+        data["auction_price"] = calculate_current_auction_price(
+            data["kick_datetime"], data["claimable_reserves"]
+        )
         return Response(data, status.HTTP_200_OK)
 
 
