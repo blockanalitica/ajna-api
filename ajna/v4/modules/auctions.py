@@ -1,5 +1,8 @@
 import hashlib
 import logging
+import math
+from datetime import datetime
+from decimal import Decimal
 
 from ajna.utils.wad import wad_to_decimal
 
@@ -342,3 +345,19 @@ def process_auction_NFT_settle_event(chain, event):
     auction.save()
     current_position.in_liquidation = False
     current_position.save()
+
+
+def calculate_current_auction_price(kick_datetime, reserves):
+    seconds = (datetime.now() - kick_datetime).total_seconds()
+
+    hours = seconds // 3600
+    if hours > 72:
+        return None
+
+    hours_component = Decimal("0.5") ** Decimal(str(hours))
+    minute_half_life = Decimal("0.988514020352896135356867505")  # 0.5^(1/60)
+    minutes_component = Decimal(str(math.pow(minute_half_life, seconds % 3600 // 60)))
+
+    initial_price = Decimal("1000000000") / reserves
+
+    return initial_price * (hours_component * minutes_component)

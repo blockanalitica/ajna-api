@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from ajna.utils.db import fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
+from ..modules.auctions import calculate_current_auction_price
+
 
 class ReserveAuctionsActiveView(RawSQLPaginatedChainView):
     default_order = "-kick_datetime"
@@ -54,6 +56,13 @@ class ReserveAuctionsActiveView(RawSQLPaginatedChainView):
         )
         sql_vars = []
         return sql, sql_vars
+
+    def serialize_data(self, data):
+        for row in data:
+            row["auction_price"] = calculate_current_auction_price(
+                row["kick_datetime"], row["claimable_reserves"]
+            )
+        return data
 
 
 class ReserveAuctionsExpiredView(RawSQLPaginatedChainView):

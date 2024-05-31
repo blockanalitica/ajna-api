@@ -9,6 +9,7 @@ from ajna.utils.db import fetch_all, fetch_one
 from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
 
 from ..modules.at_risk import WALLETS_AT_RISK_SQL
+from ..modules.auctions import calculate_current_auction_price
 from ..modules.events import parse_event_data
 
 POOLS_SQL = """
@@ -1310,7 +1311,10 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
                 ON rat.reserve_auction_uid = ra.uid
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
-            WHERE rak.block_datetime + INTERVAL '72 hours' > CURRENT_TIMESTAMP
+            WHERE (
+                    rak.block_datetime + INTERVAL '72 hours' > CURRENT_TIMESTAMP
+                    AND ra.claimable_reserves_remaining > 0
+                )
                 AND ra.pool_address = %s
             GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14
         """.format(
@@ -1321,6 +1325,13 @@ class PoolReserveAuctionsActiveView(RawSQLPaginatedChainView):
         )
         sql_vars = [pool_address]
         return sql, sql_vars
+
+    def serialize_data(self, data):
+        for row in data:
+            row["auction_price"] = calculate_current_auction_price(
+                row["kick_datetime"], row["claimable_reserves"]
+            )
+        return data
 
 
 class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
@@ -1360,7 +1371,10 @@ class PoolReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 ON rat.reserve_auction_uid = ra.uid
             JOIN {pool_table} p
                 ON ra.pool_address = p.address
-            WHERE rak.block_datetime + INTERVAL '72 hours' <= CURRENT_TIMESTAMP
+            WHERE (
+                    rak.block_datetime + INTERVAL '72 hours' <= CURRENT_TIMESTAMP
+                    OR ra.claimable_reserves_remaining = 0
+                )
                 AND ra.pool_address = %s
             GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
         """.format(
