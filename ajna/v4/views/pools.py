@@ -514,6 +514,7 @@ class PoolEventsView(RawSQLPaginatedChainView):
         sql = """
             SELECT
                   wallet_addresses
+                , pool_address
                 , block_number
                 , block_datetime
                 , order_index
@@ -1091,6 +1092,7 @@ class BucketEventsView(RawSQLPaginatedChainView):
         sql = """
             SELECT
                   wallet_addresses
+                , pool_address
                 , block_number
                 , block_datetime
                 , order_index

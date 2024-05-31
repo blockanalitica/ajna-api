@@ -765,6 +765,7 @@ class WalletPoolEventsView(RawSQLPaginatedChainView):
         sql = """
             SELECT
                   pe.block_number
+                , pe.pool_address
                 , pe.block_datetime
                 , pe.transaction_hash
                 , pe.name
