@@ -91,3 +91,7 @@ class V4ArbitrumReserveAuctionKick(base.ReserveAuctionKick):
 
 class V4ArbitrumReserveAuctionTake(base.ReserveAuctionTake):
     pass
+
+
+class V4ArbitrumActivitySnapshot(base.ActivitySnapshot):
+    pass

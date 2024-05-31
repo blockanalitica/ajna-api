@@ -91,3 +91,7 @@ class V4PolygonReserveAuctionKick(base.ReserveAuctionKick):
 
 class V4PolygonReserveAuctionTake(base.ReserveAuctionTake):
     pass
+
+
+class V4PolygonActivitySnapshot(base.ActivitySnapshot):
+    pass

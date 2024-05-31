@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    activity,
     auctions,
     notifications,
     pools,
@@ -246,5 +247,15 @@ urlpatterns = [
         "reserve-auctions/<uid>/events/",
         reserve_auctions.ReserveAuctionEventsView.as_view(),
         name="reserve-auction-events",
+    ),
+    path(
+        "activity/",
+        activity.ActivityView.as_view(),
+        name="activity",
+    ),
+    path(
+        "activity/historic/",
+        activity.ActivityHistoricView.as_view(),
+        name="activity-historic",
     ),
 ]

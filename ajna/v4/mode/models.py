@@ -91,3 +91,7 @@ class V4ModeReserveAuctionKick(base.ReserveAuctionKick):
 
 class V4ModeReserveAuctionTake(base.ReserveAuctionTake):
     pass
+
+
+class V4ModeActivitySnapshot(base.ActivitySnapshot):
+    pass
