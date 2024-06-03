@@ -136,6 +136,23 @@ class HistoryView(BaseChainView):
         )
         return sql, [self.days_ago_dt]
 
+    def _get_burn(self):
+        sql = """
+            SELECT
+                  rat.block_datetime AS date
+                , SUM(rat.ajna_burned) OVER (
+                    ORDER BY rat.block_datetime)
+                    AS cumulative_ajna_burned
+                , SUM(rat.ajna_burned * rat.ajna_price) OVER (
+                    ORDER BY rat.block_datetime)
+                    AS cumulative_ajna_burned_usd
+            FROM {reserve_auction_take_table} rat
+            ORDER BY rat.block_datetime
+        """.format(
+            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
+        )
+        return sql, []
+
     def get(self, request):
         history_type = request.GET.get("type")
 
@@ -159,6 +176,8 @@ class HistoryView(BaseChainView):
                 sql, sql_vars = self._get_from_snapshot(amount_select)
             case "volume":
                 sql, sql_vars = self._get_volume()
+            case "burn":
+                sql, sql_vars = self._get_burn()
             case _:  # deposit or default
                 amount_select = "SUM(ps.pool_size * ps.quote_token_price) AS amount"
                 sql, sql_vars = self._get_from_snapshot(amount_select)

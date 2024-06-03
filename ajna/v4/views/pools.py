@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime, timedelta
 
 from django.http import Http404
@@ -480,6 +481,32 @@ class PoolHistoricView(BaseChainView):
         data = fetch_all(sql, sql_vars)
         return data
 
+    def _get_burn(self, pool_address):
+        sql_vars = [pool_address]
+        sql = """
+            SELECT
+                  rat.block_datetime AS date
+                , SUM(rat.ajna_burned) OVER (
+                    PARTITION BY rat.pool_address ORDER BY rat.block_datetime)
+                    AS cumulative_ajna_burned
+                , SUM(rat.ajna_burned * rat.ajna_price) OVER (
+                    PARTITION BY rat.pool_address ORDER BY rat.block_datetime)
+                    AS cumulative_ajna_burned_usd
+            FROM {reserve_auction_take_table} rat
+            WHERE rat.pool_address = %s
+            ORDER BY rat.block_datetime
+        """.format(
+            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
+        )
+
+        data = fetch_all(sql, sql_vars)
+
+        if data:
+            current = deepcopy(data[-1])
+            current["date"] = datetime.now()
+            data.append(current)
+        return data
+
     def get(self, request, pool_address, historic_type):
         data = None
         match historic_type:
@@ -499,6 +526,9 @@ class PoolHistoricView(BaseChainView):
                 data = self._get_apr(pool_address)
             case "mau_tu":
                 data = self._get_mau_tu(pool_address)
+            case "burn":
+                data = self._get_burn(pool_address)
+
             case _:
                 raise Http404
 
@@ -1412,3 +1442,34 @@ class PoolAtRiskView(BaseChainView):
         sql_vars = [MAX_INFLATED_PRICE, -0.8, pool_address]
         at_risk = fetch_all(sql, sql_vars)
         return Response(at_risk, status.HTTP_200_OK)
+
+
+class BurnHistoryView(BaseChainView):
+    def get(self, request, pool_address):
+        sql_vars = [pool_address]
+        sql = """
+            SELECT
+                  rat.block_datetime AS date
+                , rat.ajna_burned
+                , rat.ajna_burned * rat.ajna_price AS ajna_burned_usd
+                , SUM(rat.ajna_burned) OVER (
+                    PARTITION BY rat.pool_address ORDER BY rat.block_datetime)
+                    AS cumulative_ajna_burned
+                , SUM(rat.ajna_burned * rat.ajna_price) OVER (
+                    PARTITION BY rat.pool_address ORDER BY rat.block_datetime)
+                    AS cumulative_ajna_burned_usd
+            FROM {reserve_auction_take_table} rat
+            WHERE rat.pool_address = %s
+            ORDER BY rat.block_datetime
+        """.format(
+            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
+        )
+
+        data = fetch_all(sql, sql_vars)
+
+        if data:
+            current = deepcopy(data[-1])
+            current["date"] = datetime.now()
+            data.append(current)
+
+        return Response(data, status.HTTP_200_OK)
