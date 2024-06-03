@@ -708,6 +708,7 @@ class ReserveAuctionTake(models.Model):
     claimable_reserves_remaining = models.DecimalField(max_digits=32, decimal_places=18)
     auction_price = models.DecimalField(max_digits=32, decimal_places=18)
     ajna_burned = models.DecimalField(max_digits=32, decimal_places=18)
+    ajna_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
     quote_purchased = models.DecimalField(max_digits=32, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()

@@ -99,6 +99,11 @@ urlpatterns = [
         name="pool-at-risk",
     ),
     path(
+        "pools/<pool_address>/burn-history/",
+        pools.BurnHistoryView.as_view(),
+        name="pool-burn-history",
+    ),
+    path(
         "tokens/",
         tokens.TokensView.as_view(),
         name="tokens",

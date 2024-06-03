@@ -2,7 +2,9 @@ import hashlib
 import logging
 from decimal import Decimal
 
+from ajna.constants import AJNA_TOKEN_ADDRESS
 from ajna.utils.wad import wad_to_decimal
+from ajna.v4.ethereum.chain import Ethereum
 
 log = logging.getLogger(__name__)
 
@@ -55,6 +57,28 @@ def process_kick_reserve_auction_event(chain, event):
     )
 
 
+def _get_ajna_price(chain, block_datetime):
+    # For chains other than Ethereum, we select the price from Ethereum chain
+    if chain.chain == "ethereum":
+        the_chain = chain
+    else:
+        the_chain = Ethereum()
+
+    feed = (
+        the_chain.price_feed.objects.filter(
+            underlying_address=AJNA_TOKEN_ADDRESS.lower(),
+            timestamp__lte=block_datetime.timestamp(),
+        )
+        .order_by("-timestamp")
+        .first()
+    )
+    ajna_price = None
+    if feed:
+        ajna_price = feed.price
+
+    return ajna_price
+
+
 def process_reserve_auction_event(chain, event):
     try:
         chain.reserve_auction_take.objects.get(order_index=event.order_index)
@@ -105,6 +129,7 @@ def process_reserve_auction_event(chain, event):
         claimable_reserves_remaining=wad_to_decimal(event.data["claimableReservesRemaining"]),
         auction_price=auction_price,
         ajna_burned=ajna_burned,
+        ajna_price=_get_ajna_price(chain, event.block_datetime),
         quote_purchased=quote_purchased,
         block_number=event.block_number,
         block_datetime=event.block_datetime,
