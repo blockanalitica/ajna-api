@@ -21,7 +21,8 @@ class OverviewView(BaseChainView):
                     , ps.pledged_collateral * ps.collateral_token_price AS pledged_collateral_usd
                     , ps.collateral_token_balance * ps.collateral_token_price AS collateral_usd
                     , ps.pool_size * ps.quote_token_price AS pool_size_usd
-                    , ps.debt * ps.quote_token_price  AS debt_usd
+                    , ps.debt * ps.quote_token_price AS debt_usd
+                    , ps.reserves * ps.quote_token_price AS reserves_usd
                     , COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0) +
                         COALESCE(ps.quote_token_balance * ps.quote_token_price, 0) AS tvl
                 FROM {pool_snapshot_table} ps
@@ -38,6 +39,7 @@ class OverviewView(BaseChainView):
                   AS total_collateral
                 , SUM(sub.pool_size * sub.quote_token_underlying_price) AS total_pool_size
                 , SUM(sub.debt * sub.quote_token_underlying_price) AS total_current_debt
+                , SUM(sub.reserves * sub.quote_token_underlying_price) AS total_reserves
                 , SUM(sub.total_ajna_burned) AS total_ajna_burned
                 , SUM(sub.prev_tvl) AS prev_total_tvl
                 , SUM(sub.prev_collateral_usd) AS prev_total_collateral
@@ -45,6 +47,7 @@ class OverviewView(BaseChainView):
                 , SUM(sub.prev_pool_size_usd) AS prev_total_pool_size
                 , SUM(sub.prev_debt_usd) AS prev_total_current_debt
                 , SUM(sub.prev_total_ajna_burned) AS prev_total_ajna_burned
+                , SUM(sub.prev_reserves_usd) AS prev_reserves_usd
             FROM (
                 SELECT
                       pool.pledged_collateral
@@ -52,6 +55,7 @@ class OverviewView(BaseChainView):
                     , pool.pool_size
                     , pool.debt
                     , pool.total_ajna_burned
+                    , pool.reserves
                     , ct.underlying_price AS collateral_token_underlying_price
                     , qt.underlying_price AS quote_token_underlying_price
                     , COALESCE(pool.collateral_token_balance * ct.underlying_price, 0) +
@@ -62,6 +66,7 @@ class OverviewView(BaseChainView):
                     , prev.debt_usd AS prev_debt_usd
                     , prev.tvl AS prev_tvl
                     , prev.total_ajna_burned AS prev_total_ajna_burned
+                    , prev.reserves_usd AS prev_reserves_usd
                 FROM {pool_table} AS pool
                 JOIN {token_table} AS ct
                     ON pool.collateral_token_address = ct.underlying_address
