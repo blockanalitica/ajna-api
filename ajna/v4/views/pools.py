@@ -28,6 +28,8 @@ POOLS_SQL = """
             , ps.total_ajna_burned
             , ps.borrow_rate
             , ps.lend_rate
+            , ps.reserves
+            , ps.reserves * ps.quote_token_price as reserves_usd
             , ps.collateral_token_balance
             , ps.quote_token_balance
             , COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0) +
@@ -52,6 +54,8 @@ POOLS_SQL = """
         , pool.lend_rate
         , pool.total_ajna_burned
         , pool.erc
+        , pool.reserves
+        , pool.reserves * quote_token.underlying_price AS reserves_usd
         , pool.allowed_token_ids
         , collateral_token.symbol AS collateral_token_symbol
         , collateral_token.name AS collateral_token_name
@@ -73,6 +77,8 @@ POOLS_SQL = """
         , prev.borrow_rate AS prev_borrow_rate
         , prev.lend_rate AS prev_lend_rate
         , prev.tvl AS prev_tvl
+        , prev.reserves AS prev_reserves
+        , prev.reserves_usd AS prev_reserves_usd
     FROM {pool_table} AS pool
     JOIN {token_table} AS collateral_token
         ON pool.collateral_token_address = collateral_token.underlying_address
