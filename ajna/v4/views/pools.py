@@ -108,6 +108,8 @@ class PoolsView(RawSQLPaginatedChainView):
         "lend_rate",
         "total_ajna_burned",
         "tvl",
+        "reserves",
+        "reserves_usd",
     ]
     search_fields = ["collateral_token.symbol", "quote_token.symbol"]
 
