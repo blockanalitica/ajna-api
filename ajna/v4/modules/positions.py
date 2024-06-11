@@ -313,7 +313,10 @@ class EventProcessor:
             case "AddQuoteToken":
                 if event.quote_token_price:
                     amount = wad_to_decimal(event.data["amount"])
-                    amount_usd = amount * event.quote_token_price
+                    if event.quote_token_price is not None:
+                        amount_usd = amount * event.quote_token_price
+                    else:
+                        amount_usd = None
                     if amount_usd >= Decimal("1000000"):
                         self._chain.notification.objects.get_or_create(
                             type=event.name,
@@ -333,7 +336,10 @@ class EventProcessor:
             case "DrawDebt":
                 if event.quote_token_price:
                     amount = wad_to_decimal(event.data["amountBorrowed"])
-                    amount_usd = amount * event.quote_token_price
+                    if event.quote_token_price is not None:
+                        amount_usd = amount * event.quote_token_price
+                    else:
+                        amount_usd = None
                     if amount_usd >= Decimal("1000000"):
                         self._chain.notification.objects.get_or_create(
                             type=event.name,
@@ -352,7 +358,11 @@ class EventProcessor:
                         )
             case "AddCollateral":
                 amount = wad_to_decimal(event.data["amount"])
-                amount_usd = amount * event.collateral_token_price
+                if event.collateral_token_price is not None:
+                    amount_usd = amount * event.collateral_token_price
+                else:
+                    amount_usd = None
+
                 self._chain.notification.objects.get_or_create(
                     type=event.name,
                     key=event.order_index,
