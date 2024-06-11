@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from ajna.utils.http import retry_get_json
+from ajna.utils.utils import chunks
 
 LLAMA_COINS_API_URL = "https://coins.llama.fi/"
 
@@ -35,14 +36,18 @@ def get_current_prices_map(addresses, chain_name, coingecko_map):
 
         coins.append(coin)
 
-    response = fetch_current_price(coins)
+    # chunk coins into batches of 50, as otherwise we sometimes overload the defillama
+    # server
+    coin_chunks = chunks(coins, 50)
     prices = {}
-    for coin, data in response.items():
-        _, address = coin.split(":")
-        if address in inv_coingecko_map:
-            address = inv_coingecko_map[address]
+    for coins in coin_chunks:
+        response = fetch_current_price(coins)
+        for coin, data in response.items():
+            _, address = coin.split(":")
+            if address in inv_coingecko_map:
+                address = inv_coingecko_map[address]
 
-        prices[address.lower()] = Decimal(str(data["price"]))
+            prices[address.lower()] = Decimal(str(data["price"]))
     return prices
 
 
