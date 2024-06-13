@@ -28,7 +28,7 @@ class OverallView(DaysAgoMixin, APIView):
     days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     default_order = "-tvl"
-    ordering_fields = ["tvl", "collateral_usd", "supply_usd", "debt_usd"]
+    ordering_fields = ["tvl", "collateral_usd", "supply_usd", "debt_usd", "reserves_usd"]
 
     def _get_ordering(self, request):
         param = request.query_params.get("order")
@@ -75,7 +75,8 @@ class OverallView(DaysAgoMixin, APIView):
                           ps.address
                         , ps.pledged_collateral * ps.collateral_token_price AS collateral_usd
                         , ps.pool_size * ps.quote_token_price AS supply_usd
-                        , ps.debt * ps.quote_token_price  AS debt_usd
+                        , ps.debt * ps.quote_token_price AS debt_usd
+                        , ps.reserves * ps.quote_token_price AS reserves_usd
                         , COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0) +
                             COALESCE(ps.quote_token_balance * ps.quote_token_price, 0) AS tvl
                     FROM {pool_snapshot_table} ps
@@ -96,10 +97,12 @@ class OverallView(DaysAgoMixin, APIView):
                     , SUM(sub.collateral_usd) AS collateral_usd
                     , SUM(sub.supply_usd) AS supply_usd
                     , SUM(sub.debt_usd) AS debt_usd
+                    , SUM(sub.reserves_usd) AS reserves_usd
                     , SUM(sub.prev_tvl) AS prev_tvl
                     , SUM(sub.prev_collateral_usd) AS prev_collateral_usd
                     , SUM(sub.prev_supply_usd) AS prev_supply_usd
                     , SUM(sub.prev_debt_usd) AS prev_debt_usd
+                    , SUM(sub.prev_reserves_usd) AS prev_reserves_usd
                     , '{name}' AS network_name
                     , '{key}' AS network
                 FROM (
@@ -109,10 +112,12 @@ class OverallView(DaysAgoMixin, APIView):
                         , p.debt * qt.underlying_price AS debt_usd
                         , COALESCE(p.collateral_token_balance * ct.underlying_price, 0) +
                           COALESCE(p.quote_token_balance * qt.underlying_price, 0) AS tvl
+                        , p.reserves * qt.underlying_price AS reserves_usd
                         , prev.collateral_usd AS prev_collateral_usd
                         , prev.supply_usd AS prev_supply_usd
                         , prev.debt_usd AS prev_debt_usd
-                        , prev.tvl as prev_tvl
+                        , prev.tvl AS prev_tvl
+                        , prev.reserves_usd AS prev_reserves_usd
                     FROM {pool_table} AS p
                     JOIN {token_table} AS ct
                         ON p.collateral_token_address = ct.underlying_address
