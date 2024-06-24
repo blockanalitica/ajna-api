@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from ajna import metrics
 from ajna.utils.http import retry_get_json
 from ajna.utils.utils import chunks
 
@@ -47,7 +48,14 @@ def get_current_prices_map(addresses, chain_name, coingecko_map):
             if address in inv_coingecko_map:
                 address = inv_coingecko_map[address]
 
-            prices[address.lower()] = Decimal(str(data["price"]))
+            # They've introduced a bug in their API where they sometimes don't return
+            # price and timestamp, but return everything else...
+            if "price" in data:
+                prices[address.lower()] = Decimal(str(data["price"]))
+            else:
+                metrics.gauge(
+                    "defillama.get_current_prices_map.{}.no_price_in_response".format(chain_name)
+                )
     return prices
 
 
