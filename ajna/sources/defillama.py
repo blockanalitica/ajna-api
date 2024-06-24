@@ -53,9 +53,7 @@ def get_current_prices_map(addresses, chain_name, coingecko_map):
             if "price" in data:
                 prices[address.lower()] = Decimal(str(data["price"]))
             else:
-                metrics.gauge(
-                    "defillama.get_current_prices_map.{}.no_price_in_response".format(chain_name)
-                )
+                metrics.increment("defillama.get_current_prices_map.{}.no_price".format(chain_name))
     return prices
 
 
