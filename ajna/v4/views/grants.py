@@ -30,7 +30,6 @@ GRANTS_SQL = """
     JOIN {grant_distribution_period_table} gdp
         ON gp.distribution_id = gdp.distribution_id
     ORDER BY gp.screening_votes_received DESC NULLS LAST
-    LIMIT 10
 """
 
 
@@ -45,6 +44,7 @@ class GrantsView(BaseChainView):
                 AND g.finalize_start_block_number > %s
                 AND g.end_block > %s
             ORDER BY g.funding_votes_received DESC NULLS LAST
+            LIMIT 10
         """.format(
             GRANTS_SQL.format(
                 grand_proposal_table=self.models.grant_proposal._meta.db_table,
@@ -61,6 +61,7 @@ class GrantsView(BaseChainView):
             WHERE g.finalize_start_block_number <= %s
                AND g.end_block > %s
             ORDER BY g.funding_votes_positive DESC NULLS LAST
+            LIMIT 10
         """.format(
             GRANTS_SQL.format(
                 grand_proposal_table=self.models.grant_proposal._meta.db_table,
