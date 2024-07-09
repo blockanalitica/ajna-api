@@ -129,8 +129,12 @@ def _send_auction_settle_notification(chain, event):
 
 
 def send_notification_for_event(chain, event):
-    match event.name:
-        case "Kick":
-            _send_kick_notification(chain, event)
-        case "AuctionSettle":
-            _send_auction_settle_notification(chain, event)
+    try:
+        match event.name:
+            case "Kick":
+                _send_kick_notification(chain, event)
+            case "AuctionSettle":
+                _send_auction_settle_notification(chain, event)
+
+    except Exception:
+        log.exception("Can't send auction notification to discord")
