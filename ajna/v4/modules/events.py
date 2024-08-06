@@ -42,7 +42,12 @@ def parse_event_data(event, chain):
                 "lpAwarded": wad_to_decimal(event_data["lpAwarded"]),
             }
         case "AddCollateralNFT":
-            pass  # TODO
+            data = {
+                "actor": event_data["actor"].lower(),
+                "index": event_data["index"],
+                "tokenIds": event_data["tokenIds"],
+                "lpAwarded": wad_to_decimal(event_data["lpAwarded"]),
+            }
         case "AddQuoteToken":
             data = {
                 "lup": wad_to_decimal(event_data["lup"]),
