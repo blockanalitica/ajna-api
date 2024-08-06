@@ -624,7 +624,7 @@ class PoolERC721Manager(BasePoolManager):
             underlying_address=token_address,
             symbol=data["symbol"][:63],
             name=data["name"][:254],
-            decimals=18,
+            decimals=0,
             erc=ERC721,
         )
         return True
