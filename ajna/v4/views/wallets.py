@@ -392,6 +392,13 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                 WHERE wp.wallet_address = %s
                     AND wp.datetime <= %s
                 ORDER BY wp.pool_address, wp.datetime DESC
+            ),
+            buckets AS (
+                SELECT
+                      b.pool_address
+                    , SUM(b.deposit + b.collateral * b.bucket_price) AS total
+                FROM {bucket_table} b
+                GROUP BY 1
             )
 
             SELECT
@@ -427,9 +434,9 @@ class WalletPoolsView(RawSQLPaginatedChainView):
                   END AS debt_share
                 , CASE
                     WHEN NULLIF(x.supply, 0) IS NULL
-                        OR NULLIF(x.pool_size, 0) IS NULL
+                        OR NULLIF(b.total, 0) IS NULL
                     THEN NULL
-                    ELSE x.supply / x.pool_size
+                    ELSE x.supply / b.total
                   END AS supply_share
                 , prev.supply AS prev_supply
                 , prev.supply_usd AS prev_supply_usd
@@ -469,12 +476,15 @@ class WalletPoolsView(RawSQLPaginatedChainView):
             LEFT JOIN previous AS prev
                 ON x.wallet_address = prev.wallet_address
                     AND x.pool_address = prev.pool_address
+            LEFT JOIN buckets AS b
+                ON x.pool_address = b.pool_address
         """.format(
             current_wallet_position_table=self.models.current_wallet_position._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
             token_table=self.models.token._meta.db_table,
             wallet_position_table=self.models.wallet_position._meta.db_table,
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            bucket_table=self.models.bucket._meta.db_table,
         )
 
         sql_vars = [

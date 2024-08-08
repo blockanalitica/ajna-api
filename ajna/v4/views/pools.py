@@ -739,6 +739,12 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                     AND ps.datetime <= %s
                     AND ps.address = %s
                 ORDER BY ps.address, ps.datetime DESC
+            ),
+            bucket_total AS (
+                SELECT
+                    SUM(b.deposit + b.collateral * b.bucket_price) AS total
+                FROM {bucket_table} b
+                WHERE b.pool_address = %s
             )
 
             SELECT
@@ -751,9 +757,9 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 , prev.supply * prev_pool.quote_token_price  AS prev_supply_usd
                 , CASE
                     WHEN NULLIF(cwp.supply, 0) IS NULL
-                        OR NULLIF(p.pool_size, 0) IS NULL
+                        OR NULLIF(b.total, 0) IS NULL
                     THEN NULL
-                    ELSE cwp.supply / p.pool_size
+                    ELSE cwp.supply / b.total
                   END AS supply_share
                 , w.last_activity
                 , w.first_activity
@@ -767,7 +773,8 @@ class PoolPositionsView(RawSQLPaginatedChainView):
             LEFT JOIN {wallet_table} w
                 ON cwp.wallet_address = w.address
             LEFT JOIN previous_pool AS prev_pool
-                    ON cwp.pool_address = prev_pool.address
+                ON cwp.pool_address = prev_pool.address
+            LEFT JOIN bucket_total b ON 1=1
             WHERE cwp.pool_address = %s
                 {position_filter}
         """.format(
@@ -777,6 +784,7 @@ class PoolPositionsView(RawSQLPaginatedChainView):
             wallet_position=self.models.wallet_position._meta.db_table,
             wallet_table=self.models.wallet._meta.db_table,
             pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
+            bucket_table=self.models.bucket._meta.db_table,
             position_filter=position_filter,
         )
 
@@ -793,6 +801,15 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 "first_activity",
                 "supply_share",
             ]
+            sql_vars = [
+                self.days_ago_dt,
+                pool_address,
+                self.days_ago_dt,
+                self.days_ago_dt,
+                pool_address,
+                pool_address,
+                pool_address,
+            ]
         else:
             sql = self._get_borrower_sql(only_closed)
             self.ordering_fields = [
@@ -803,15 +820,14 @@ class PoolPositionsView(RawSQLPaginatedChainView):
                 "first_activity",
                 "last_activity",
             ]
-
-        sql_vars = [
-            self.days_ago_dt,
-            pool_address,
-            self.days_ago_dt,
-            self.days_ago_dt,
-            pool_address,
-            pool_address,
-        ]
+            sql_vars = [
+                self.days_ago_dt,
+                pool_address,
+                self.days_ago_dt,
+                self.days_ago_dt,
+                pool_address,
+                pool_address,
+            ]
 
         filters = []
         if search_filters:
@@ -1074,6 +1090,7 @@ class BucketHistoricView(BaseChainView):
                 ON pool.quote_token_address = qt.underlying_address
             WHERE bs.pool_address = %s
                 AND bs.bucket_index = %s
+            ORDER BY bs.block_number
         """.format(
             bucket_state_table=self.models.bucket_state._meta.db_table,
             pool_table=self.models.pool._meta.db_table,
