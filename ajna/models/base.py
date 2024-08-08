@@ -670,11 +670,11 @@ class AuctionAuctionNFTSettle(models.Model):
 class ReserveAuction(models.Model):
     uid = models.TextField(unique=True)
     pool_address = models.CharField(max_length=42)
-    claimable_reserves = models.DecimalField(max_digits=32, decimal_places=18)
-    claimable_reserves_remaining = models.DecimalField(max_digits=32, decimal_places=18)
-    last_take_price = models.DecimalField(max_digits=32, decimal_places=18)
+    claimable_reserves = models.DecimalField(max_digits=64, decimal_places=18)
+    claimable_reserves_remaining = models.DecimalField(max_digits=64, decimal_places=18)
+    last_take_price = models.DecimalField(max_digits=64, decimal_places=18)
     burn_epoch = models.BigIntegerField()
-    ajna_burned = models.DecimalField(max_digits=32, decimal_places=18)
+    ajna_burned = models.DecimalField(max_digits=64, decimal_places=18)
 
     class Meta:
         abstract = True
@@ -705,11 +705,11 @@ class ReserveAuctionTake(models.Model):
     reserve_auction_uid = models.TextField()
     pool_address = models.CharField(max_length=42)
     taker = models.CharField(max_length=42)
-    claimable_reserves_remaining = models.DecimalField(max_digits=32, decimal_places=18)
-    auction_price = models.DecimalField(max_digits=32, decimal_places=18)
-    ajna_burned = models.DecimalField(max_digits=32, decimal_places=18)
-    ajna_price = models.DecimalField(max_digits=32, decimal_places=18, null=True)
-    quote_purchased = models.DecimalField(max_digits=32, decimal_places=18)
+    claimable_reserves_remaining = models.DecimalField(max_digits=64, decimal_places=18)
+    auction_price = models.DecimalField(max_digits=64, decimal_places=18)
+    ajna_burned = models.DecimalField(max_digits=64, decimal_places=18)
+    ajna_price = models.DecimalField(max_digits=64, decimal_places=18, null=True)
+    quote_purchased = models.DecimalField(max_digits=64, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
     transaction_hash = models.CharField(max_length=66)
