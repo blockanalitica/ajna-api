@@ -688,8 +688,8 @@ class ReserveAuctionKick(models.Model):
     kicker = models.CharField(max_length=42)
     # kicker_award is removed in v3
     kicker_award = models.DecimalField(max_digits=32, decimal_places=18, null=True)
-    claimable_reserves = models.DecimalField(max_digits=32, decimal_places=18)
-    starting_price = models.DecimalField(max_digits=32, decimal_places=18)
+    claimable_reserves = models.DecimalField(max_digits=64, decimal_places=18)
+    starting_price = models.DecimalField(max_digits=64, decimal_places=18)
     block_number = models.BigIntegerField()
     block_datetime = models.DateTimeField()
     transaction_hash = models.CharField(max_length=66)
