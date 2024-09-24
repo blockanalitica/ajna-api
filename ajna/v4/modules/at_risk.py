@@ -67,7 +67,7 @@ WALLETS_AT_RISK_SQL = """
     ) x
     LEFT JOIN {wallet_table} wt
         ON x.wallet_address = wt.address
-    WHERE -ROUND(1 -  1 / x.health_rate, 4) >= %s AND x.health_rate > 0.1
+    WHERE -ROUND(1 -  1 / x.health_rate, 4) >= %s
 """
 
 
