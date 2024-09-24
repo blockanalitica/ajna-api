@@ -30,7 +30,6 @@ class Command(BaseCommand):
         address = "0x26ac6b64b2734b821a612db68a07d54d24459dd4".lower()
         pool = chain.pool.objects.get(address=address)
 
-
         for dt, block_number in dts:
             self.stdout.write(f"Working: {dt}")
 
