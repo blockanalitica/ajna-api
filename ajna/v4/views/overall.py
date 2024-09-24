@@ -53,6 +53,7 @@ class OverallView(DaysAgoMixin, APIView):
             "gnosis": "Gnosis",
             "blast": "Blast",
             "mode": "Mode",
+            # "rari": "RARI",
         }
         chain_models_map = {
             "ethereum": EthereumModels(),
@@ -63,6 +64,7 @@ class OverallView(DaysAgoMixin, APIView):
             "gnosis": GnosisModels(),
             "blast": BlastModels(),
             "mode": ModeModels(),
+            # "rari": RariModels(),
         }
         prev_sqls = []
         selects = []

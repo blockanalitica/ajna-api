@@ -23,6 +23,7 @@ AJNA_DEPLOYMENTS = {
         "blast",
         "gnosis",
         "mode",
+        "rari",
     ],
 }
 
