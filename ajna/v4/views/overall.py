@@ -20,6 +20,7 @@ from ..mode.chain import ModeModels
 from ..models import V4NetworkStatsDaily, V4OverallStats
 from ..optimism.chain import OptimismModels
 from ..polygon.chain import PolygonModels
+from ..rari.chain import RariModels
 
 
 class OverallView(DaysAgoMixin, APIView):
@@ -53,7 +54,7 @@ class OverallView(DaysAgoMixin, APIView):
             "gnosis": "Gnosis",
             "blast": "Blast",
             "mode": "Mode",
-            # "rari": "RARI",
+            "rari": "RARI",
         }
         chain_models_map = {
             "ethereum": EthereumModels(),
@@ -64,7 +65,7 @@ class OverallView(DaysAgoMixin, APIView):
             "gnosis": GnosisModels(),
             "blast": BlastModels(),
             "mode": ModeModels(),
-            # "rari": RariModels(),
+            "rari": RariModels(),
         }
         prev_sqls = []
         selects = []
