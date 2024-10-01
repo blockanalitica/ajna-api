@@ -1447,8 +1447,8 @@ class PoolAtRiskView(BaseChainView):
         sql = """
             SELECT
                   CASE WHEN w.price_change > 0
-                    THEN CEIL(w.price_change * 100)::int
-                    ELSE FLOOR(w.price_change * 100)::int
+                    THEN CEIL(w.price_change * 100)
+                    ELSE FLOOR(w.price_change * 100)
                   END AS change
                 , SUM(w.collateral) AS amount
                 , SUM(w.collateral_usd) AS amount_usd
