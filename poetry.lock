@@ -3350,22 +3350,23 @@ files = [
 
 [[package]]
 name = "web3"
-version = "6.19.0"
+version = "6.20.3"
 description = "web3.py"
 optional = false
 python-versions = ">=3.7.2"
 files = [
-    {file = "web3-6.19.0-py3-none-any.whl", hash = "sha256:fb39683d6aa7586ce0ab0be4be392f8acb62c2503958079d61b59f2a0b883718"},
-    {file = "web3-6.19.0.tar.gz", hash = "sha256:d27fbd4ac5aa70d0e0c516bd3e3b802fbe74bc159b407c34052d9301b400f757"},
+    {file = "web3-6.20.3-py3-none-any.whl", hash = "sha256:529fbb33f2476ce8185f7a2ed7e2e07c4c28621b0e89b845fbfdcaea9571286d"},
+    {file = "web3-6.20.3.tar.gz", hash = "sha256:c69dbf1a61ace172741d06990e60afc7f55f303eac087e7235f382df3047d017"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.7.4.post0"
+ckzg = "<2"
 eth-abi = ">=4.0.0"
 eth-account = ">=0.8.0,<0.13"
 eth-hash = {version = ">=0.5.1", extras = ["pycryptodome"]}
-eth-typing = ">=3.0.0,<4.2.0 || >4.2.0"
-eth-utils = ">=2.1.0"
+eth-typing = ">=3.0.0,<4.2.0 || >4.2.0,<5.0.0"
+eth-utils = ">=2.1.0,<5"
 hexbytes = ">=0.1.0,<0.4.0"
 jsonschema = ">=4.0.0"
 lru-dict = ">=1.1.6,<1.3.0"
@@ -3377,10 +3378,10 @@ typing-extensions = ">=4.0.1"
 websockets = ">=10.0.0"
 
 [package.extras]
-dev = ["build (>=0.9.0)", "bumpversion", "eth-tester[py-evm] (>=0.11.0b1,<0.12.0b1)", "eth-tester[py-evm] (>=0.9.0b1,<0.10.0b1)", "flaky (>=3.7.0)", "hypothesis (>=3.31.2)", "importlib-metadata (<5.0)", "ipfshttpclient (==0.8.0a2)", "pre-commit (>=2.21.0)", "py-geth (>=3.14.0)", "pytest (>=7.0.0)", "pytest-asyncio (>=0.21.2,<0.23)", "pytest-mock (>=1.10)", "pytest-watch (>=4.2)", "pytest-xdist (>=1.29)", "setuptools (>=38.6.0)", "sphinx (>=5.3.0)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (>=21,<22)", "tox (>=3.18.0)", "tqdm (>4.32)", "twine (>=1.13)", "when-changed (>=0.3.0)"]
+dev = ["build (>=0.9.0)", "bumpversion", "eth-tester[py-evm] (>=0.11.0b1,<0.12.0b1)", "eth-tester[py-evm] (>=0.9.0b1,<0.10.0b1)", "flaky (>=3.7.0)", "hypothesis (>=3.31.2)", "importlib-metadata (<5.0)", "ipfshttpclient (==0.8.0a2)", "pre-commit (>=2.21.0)", "py-geth (>=3.14.0,<4)", "pytest (>=7.0.0)", "pytest-asyncio (>=0.21.2,<0.23)", "pytest-mock (>=1.10)", "pytest-watch (>=4.2)", "pytest-xdist (>=1.29)", "setuptools (>=38.6.0)", "sphinx (>=5.3.0)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (>=21,<22)", "tox (>=3.18.0)", "tqdm (>4.32)", "twine (>=1.13)", "when-changed (>=0.3.0)"]
 docs = ["sphinx (>=5.3.0)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (>=21,<22)"]
 ipfs = ["ipfshttpclient (==0.8.0a2)"]
-tester = ["eth-tester[py-evm] (>=0.11.0b1,<0.12.0b1)", "eth-tester[py-evm] (>=0.9.0b1,<0.10.0b1)", "py-geth (>=3.14.0)"]
+tester = ["eth-tester[py-evm] (>=0.11.0b1,<0.12.0b1)", "eth-tester[py-evm] (>=0.9.0b1,<0.10.0b1)", "py-geth (>=3.14.0,<4)"]
 
 [[package]]
 name = "websockets"
@@ -3616,4 +3617,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e19dd6dc774abbc798ce3fab32cdcbb2abf3fcc80fa614f78bac9faef80bf65c"
+content-hash = "da4b3ca10429b543dae7b9362d338f2d8420abb91f5bc5d05bd61629c406d226"
