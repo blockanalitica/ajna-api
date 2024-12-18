@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from decimal import Decimal
 
 from ajna.constants import MAX_PRICE_DECIMAL
 from ajna.sources.defillama import get_current_prices_map
@@ -7,6 +8,63 @@ from ajna.sources.rhinofi import fetch_pair_price
 from ajna.utils.db import fetch_one
 
 log = logging.getLogger(__name__)
+
+STABLECOIN_SYMBOLS = {
+    "USDT",
+    "USDC",
+    "USDe",
+    "DAI",
+    "FDUSD",
+    "USDD",
+    "TUSD",
+    "PYUSD",
+    "USD0",
+    "FRAX",
+    "USDY",
+    "USDJ",
+    "EURS",
+    "USTC",
+    "USDB",
+    "USDP",
+    "EURC",
+    "USDX",
+    "BUSD",
+    "LUSD",
+    "GUSD",
+    "vBUSD",
+    "AEUR",
+    "USDL",
+    "SBD",
+    "XSGD",
+    "EURt",
+    "ERUI",
+    "CUSD",
+    "USDG",
+    "RSV",
+    "ZUSD",
+    "IDRT",
+    "USDV",
+    "EDLC",
+    "SUSD",
+    "GYEN",
+    "MNEE",
+    "BIDR",
+    "HUSD",
+    "VCHF",
+    "FEI",
+    "vDAI",
+    "OUSD",
+    "CEUR",
+    "VEUR",
+    "VAI",
+    "MKUSD",
+    "DJED",
+    "USDs",
+    "ESD",
+    "IDRX",
+    "BAC",
+    "",
+}
 
 RHINOFI_MAP = {
     "0x0274a704a6d9129f90a62ddc6f6024b33ecdad36": {
@@ -49,7 +107,11 @@ def _get_rhiofi_price(models, address):
     return price_token.underlying_price * conversion_price
 
 
-def _estimate_price_from_pools_for_token(models, address):
+def _estimate_price_from_pools_for_token(models, address, symbol):
+    # When estimating, if it's a stablecoin, set it to $1
+    if symbol in STABLECOIN_SYMBOLS:
+        return Decimal("1")
+
     sql = """
         SELECT
             MIN(x.price) AS price
@@ -78,14 +140,15 @@ def update_token_prices(models, network):
     This function retrieves all the underlying addresses of the tokens, fetches the
     current prices for those addresses, and then updates the corresponding token
     instances with the new prices."""
-    underlying_addresses = models.token.objects.all().values_list("underlying_address", flat=True)
-    if not underlying_addresses:
+    tokens = models.token.objects.all().values_list("underlying_address", "symbol")
+    if not tokens:
         return
 
+    underlying_addresses = [token[0] for token in tokens]
     price_mapping = get_current_prices_map(
         underlying_addresses, chain_name=network, coingecko_map=COINGECKO_MAP
     )
-    for address in underlying_addresses:
+    for address, symbol in tokens:
         if address in price_mapping:
             _save_price_for_address(models, address, price_mapping[address])
         else:
@@ -96,7 +159,7 @@ def update_token_prices(models, network):
                 if address in RHINOFI_MAP:
                     price = _get_rhiofi_price(models, address)
                 else:
-                    price = _estimate_price_from_pools_for_token(models, address)
+                    price = _estimate_price_from_pools_for_token(models, address, symbol)
                     is_estimated_price = True
 
                 if price is not None:

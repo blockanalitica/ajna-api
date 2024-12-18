@@ -208,7 +208,7 @@ class PoolView(BaseChainView):
                         , ps.pledged_collateral * ps.collateral_token_price
                             AS pledged_collateral_usd
                         , ps.collateral_token_balance AS collateral
-                        , ps.collateral_token_balance * ps.collateral_token_balance
+                        , ps.collateral_token_balance * ps.collateral_token_price
                             AS collateral_usd
                         , ps.pool_size
                         , ps.pool_size * ps.quote_token_price AS pool_size_usd
