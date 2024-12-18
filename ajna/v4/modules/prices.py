@@ -63,7 +63,7 @@ STABLECOIN_SYMBOLS = {
     "ESD",
     "IDRX",
     "BAC",
-    "",
+    "USDS",
 }
 
 RHINOFI_MAP = {
