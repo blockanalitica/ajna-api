@@ -129,7 +129,7 @@ class RawSQLPaginatedApiView(APIView):
 
     def get_queryset(self, **kwargs):
         raise InvalidMethod(
-            "RawSQLPaginatedApiView needs get_raw_sql to be implemented instead of " "get_queryset"
+            "RawSQLPaginatedApiView needs get_raw_sql to be implemented instead of get_queryset"
         )
 
     def get_count_sql(self, **kwargs):

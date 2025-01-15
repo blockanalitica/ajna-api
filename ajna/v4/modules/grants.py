@@ -151,7 +151,7 @@ def fetch_and_save_grant_proposals(chain):
             order_index=order_index,
             block_number=raw_event["blockNumber"],
             block_datetime=block_datetime,
-            transaction_hash=raw_event["transactionHash"].hex(),
+            transaction_hash=raw_event["transactionHash"].to_0x_hex(),
             name=raw_event["event"],
             data=dict(raw_event["args"]),
         )

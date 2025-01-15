@@ -51,7 +51,7 @@ def _update_auction(chain, auction_uid, block_number, last_take_price=None):
         (
             chain.pool_info_address,
             [
-                "auctionStatus(address,address)(" "(uint256,uint256,uint256,bool,uint256,uint256))",
+                "auctionStatus(address,address)((uint256,uint256,uint256,bool,uint256,uint256))",
                 auction.pool_address,
                 auction.borrower,
             ],
@@ -122,7 +122,7 @@ def process_kick_event(chain, event):
         (
             chain.pool_info_address,
             [
-                "auctionStatus(address,address)(" "(uint256,uint256,uint256,bool,uint256,uint256))",
+                "auctionStatus(address,address)((uint256,uint256,uint256,bool,uint256,uint256))",
                 event.pool_address,
                 event.data["borrower"],
             ],
