@@ -442,7 +442,7 @@ def fetch_and_save_events_for_all_pools(chain):
             block_number=event["blockNumber"],
             block_datetime=block_datetime,
             order_index=order_index,
-            transaction_hash=event["transactionHash"].hex(),
+            transaction_hash=event["transactionHash"].to_0x_hex(),
             name=event["event"],
             data=dict(event["args"]),
             collateral_token_price=collateral_token_price,

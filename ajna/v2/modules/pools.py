@@ -248,10 +248,7 @@ class BasePoolManager:
                     (
                         self._chain.pool_info_address,
                         [
-                            (
-                                "poolLoansInfo(address)("
-                                "(uint256,uint256,address,uint256,uint256))"
-                            ),
+                            ("poolLoansInfo(address)((uint256,uint256,address,uint256,uint256))"),
                             pool_address,
                         ],
                         [f"{pool_address}:loansInfo", None],
@@ -307,7 +304,7 @@ class BasePoolManager:
                     (
                         self._chain.pool_info_address,
                         [
-                            ("poolUtilizationInfo(address)(" "(uint256,uint256,uint256,uint256))"),
+                            ("poolUtilizationInfo(address)((uint256,uint256,uint256,uint256))"),
                             pool_address,
                         ],
                         [f"{pool_address}:poolUtilizationInfo", None],
@@ -551,7 +548,7 @@ class PoolERC20Manager(BasePoolManager):
                 block_number=event["blockNumber"],
                 block_datetime=block_datetime,
                 order_index=order_index,
-                transaction_hash=event["transactionHash"].hex(),
+                transaction_hash=event["transactionHash"].to_0x_hex(),
                 name=event["event"],
                 data=pool_data,
             )
@@ -653,7 +650,7 @@ class PoolERC721Manager(BasePoolManager):
                 block_number=event["blockNumber"],
                 block_datetime=block_datetime,
                 order_index=order_index,
-                transaction_hash=event["transactionHash"].hex(),
+                transaction_hash=event["transactionHash"].to_0x_hex(),
                 name=event["event"],
                 data=pool_data,
             )

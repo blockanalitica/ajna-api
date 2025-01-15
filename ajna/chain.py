@@ -16,8 +16,7 @@ class AjnaChainMixin:
     def get_eoa(self, contract_address):
         address = Web3.to_checksum_address(contract_address)
         code = self.eth.get_code(address).hex()
-
-        if len(code) > 2:
+        if code:
             abi = [
                 {
                     "inputs": [],
