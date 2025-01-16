@@ -73,6 +73,8 @@ RHINOFI_MAP = {
     }
 }
 
+DEFILLAMA_CHAIN_MAP = {"avalanche": "avax"}
+
 # Note: make sure the address is lowercase
 COINGECKO_MAP = {
     "0x10398abc267496e49106b07dd6be13364d10dc71": "let-s-get-hai",
@@ -145,8 +147,10 @@ def update_token_prices(models, network):
         return
 
     underlying_addresses = [token[0] for token in tokens]
+
+    chain_name = DEFILLAMA_CHAIN_MAP.get(network, network)
     price_mapping = get_current_prices_map(
-        underlying_addresses, chain_name=network, coingecko_map=COINGECKO_MAP
+        underlying_addresses, chain_name=chain_name, coingecko_map=COINGECKO_MAP
     )
     for address, symbol in tokens:
         if address in price_mapping:
