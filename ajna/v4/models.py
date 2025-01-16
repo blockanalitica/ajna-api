@@ -7,6 +7,7 @@ from ajna.v4.mode.models import *  # noqa: F403
 from ajna.v4.optimism.models import *  # noqa: F403
 from ajna.v4.polygon.models import *  # noqa: F403
 from ajna.v4.rari.models import *  # noqa: F403
+from ajna.v4.avalanche.models import *  # noqa: F403
 
 from ..models import base
 
