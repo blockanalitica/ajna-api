@@ -12,6 +12,7 @@ from ajna.utils.db import fetch_all
 from ajna.utils.views import DaysAgoMixin
 
 from ..arbitrum.chain import ArbitrumModels
+from ..avalanche.chain import AvalancheModels
 from ..base.chain import BaseModels
 from ..blast.chain import BlastModels
 from ..ethereum.chain import EthereumModels
@@ -55,6 +56,7 @@ class OverallView(DaysAgoMixin, APIView):
             "blast": "Blast",
             "mode": "Mode",
             "rari": "RARI",
+            "avalanche": "Avalanche",
         }
         chain_models_map = {
             "ethereum": EthereumModels(),
@@ -66,6 +68,7 @@ class OverallView(DaysAgoMixin, APIView):
             "blast": BlastModels(),
             "mode": ModeModels(),
             "rari": RariModels(),
+            "avalanche": AvalancheModels(),
         }
         prev_sqls = []
         selects = []
