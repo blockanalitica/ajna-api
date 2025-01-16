@@ -48,9 +48,7 @@ class AvalancheModels:
 
 class Avalanche(AjnaChainMixin, AvalancheMainnetChain):
     def __init__(self):
-        super().__init__(
-            rpc=settings.AVALANCHE_NODE
-        )
+        super().__init__(rpc=settings.AVALANCHE_NODE)
         self.unique_key = "v4_avalanche"
 
         self.pool_info_address = "0x9e407019C07b50e8D7C2d0E2F796C4eCb0F485b3"
