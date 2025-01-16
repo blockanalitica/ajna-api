@@ -32,6 +32,7 @@ urlpatterns = [
     path("v4/gnosis/", include("ajna.v4.gnosis.urls")),
     path("v4/mode/", include("ajna.v4.mode.urls")),
     path("v4/rari/", include("ajna.v4.rari.urls")),
+    path("v4/avalanche/", include("ajna.v4.avalanche.urls")),
 ]
 
 if settings.DEBUG:
