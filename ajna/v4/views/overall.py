@@ -195,7 +195,7 @@ class HistoricView(DaysAgoMixin, APIView):
                 , SUM(supply_usd) AS  supply_usd
                 , SUM(debt_usd) AS debt_usd
             FROM {network_stats_daily_table}
-            WHERE date >= %s AND date < %s
+            WHERE date >= %s AND date < %s AND network != 'avalanche'
             GROUP BY 1
             ORDER BY date
         """.format(network_stats_daily_table=V4NetworkStatsDaily._meta.db_table)
