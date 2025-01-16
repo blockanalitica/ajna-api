@@ -24,6 +24,7 @@ AJNA_DEPLOYMENTS = {
         "gnosis",
         "mode",
         "rari",
+        "avalanche",
     ],
 }
 
