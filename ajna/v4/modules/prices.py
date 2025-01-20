@@ -64,6 +64,7 @@ STABLECOIN_SYMBOLS = {
     "IDRX",
     "BAC",
     "USDS",
+    "savUSD",
 }
 
 RHINOFI_MAP = {
