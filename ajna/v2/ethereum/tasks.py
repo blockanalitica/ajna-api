@@ -15,7 +15,7 @@ from ..modules.pools import (
 )
 from ..modules.positions import EventProcessor
 from ..modules.prices import update_token_prices
-from .chain import Ethereum, EthereumModels
+from .chain import Ethereum
 
 log = logging.getLogger(__name__)
 
@@ -57,8 +57,8 @@ SCHEDULE = {
 
 @app.task
 def fetch_market_price_task():
-    models = EthereumModels()
-    update_token_prices(models)
+    chain = Ethereum()
+    update_token_prices(chain)
 
 
 @app.task
