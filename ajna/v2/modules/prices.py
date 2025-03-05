@@ -56,7 +56,7 @@ def _handle_rhinofi_tokens(models, done_addresses, chain):
         _save_price_for_address(models, address, price)
 
 
-def update_token_prices(models, chain):
+def update_token_prices(chain):
     """
     Updates the underlying_price field for all Token instances in the database.
 
@@ -64,7 +64,7 @@ def update_token_prices(models, chain):
     current prices for those addresses, and then updates the corresponding token
     instances with the new prices.
     """
-    underlying_addresses = models.token.objects.all().values_list("underlying_address", flat=True)
+    underlying_addresses = chain.token.objects.all().values_list("underlying_address", flat=True)
     if not underlying_addresses:
         return
     prices_mapping = get_current_prices(underlying_addresses)
@@ -75,6 +75,6 @@ def update_token_prices(models, chain):
         done_addresses.add(underlying_addresses)
 
         price = Decimal(str(values["price"]))
-        _save_price_for_address(models, underlying_address, price)
+        _save_price_for_address(chain, underlying_address, price)
 
-    _handle_rhinofi_tokens(models, done_addresses, chain)
+    _handle_rhinofi_tokens(chain, done_addresses, chain)
