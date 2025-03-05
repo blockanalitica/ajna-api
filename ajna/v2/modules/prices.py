@@ -3,7 +3,6 @@ from datetime import datetime
 from decimal import Decimal
 
 from ajna.sources.defillama import get_current_prices
-from ajna.sources.rhinofi import fetch_pair_price
 
 log = logging.getLogger(__name__)
 
@@ -32,20 +31,32 @@ def _save_price_for_address(models, address, price):
         )
 
 
-def _handle_rhinofi_tokens(models, done_addresses):
+def _handle_rhinofi_tokens(models, done_addresses, chain):
     for address, data in RHINOFI_MAP.items():
         if address in done_addresses:
             log.debug("Skipping {} address from rhino.fi price fetching")
             continue
 
-        conversion_price = fetch_pair_price(data["rhino_pair"])
+        burn_data_calls = [
+            (
+                address,
+                [
+                    "convertToAssets(uint256)(uint256)",
+                    1 * (10**18),
+                ],
+                ["assets", None],
+            ),
+        ]
+        on_chain_data = chain.multicall(burn_data_calls)
+        # the only token we check here is YIELDBTC and we know it has 8 decimal precision
+        conversion_rate = Decimal(str(on_chain_data["assets"])) / 10**8
         price_token = models.token.objects.get(symbol=data["price_token"])
 
-        price = price_token.underlying_price * conversion_price
+        price = price_token.underlying_price * conversion_rate
         _save_price_for_address(models, address, price)
 
 
-def update_token_prices(models, network="ethereum"):
+def update_token_prices(models, chain):
     """
     Updates the underlying_price field for all Token instances in the database.
 
@@ -66,4 +77,4 @@ def update_token_prices(models, network="ethereum"):
         price = Decimal(str(values["price"]))
         _save_price_for_address(models, underlying_address, price)
 
-    _handle_rhinofi_tokens(models, done_addresses)
+    _handle_rhinofi_tokens(models, done_addresses, chain)

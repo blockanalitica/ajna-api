@@ -27,3 +27,8 @@ def _show_toolbar(request):
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": _show_toolbar,
 }
+
+IPYTHON_ARGUMENTS = [
+    "-c=%load_ext autoreload\n%autoreload 2",
+    "-i",
+]

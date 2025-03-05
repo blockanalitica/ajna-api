@@ -57,8 +57,9 @@ SCHEDULE = {
 
 @app.task
 def fetch_market_price_task():
+    chain = Ethereum()
     models = EthereumModels()
-    update_token_prices(models)
+    update_token_prices(models, chain)
 
 
 @app.task
