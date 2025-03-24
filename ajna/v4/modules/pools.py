@@ -448,7 +448,7 @@ class BasePoolManager:
         # we don't download half of the blockchain in one multicall call.
         pool_chunks = chunks(pool_addresses, 100)
         for addresses in pool_chunks:
-            pools_data = self._fetch_pools_data(pool_addresses)
+            pools_data = self._fetch_pools_data(addresses)
             for address in addresses:
                 pool_data = pools_data[address]
                 # Force address to be lowercase just in case it wasn't already
