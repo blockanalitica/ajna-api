@@ -446,7 +446,7 @@ class BasePoolManager:
 
         # Put pools into more managable chunks so that we don't use too much ram and
         # we don't download half of the blockchain in one multicall call.
-        pool_chunks = chunks(pool_addresses, 100)
+        pool_chunks = chunks(pool_addresses, 50)
         for addresses in pool_chunks:
             pools_data = self._fetch_pools_data(pool_addresses)
             for address in addresses:
