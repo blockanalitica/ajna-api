@@ -109,7 +109,7 @@ class RawPagination(PageNumberPagination):
         return list(self.page)
 
 
-class InvalidMethod(AttributeError):
+class InvalidMethodError(AttributeError):
     pass
 
 
@@ -128,7 +128,7 @@ class RawSQLPaginatedApiView(APIView):
         self.paginator = RawPagination()
 
     def get_queryset(self, **kwargs):
-        raise InvalidMethod(
+        raise InvalidMethodError(
             "RawSQLPaginatedApiView needs get_raw_sql to be implemented instead of get_queryset"
         )
 
@@ -146,9 +146,9 @@ class RawSQLPaginatedApiView(APIView):
         filters = []
         if search and self.search_fields:
             for field in self.search_fields:
-                filters.append("{} ilike %s ESCAPE ''".format(field))
+                filters.append(f"{field} ilike %s ESCAPE ''")
 
-            search = "%{}%".format(search)
+            search = f"%{search}%"
             return "({})".format(" OR ".join(filters)), [search] * len(self.search_fields)
         return None
 
@@ -157,7 +157,7 @@ class RawSQLPaginatedApiView(APIView):
         ordering_fields = []
         for field in self.ordering_fields:
             ordering_fields.append(field)
-            ordering_fields.append("-{}".format(field))
+            ordering_fields.append(f"-{field}")
 
         if param in ordering_fields:
             return param
@@ -215,7 +215,7 @@ class RawSQLPaginatedApiView(APIView):
 
 def _get_module(version, network):
     module_path = ".".join([version.lower(), network.lower()])
-    module = importlib.import_module("ajna.{}.chain".format(module_path))
+    module = importlib.import_module(f"ajna.{module_path}.chain")
     return module
 
 

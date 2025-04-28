@@ -27,14 +27,14 @@ class Timer:
         self.timer.stop()
 
 
-def Timerd(key):
+def timerd(key):
     """
     Decorator function to set up a timer around a function call.
     This is a function only decorator!
 
     Example:
     >>> import time
-    >>> @metrics.Timerd('time_sleep_key')
+    >>> @metrics.timerd('time_sleep_key')
     >>> def timed_function():
     ...     time.sleep(1)
     """
@@ -78,9 +78,9 @@ def increment(key, delta=1, subname=None):
         :keyword subname: The subname to report the data to (appended to the
             client name). Like "hits", or "sales".
     """
-    name = "counters.{}".format(key)
+    name = f"counters.{key}"
     if subname:
-        name += ".{}".format(subname)
+        name += f".{subname}"
 
     return statsd_client.incr(name, delta)
 
@@ -96,9 +96,9 @@ def decrement(key, delta=1, subname=None):
             client name)
     """
 
-    name = "counters.{}".format(key)
+    name = f"counters.{key}"
     if subname:
-        name += ".{}".format(subname)
+        name += f".{subname}"
 
     return statsd_client.decr(name, delta)
 
@@ -113,7 +113,7 @@ def gauge(key, value=1, subname=None):
 
     name = key
     if subname:
-        name += ".{}".format(subname)
+        name += f".{subname}"
 
     # We never use the relative changes behaviour so attempt to always make it do the
     # set value behaviour instead.

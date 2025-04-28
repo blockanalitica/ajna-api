@@ -6,7 +6,7 @@ from ajna.utils.wad import decimal_to_wad, wad_to_decimal
 
 
 @pytest.mark.parametrize(
-    "wad,expected",
+    ("wad", "expected"),
     [
         (67153818568173297, Decimal("0.067153818568173297")),
         ("888888888888888888", Decimal("0.888888888888888888")),
@@ -25,7 +25,7 @@ def test_wad_to_decimal(wad, expected):
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     [
         (Decimal("123.123456789123456789"), 123123456789123456789),
         (Decimal("123.1234"), 123123400000000000000),

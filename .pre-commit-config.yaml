@@ -1,11 +1,18 @@
 repos:
-    - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.4.4
-      hooks:
-        - id: ruff
-          exclude: .*/migrations/.*
-          language_version: python3.11
-        - id: ruff-format
-          args: [--check]
-          exclude: .*/migrations/.*
-          language_version: python3.11
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: ruff check --force-exclude .
+        language: system
+        types: [python]
+        require_serial: true
+        extend-exclude: '.*/migrations/.*'
+
+      - id: ruff-format
+        name: ruff-format
+        entry: ruff format --force-exclude . --check
+        language: system
+        types: [python]
+        require_serial: true
+        extend-exclude: '.*/migrations/.*'

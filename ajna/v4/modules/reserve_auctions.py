@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 def _generate_reserve_auction_uid(pool_address, current_burn_epoch):
-    key = "{}_{}".format(pool_address, current_burn_epoch).encode("utf-8")
+    key = f"{pool_address}_{current_burn_epoch}".encode()
     return hashlib.md5(key).hexdigest()  # noqa: S324
 
 

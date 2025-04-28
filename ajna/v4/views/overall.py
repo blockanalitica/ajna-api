@@ -37,7 +37,7 @@ class OverallView(DaysAgoMixin, APIView):
         ordering_fields = []
         for field in self.ordering_fields:
             ordering_fields.append(field)
-            ordering_fields.append("-{}".format(field))
+            ordering_fields.append(f"-{field}")
 
         if param in ordering_fields:
             return param
@@ -73,10 +73,10 @@ class OverallView(DaysAgoMixin, APIView):
         prev_sqls = []
         selects = []
         for key, models in chain_models_map.items():
-            prev_name = "{}_previous".format(key)
+            prev_name = f"{key}_previous"
             prev_sqls.append(
-                """
-                {name} AS (
+                f"""
+                {prev_name} AS (
                     SELECT DISTINCT ON (ps.address)
                           ps.address
                         , ps.pledged_collateral * ps.collateral_token_price AS collateral_usd
@@ -85,19 +85,16 @@ class OverallView(DaysAgoMixin, APIView):
                         , ps.reserves * ps.quote_token_price AS reserves_usd
                         , COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0) +
                             COALESCE(ps.quote_token_balance * ps.quote_token_price, 0) AS tvl
-                    FROM {pool_snapshot_table} ps
+                    FROM {models.pool_snapshot._meta.db_table} ps
                     WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
                         AND ps.datetime <= %(days_ago_dt)s
                     ORDER BY ps.address, ps.datetime DESC
                 )
-            """.format(
-                    name=prev_name,
-                    pool_snapshot_table=models.pool_snapshot._meta.db_table,
-                )
+            """
             )
 
             selects.append(
-                """
+                f"""
                 SELECT
                       SUM(sub.tvl) AS tvl
                     , SUM(sub.collateral_usd) AS collateral_usd
@@ -109,7 +106,7 @@ class OverallView(DaysAgoMixin, APIView):
                     , SUM(sub.prev_supply_usd) AS prev_supply_usd
                     , SUM(sub.prev_debt_usd) AS prev_debt_usd
                     , SUM(sub.prev_reserves_usd) AS prev_reserves_usd
-                    , '{name}' AS network_name
+                    , '{name_map[key]}' AS network_name
                     , '{key}' AS network
                 FROM (
                     SELECT
@@ -124,21 +121,15 @@ class OverallView(DaysAgoMixin, APIView):
                         , prev.debt_usd AS prev_debt_usd
                         , prev.tvl AS prev_tvl
                         , prev.reserves_usd AS prev_reserves_usd
-                    FROM {pool_table} AS p
-                    JOIN {token_table} AS ct
+                    FROM {models.pool._meta.db_table} AS p
+                    JOIN {models.token._meta.db_table} AS ct
                         ON p.collateral_token_address = ct.underlying_address
-                    JOIN {token_table} AS qt
+                    JOIN {models.token._meta.db_table} AS qt
                         ON p.quote_token_address = qt.underlying_address
                     LEFT JOIN {prev_name} AS prev
                         ON prev.address = p.address
                 ) AS sub
-            """.format(
-                    prev_name=prev_name,
-                    name=name_map[key],
-                    key=key,
-                    token_table=models.token._meta.db_table,
-                    pool_table=models.pool._meta.db_table,
-                )
+            """
             )
 
         sql = """
@@ -190,18 +181,18 @@ class HistoricView(DaysAgoMixin, APIView):
     days_ago_options = [30, 90, 365, 9999]
 
     def get(self, request):
-        sql = """
+        sql = f"""
             SELECT
                   date
                 , SUM(tvl) AS tvl
                 , SUM(collateral_usd) AS collateral_usd
                 , SUM(supply_usd) AS  supply_usd
                 , SUM(debt_usd) AS debt_usd
-            FROM {network_stats_daily_table}
+            FROM {V4NetworkStatsDaily._meta.db_table}
             WHERE date >= %s AND date < %s
             GROUP BY 1
             ORDER BY date
-        """.format(network_stats_daily_table=V4NetworkStatsDaily._meta.db_table)
+        """
         data = fetch_all(sql, [self.days_ago_dt, date.today()])
         return Response(data, status.HTTP_200_OK)
 

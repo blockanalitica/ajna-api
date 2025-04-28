@@ -114,7 +114,7 @@ def _handle_proposal_executed(chain, event):
 
 
 def fetch_and_save_grant_proposals(chain):
-    cache_key = "fetch_and_save_grant_proposals.{}.last_block_number".format(chain.unique_key)
+    cache_key = f"fetch_and_save_grant_proposals.{chain.unique_key}.last_block_number"
 
     from_block = cache.get(cache_key)
     if not from_block:

@@ -39,7 +39,12 @@ class AjnaChainMixin:
 
         return address.lower()
 
-    def load_abi(self, contract_address, abi_name=None):
+    def get_implementation_address(self, contract_address, block_identifier=None):
+        # Ajna was built before chain harvester so we need to disable a few things.
+        # This is one of those things.
+        return contract_address
+
+    def load_abi(self, contract_address, abi_name=None, refetch_on_block=None):
         contract_address = contract_address.lower()
         try:
             pool = self.pool.objects.get(address=contract_address)
@@ -50,7 +55,8 @@ class AjnaChainMixin:
                 contract_address = self.erc20_pool_abi_contract
             else:
                 contract_address = self.erc721_pool_abi_contract
-        return super().load_abi(contract_address, abi_name=abi_name)
+
+        return super().load_abi(contract_address, abi_name=abi_name, refetch_on_block=None)
 
     def get_block_datetime(self, block_number):
         global BLOCK_DATETIMES
@@ -60,3 +66,23 @@ class AjnaChainMixin:
             BLOCK_DATETIMES[block_number] = datetime.fromtimestamp(block_info["timestamp"])
 
         return BLOCK_DATETIMES[block_number]
+
+    # def get_abi_source_url(self, contract_address):
+    #     """
+    #     Returns the URL for fetching the ABI of a contract from the scan API.
+
+    #     Args:
+    #         contract_address (str): The address of the contract.
+
+    #     Returns:
+    #         str: The URL for fetching the ABI.
+    #     """
+    #     query_params = {
+    #         "module": "contract",
+    #         "action": "getabi",
+    #         "address": contract_address,
+    #         "apikey": self.api_key,
+    #     }
+    #     url = f"{self.scan_url}/api?{urllib.parse.urlencode(query_params)}"
+    #     print(url)
+    #     return url

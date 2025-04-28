@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 def _generate_auction_uid(pool_address, borrower, block_number):
-    key = "{}_{}_{}".format(pool_address, borrower, block_number).encode("utf-8")
+    key = f"{pool_address}_{borrower}_{block_number}".encode()
     return hashlib.md5(key).hexdigest()  # noqa: S324
 
 
@@ -310,7 +310,7 @@ def process_auction_settle_event(chain, event):
     current_position.save()
 
 
-def process_auction_NFT_settle_event(chain, event):
+def process_auction_nft_settle_event(chain, event):
     try:
         chain.auction_auction_nft_settle.objects.get(order_index=event.order_index)
     except chain.auction_auction_nft_settle.DoesNotExist:

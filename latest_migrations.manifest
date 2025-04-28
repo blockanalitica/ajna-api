@@ -1,5 +1,5 @@
 admin: 0003_logentry_add_action_flag_choices
-ajna: 0100_v4avalancheactivitysnapshot_v4avalancheauction_and_more
+ajna: 0101_v4lineaactivitysnapshot_v4lineaauction_and_more
 auth: 0012_alter_user_first_name_max_length
 contenttypes: 0002_remove_content_type_name
 django_celery_beat: 0019_alter_periodictasks_options

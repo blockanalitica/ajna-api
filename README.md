@@ -44,7 +44,7 @@ To install and run Ajna API using `python manage.py`, follow these steps:
 
 1. Clone the repository: `git clone https://github.com/blockanalitica/ajna-api.git`
 2. Navigate to the project directory: `cd ajna-api`
-3. Install dependencies: `poetry install`
+3. Install dependencies: `uv sync`
 4. Run migrations: `python manage.py migrate`
 5. Run the development server: `python manage.py runserver`
 6. Navigate to [http://localhost:8000/](http://localhost:8000/) to access the application

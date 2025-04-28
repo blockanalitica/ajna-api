@@ -33,11 +33,11 @@ def sync_activity_snapshots(chain):
 
 
 def save_activity_snapshot_for_date(chain, dt):
-    sql = """
+    sql = f"""
         WITH active_wallets AS (
             SELECT
                 COUNT(*) AS active_wallets
-            FROM {wallet_position_table} wpt
+            FROM {chain.wallet_position._meta.db_table} wpt
             WHERE DATE(wpt.datetime) = %(dt)s
         ),
         total_wallets AS (
@@ -45,7 +45,7 @@ def save_activity_snapshot_for_date(chain, dt):
                 COUNT(*) AS total_wallets
             FROM (
                 SELECT DISTINCT wallet_address
-                FROM {wallet_position_table} wpt
+                FROM {chain.wallet_position._meta.db_table} wpt
                 WHERE DATE(wpt.datetime) <= %(dt)s
             ) d
         ),
@@ -54,7 +54,7 @@ def save_activity_snapshot_for_date(chain, dt):
                 COUNT(*) AS active_this_month
             FROM (
                 SELECT DISTINCT wallet_address
-                FROM {wallet_position_table} wpt
+                FROM {chain.wallet_position._meta.db_table} wpt
                 WHERE wpt.datetime >= DATE_TRUNC('month', %(dt)s)
                     AND wpt.datetime <= %(dt)s
             ) d
@@ -62,14 +62,14 @@ def save_activity_snapshot_for_date(chain, dt):
         new_this_month AS (
             SELECT
                 COUNT(*) AS new_this_month
-            FROM {wallet_table} wpt
+            FROM {chain.wallet._meta.db_table} wpt
             WHERE wpt.first_activity >= DATE_TRUNC('month', %(dt)s)
                 AND wpt.first_activity <= %(dt)s
         ),
         new_wallets AS (
             SELECT
                 COUNT(*) AS new_wallets
-            FROM {wallet_table} wt
+            FROM {chain.wallet._meta.db_table} wt
             WHERE DATE(wt.first_activity) = %(dt)s
         )
 
@@ -80,10 +80,7 @@ def save_activity_snapshot_for_date(chain, dt):
         LEFT JOIN new_wallets ON 1=1
         LEFT JOIN active_this_month ON 1=1
         LEFT JOIN new_this_month ON 1=1
-    """.format(
-        wallet_position_table=chain.wallet_position._meta.db_table,
-        wallet_table=chain.wallet._meta.db_table,
-    )
+    """
 
     data = fetch_one(sql, {"dt": dt})
     chain.activity_snapshot.objects.update_or_create(

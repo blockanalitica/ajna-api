@@ -10,7 +10,7 @@ def save_network_stats_for_date(models, dt, network):
     if not isinstance(dt, date):
         raise TypeError
 
-    sql = """
+    sql = f"""
         SELECT
               SUM(x.tvl) AS tvl
             , SUM(x.collateral_usd) AS collateral_usd
@@ -24,12 +24,12 @@ def save_network_stats_for_date(models, dt, network):
                 , ps.pledged_collateral * ps.collateral_token_price AS collateral_usd
                 , ps.pool_size * ps.quote_token_price AS supply_usd
                 , ps.debt * ps.quote_token_price AS debt_usd
-            FROM {pool_snapshot_table} ps
+            FROM {models.pool_snapshot._meta.db_table} ps
             WHERE ps.datetime >= %s
                 AND ps.datetime < %s
             ORDER BY 1, ps.address, ps.datetime DESC
         ) x
-    """.format(pool_snapshot_table=models.pool_snapshot._meta.db_table)
+    """
     sql_vars = [dt, dt + timedelta(days=1)]
 
     data = fetch_one(sql, sql_vars)

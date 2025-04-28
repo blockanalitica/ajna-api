@@ -9,13 +9,13 @@ LLAMA_COINS_API_URL = "https://coins.llama.fi/"
 
 def fetch_current_price(coins):
     url = "prices/current/{}".format(",".join(coins))
-    data = retry_get_json("{}{}".format(LLAMA_COINS_API_URL, url))
+    data = retry_get_json(f"{LLAMA_COINS_API_URL}{url}")
     return data["coins"]
 
 
 def fetch_price_for_timestamp(timestamp, coins):
     url = "prices/historical/{}/{}".format(timestamp, ",".join(coins))
-    data = retry_get_json("{}{}".format(LLAMA_COINS_API_URL, url))
+    data = retry_get_json(f"{LLAMA_COINS_API_URL}{url}")
     return data["coins"]
 
 
@@ -53,7 +53,7 @@ def get_current_prices_map(addresses, chain_name, coingecko_map):
             if "price" in data:
                 prices[address.lower()] = Decimal(str(data["price"]))
             else:
-                metrics.increment("defillama.get_current_prices_map.{}.no_price".format(chain_name))
+                metrics.increment(f"defillama.get_current_prices_map.{chain_name}.no_price")
     return prices
 
 

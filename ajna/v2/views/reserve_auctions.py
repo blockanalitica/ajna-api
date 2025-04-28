@@ -19,7 +19,7 @@ class ReserveAuctionsActiveView(RawSQLPaginatedChainView):
     ]
 
     def get_raw_sql(self, **kwargs):
-        sql = """
+        sql = f"""
             SELECT
                   ra.uid
                 , ra.pool_address
@@ -34,22 +34,17 @@ class ReserveAuctionsActiveView(RawSQLPaginatedChainView):
                 , p.quote_token_symbol AS quote_token_symbol
                 , 'active' AS type
                 , COUNT(rat.order_index) as take_count
-            FROM {reserve_auction_table} ra
-            JOIN {reserve_auction_kick_table} rak
+            FROM {self.models.reserve_auction._meta.db_table} ra
+            JOIN {self.models.reserve_auction_kick._meta.db_table} rak
                 ON rak.reserve_auction_uid = ra.uid
-            LEFT JOIN {reserve_auction_take_table} rat
+            LEFT JOIN {self.models.reserve_auction_take._meta.db_table} rat
                 ON rat.reserve_auction_uid = ra.uid
-            JOIN {pool_table} p
+            JOIN {self.models.pool._meta.db_table} p
                 ON ra.pool_address = p.address
             WHERE rak.block_datetime + INTERVAL '72 hours' > CURRENT_TIMESTAMP
                 AND ra.claimable_reserves_remaining > 0
             GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
-        """.format(
-            reserve_auction_table=self.models.reserve_auction._meta.db_table,
-            reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
-            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-        )
+        """
         sql_vars = []
         return sql, sql_vars
 
@@ -66,7 +61,7 @@ class ReserveAuctionsExpiredView(RawSQLPaginatedChainView):
     ]
 
     def get_raw_sql(self, **kwargs):
-        sql = """
+        sql = f"""
             SELECT
                   ra.uid
                 , ra.pool_address
@@ -82,22 +77,17 @@ class ReserveAuctionsExpiredView(RawSQLPaginatedChainView):
                 , p.quote_token_symbol AS quote_token_symbol
                 , 'expired' AS type
                 , COUNT(rat.order_index) as take_count
-            FROM {reserve_auction_table} ra
-            JOIN {reserve_auction_kick_table} rak
+            FROM {self.models.reserve_auction._meta.db_table} ra
+            JOIN {self.models.reserve_auction_kick._meta.db_table} rak
                 ON rak.reserve_auction_uid = ra.uid
-            LEFT JOIN {reserve_auction_take_table} rat
+            LEFT JOIN {self.models.reserve_auction_take._meta.db_table} rat
                 ON rat.reserve_auction_uid = ra.uid
-            JOIN {pool_table} p
+            JOIN {self.models.pool._meta.db_table} p
                 ON ra.pool_address = p.address
             WHERE rak.block_datetime + INTERVAL '72 hours' <= CURRENT_TIMESTAMP
                 OR ra.claimable_reserves_remaining = 0
             GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
-        """.format(
-            reserve_auction_table=self.models.reserve_auction._meta.db_table,
-            reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
-            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-        )
+        """
         sql_vars = []
         return sql, sql_vars
 
@@ -105,7 +95,7 @@ class ReserveAuctionsExpiredView(RawSQLPaginatedChainView):
 class ReserveAuctionView(BaseChainView):
     def get(self, request, uid):
         sql_vars = [uid]
-        sql = """
+        sql = f"""
             SELECT
                   ra.uid
                 , ra.pool_address
@@ -120,21 +110,16 @@ class ReserveAuctionView(BaseChainView):
                 , p.collateral_token_symbol AS collateral_token_symbol
                 , p.quote_token_symbol AS quote_token_symbol
                 , COUNT(rat.order_index) as take_count
-            FROM {reserve_auction_table} ra
-            JOIN {reserve_auction_kick_table} rak
+            FROM {self.models.reserve_auction._meta.db_table} ra
+            JOIN {self.models.reserve_auction_kick._meta.db_table} rak
                 ON rak.reserve_auction_uid = ra.uid
-            LEFT JOIN {reserve_auction_take_table} rat
+            LEFT JOIN {self.models.reserve_auction_take._meta.db_table} rat
                 ON rat.reserve_auction_uid = ra.uid
-            JOIN {pool_table} p
+            JOIN {self.models.pool._meta.db_table} p
                 ON ra.pool_address = p.address
             WHERE ra.uid = %s
             GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
-        """.format(
-            reserve_auction_table=self.models.reserve_auction._meta.db_table,
-            reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
-            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-        )
+        """
 
         data = fetch_one(sql, sql_vars)
 
@@ -148,7 +133,7 @@ class ReserveAuctionEventsView(RawSQLPaginatedChainView):
     default_order = "-order_index"
 
     def get_raw_sql(self, uid, **kwargs):
-        sql = """
+        sql = f"""
             SELECT
                   rat.order_index
                 , 'Take' AS event
@@ -164,7 +149,7 @@ class ReserveAuctionEventsView(RawSQLPaginatedChainView):
                     'ajna_burned', rat.ajna_burned::text,
                     'quote_purchased', rat.quote_purchased::text
                 ) AS data
-            FROM {reserve_auction_take_table} rat
+            FROM {self.models.reserve_auction_take._meta.db_table} rat
             WHERE rat.reserve_auction_uid = %s
 
             UNION
@@ -183,13 +168,10 @@ class ReserveAuctionEventsView(RawSQLPaginatedChainView):
                     'claimable_reserves', rak.claimable_reserves::text,
                     'starting_price', rak.starting_price::text
                 ) AS data
-            FROM {reserve_auction_kick_table} rak
+            FROM {self.models.reserve_auction_kick._meta.db_table} rak
             WHERE rak.reserve_auction_uid = %s
 
-        """.format(
-            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
-            reserve_auction_kick_table=self.models.reserve_auction_kick._meta.db_table,
-        )
+        """
 
         sql_vars = [uid] * 2
         return sql, sql_vars

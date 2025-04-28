@@ -160,23 +160,21 @@ class BasePoolManager:
         return True
 
     def _fetch_new_pool_created_events(self):
-        cache_key = "fetch_new_pool_created_events.{}.{}.last_block_number".format(
-            self.erc, self._chain.unique_key
+        cache_key = (
+            f"fetch_new_pool_created_events.{self.erc}.{self._chain.unique_key}.last_block_number"
         )
 
         from_block_number = cache.get(cache_key)
         if not from_block_number:
-            sql = """
+            sql = f"""
                 SELECT
                     pe.block_number
-                FROM {pool_event_table} pe
+                FROM {self._chain.pool_event._meta.db_table} pe
                 WHERE pe.name = 'PoolCreated'
                     AND pe.data->>'erc' = %s
                 ORDER BY pe.block_number DESC
                 LIMIT 1
-            """.format(
-                pool_event_table=self._chain.pool_event._meta.db_table,
-            )
+            """
 
             data = fetch_one(sql, [self.erc])
             if data:

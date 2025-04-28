@@ -8,7 +8,7 @@ from ajna.utils.db import fetch_one
 from ajna.utils.wad import wad_to_decimal
 
 from .auctions import (
-    process_auction_NFT_settle_event,
+    process_auction_nft_settle_event,
     process_auction_settle_event,
     process_bucket_take_event,
     process_kick_event,
@@ -136,20 +136,20 @@ class EventProcessor:
     ):
         supply = None
         if wallet_address in updated_bucket_wallets:
-            sql = """
+            sql = f"""
                 SELECT
                     SUM(x.deposit) AS supply
                 FROM (
                     SELECT DISTINCT ON (bucket_index)
                         deposit
                     FROM
-                        {wallet_bucket_state_table}
+                        {self._chain.wallet_bucket_state._meta.db_table}
                     WHERE
                         pool_address = %s AND wallet_address = %s AND block_number <= %s
                     ORDER BY
                         bucket_index, block_number DESC
                 ) x
-            """.format(wallet_bucket_state_table=self._chain.wallet_bucket_state._meta.db_table)
+            """
 
             data = fetch_one(sql, [pool_address, wallet_address, block_number])
             supply = data["supply"]
@@ -233,7 +233,7 @@ class EventProcessor:
 
     def _save_wallets_and_buckets(self):
         for block_number, pool_data in sorted(self._data_to_update.items()):
-            log.debug("_save_wallets_and_buckets processing: {}".format(block_number))
+            log.debug(f"_save_wallets_and_buckets processing: {block_number}")
             calls = []
             for pool_address, data in pool_data.items():
                 # Calls for wallets
@@ -431,7 +431,7 @@ class EventProcessor:
             case "AuctionSettle":
                 process_auction_settle_event(self._chain, event)
             case "AuctionNFTSettle":
-                process_auction_NFT_settle_event(self._chain, event)
+                process_auction_nft_settle_event(self._chain, event)
 
     def _process_reserve_auctions(self, event):
         match event.name:

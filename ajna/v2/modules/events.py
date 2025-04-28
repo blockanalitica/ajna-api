@@ -63,7 +63,6 @@ def parse_event_data(event):
                 "index": event_data["index"],
                 "lpForfeited": wad_to_decimal(event_data["lpForfeited"]),
             }
-            pass
         case "BucketTake":
             data = {
                 "index": event_data["index"],
@@ -106,7 +105,6 @@ def parse_event_data(event):
                 "owner": event_data["owner"].lower(),
                 "spender": event_data["spender"].lower(),
             }
-            pass
         case "Kick":
             data = {
                 "bond": wad_to_decimal(event_data["bond"]),
@@ -126,7 +124,6 @@ def parse_event_data(event):
             data = {
                 "borrower": event_data["borrower"].lower(),
             }
-            pass
         case "MergeOrRemoveCollateralNFT":
             pass  # TODO
         case "MoveQuoteToken":
@@ -366,7 +363,7 @@ def _get_pool_info(chain, pool_address):
 
 
 def fetch_and_save_events_for_all_pools(chain):
-    cache_key = "fetch_and_save_events_for_all_pools.{}.last_block_number".format(chain.unique_key)
+    cache_key = f"fetch_and_save_events_for_all_pools.{chain.unique_key}.last_block_number"
 
     pool_addresses = list(chain.pool.objects.all().values_list("address", flat=True))
 
