@@ -20,7 +20,7 @@ class Command(BaseCommand):
                         day_of_month=sch._orig_day_of_month,
                         month_of_year=sch._orig_month_of_year,
                     )
-                    task = "{}.{}".format(celery_module, key)
+                    task = f"{celery_module}.{key}"
                     PeriodicTask.objects.update_or_create(
                         name=task,
                         defaults={

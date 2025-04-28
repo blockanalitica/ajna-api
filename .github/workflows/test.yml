@@ -10,15 +10,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up the environment
-        uses: ./.github/actions/setup-poetry-env
-      - name: Run checks
-        run: poetry run pre-commit run -a
+        uses: ./.github/actions/setup-uv-env
+      - name: Run ruff check
+        run: uv run ruff check .
+      - name: Run ruff format check
+        run: uv run ruff format . --check
 
   test:
     runs-on: ubuntu-latest
     services:
       db:
-        image: postgres:13.2
+        image: postgres:17.2
         env:
           POSTGRES_DB: ajna
           POSTGRES_USER: ajna
@@ -34,9 +36,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up the environment
-        uses: ./.github/actions/setup-poetry-env
+        uses: ./.github/actions/setup-uv-env
       - name: Run pytest
-        run: poetry run pytest --ds=config.settings.test tests/
+        run: uv run pytest --ds=config.settings.test tests/
         env:
           AJNA_DB_NAME: ajna
           AJNA_DB_USER: ajna

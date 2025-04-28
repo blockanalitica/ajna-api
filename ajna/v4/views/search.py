@@ -7,7 +7,7 @@ from ajna.utils.views import BaseChainView
 
 class SearchView(BaseChainView):
     def _get_pools(self, search_term):
-        sql = """
+        sql = f"""
             SELECT
                 *
             FROM (
@@ -20,13 +20,13 @@ class SearchView(BaseChainView):
                     (pool.collateral_token_balance * collateral_token.underlying_price) +
                     (pool.quote_token_balance * quote_token.underlying_price) AS tvl
                 FROM
-                    {pool_table} AS pool
+                    {self.models.pool._meta.db_table} AS pool
                 JOIN
-                    {token_table} AS collateral_token
+                    {self.models.token._meta.db_table} AS collateral_token
                 ON
                     pool.collateral_token_address = collateral_token.underlying_address
                 JOIN
-                    {token_table} AS quote_token
+                    {self.models.token._meta.db_table} AS quote_token
                 ON
                     pool.quote_token_address = quote_token.underlying_address
                 WHERE collateral_token.symbol ILIKE %s
@@ -36,16 +36,13 @@ class SearchView(BaseChainView):
             ) AS x
             ORDER BY tvl DESC NULLS LAST
             LIMIT 3
-        """.format(
-            token_table=self.models.token._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-        )
+        """
 
         pools = fetch_all(sql, [search_term] * 4)
         return pools
 
     def _get_tokens(self, search_term):
-        sql = """
+        sql = f"""
             SELECT
                 *
             FROM (
@@ -71,9 +68,9 @@ class SearchView(BaseChainView):
                             ELSE 0
                             END) AS quote_amount
                     FROM
-                        {token_table} AS token
+                        {self.models.token._meta.db_table} AS token
                     LEFT JOIN
-                        {pool_table} AS pool
+                        {self.models.pool._meta.db_table} AS pool
                     ON
                         token.underlying_address = pool.collateral_token_address
                         OR token.underlying_address = pool.quote_token_address
@@ -87,17 +84,14 @@ class SearchView(BaseChainView):
             ) AS x
             ORDER BY tvl DESC NULLS LAST
             LIMIT 3
-        """.format(
-            token_table=self.models.token._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-        )
+        """
 
         tokens = fetch_all(sql, [search_term] * 2)
         return tokens
 
     def get(self, request):
         search_term = request.GET.get("search", "")
-        search_term = "%{}%".format(search_term)
+        search_term = f"%{search_term}%"
 
         pools = self._get_pools(search_term)
         tokens = self._get_tokens(search_term)

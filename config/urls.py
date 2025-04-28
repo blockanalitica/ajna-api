@@ -33,6 +33,7 @@ urlpatterns = [
     path("v4/mode/", include("ajna.v4.mode.urls")),
     path("v4/rari/", include("ajna.v4.rari.urls")),
     path("v4/avalanche/", include("ajna.v4.avalanche.urls")),
+    path("v4/linea/", include("ajna.v4.linea.urls")),
 ]
 
 if settings.DEBUG:

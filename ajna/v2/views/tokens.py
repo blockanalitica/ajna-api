@@ -26,7 +26,7 @@ class TokensView(RawSQLPaginatedChainView):
     search_fields = ["sub.symbol", "sub.name"]
 
     def get_raw_sql(self, search_filters, **kwargs):
-        sql = """
+        sql = f"""
             WITH previous AS (
                 SELECT
                       sub.underlying_address
@@ -55,7 +55,7 @@ class TokensView(RawSQLPaginatedChainView):
                             THEN pool.debt
                             ELSE 0
                             END) AS borrowed_amount
-                    FROM {token_table} AS token
+                    FROM {self.models.token._meta.db_table} AS token
                     LEFT JOIN (
                         SELECT DISTINCT ON (ps.address)
                               ps.address
@@ -66,7 +66,7 @@ class TokensView(RawSQLPaginatedChainView):
                             , ps.quote_token_address
                             , ps.collateral_token_balance
                             , ps.quote_token_balance
-                        FROM {pool_snapshot_table} ps
+                        FROM {self.models.pool_snapshot._meta.db_table} ps
                         WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
                             AND ps.datetime <= %(days_ago_dt)s
                         ORDER BY ps.address, ps.datetime DESC
@@ -79,7 +79,7 @@ class TokensView(RawSQLPaginatedChainView):
                     SELECT DISTINCT ON (feed.underlying_address)
                           feed.price
                         , feed.underlying_address
-                    FROM {price_feed_table} feed
+                    FROM {self.models.price_feed._meta.db_table} feed
                     WHERE feed.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
                         AND feed.datetime <= %(days_ago_dt)s
                     ORDER BY feed.underlying_address, feed.datetime DESC
@@ -129,20 +129,15 @@ class TokensView(RawSQLPaginatedChainView):
                         THEN pool.debt
                         ELSE 0
                         END) AS borrowed_amount
-                FROM {token_table} AS token
-                LEFT JOIN {pool_table} AS pool
+                FROM {self.models.token._meta.db_table} AS token
+                LEFT JOIN {self.models.pool._meta.db_table} AS pool
                     ON token.underlying_address = pool.collateral_token_address
                         OR token.underlying_address = pool.quote_token_address
                 GROUP BY 1, 2, 3, 4
                 ) AS sub
             LEFT JOIN previous AS prev
                 ON sub.underlying_address = prev.underlying_address
-        """.format(
-            token_table=self.models.token._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            price_feed_table=self.models.price_feed._meta.db_table,
-        )
+        """
 
         sql_vars = {"days_ago_dt": self.days_ago_dt}
         filters = []
@@ -163,7 +158,7 @@ class TokenView(BaseChainView):
     days_ago_options = [1, 7, 30, 365]
 
     def get(self, request, underlying_address):
-        sql = """
+        sql = f"""
             SELECT
                   underlying_address
                 , symbol
@@ -171,11 +166,9 @@ class TokenView(BaseChainView):
                 , decimals
                 , is_erc721
                 , underlying_price
-            FROM {token_table}
+            FROM {self.models.token._meta.db_table}
             WHERE underlying_address = %s
-        """.format(
-            token_table=self.models.token._meta.db_table,
-        )
+        """
 
         data = fetch_one(sql, [underlying_address])
 
@@ -193,7 +186,7 @@ class TokenOverviewView(BaseChainView):
     def get(self, request, underlying_address):
         sql_vars = {"days_ago_dt": self.days_ago_dt, "address": underlying_address}
 
-        sql = """
+        sql = f"""
             WITH previous AS (
                 SELECT
                       sub.underlying_address
@@ -220,7 +213,7 @@ class TokenOverviewView(BaseChainView):
                             THEN pool.debt
                             ELSE 0
                             END) AS borrowed_amount
-                    FROM {token_table} AS token
+                    FROM {self.models.token._meta.db_table} AS token
                     LEFT JOIN (
                         SELECT DISTINCT ON (ps.address)
                               ps.address
@@ -229,7 +222,7 @@ class TokenOverviewView(BaseChainView):
                             , ps.debt
                             , ps.collateral_token_address
                             , ps.quote_token_address
-                        FROM {pool_snapshot_table} ps
+                        FROM {self.models.pool_snapshot._meta.db_table} ps
                         WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
                             AND ps.datetime <= %(days_ago_dt)s
                         ORDER BY ps.address, ps.datetime DESC
@@ -290,8 +283,8 @@ class TokenOverviewView(BaseChainView):
                         THEN pool.debt
                         ELSE 0
                         END) AS borrowed_amount
-                FROM {token_table} AS token
-                LEFT JOIN {pool_table} AS pool
+                FROM {self.models.token._meta.db_table} AS token
+                LEFT JOIN {self.models.pool._meta.db_table} AS pool
                 ON token.underlying_address = pool.collateral_token_address
                     OR token.underlying_address = pool.quote_token_address
                 WHERE token.underlying_address = %(address)s
@@ -299,11 +292,7 @@ class TokenOverviewView(BaseChainView):
             ) AS sub
             LEFT JOIN previous AS prev
                 ON sub.underlying_address = prev.underlying_address
-        """.format(
-            token_table=self.models.token._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-        )
+        """
 
         data = fetch_one(sql, sql_vars)
 
@@ -368,7 +357,7 @@ class TokenArbitragePoolsView(RawSQLPaginatedChainView):
     def get_raw_sql(self, search_filters, **kwargs):
         underlying_address = kwargs["underlying_address"]
 
-        sql = """
+        sql = f"""
             WITH previous AS (
                 SELECT DISTINCT ON (ps.address)
                       ps.address
@@ -376,14 +365,14 @@ class TokenArbitragePoolsView(RawSQLPaginatedChainView):
                     , ps.htp
                     , ps.hpb
                     , pfc.price AS collateral_token_underlying_price
-                FROM {pool_snapshot_table} ps
-                JOIN {pool_table} pool
+                FROM {self.models.pool_snapshot._meta.db_table} ps
+                JOIN {self.models.pool._meta.db_table} pool
                     ON ps.address = pool.address
                 LEFT JOIN (
                     SELECT DISTINCT ON (feed.underlying_address)
                           feed.price
                         , feed.underlying_address
-                    FROM {price_feed_table} feed
+                    FROM {self.models.price_feed._meta.db_table} feed
                     WHERE feed.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
                         AND feed.datetime <= %(days_ago_dt)s
                     ORDER BY feed.underlying_address, feed.datetime DESC
@@ -406,22 +395,17 @@ class TokenArbitragePoolsView(RawSQLPaginatedChainView):
                 , prev.htp AS prev_htp
                 , prev.hpb AS prev_hpb
                 , prev.collateral_token_underlying_price AS prev_collateral_token_underlying_price
-            FROM {pool_table} AS pool
-            JOIN {token_table} AS collateral_token
+            FROM {self.models.pool._meta.db_table} AS pool
+            JOIN {self.models.token._meta.db_table} AS collateral_token
                 ON pool.collateral_token_address = collateral_token.underlying_address
-            JOIN {token_table} AS quote_token
+            JOIN {self.models.token._meta.db_table} AS quote_token
                 ON pool.quote_token_address = quote_token.underlying_address
             LEFT JOIN previous AS prev
                 ON pool.address = prev.address
             WHERE (pool.collateral_token_address = %(address)s
                 OR pool.quote_token_address = %(address)s)
                 AND pool.hpb * quote_token.underlying_price >= collateral_token.underlying_price
-        """.format(
-            token_table=self.models.token._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            price_feed_table=self.models.price_feed._meta.db_table,
-        )
+        """
         sql_vars = {"days_ago_dt": self.days_ago_dt, "address": underlying_address}
 
         return sql, sql_vars

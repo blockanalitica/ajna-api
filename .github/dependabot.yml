@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: "github-actions"
     directories:
       - "/"
-      - "/.github/actions/setup-poetry-env/"
+      - "/.github/actions/setup-uv-env/"
     schedule:
       interval: "weekly"
     labels:

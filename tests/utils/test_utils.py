@@ -4,7 +4,7 @@ from ajna.utils.utils import compute_order_index
 
 
 @pytest.mark.parametrize(
-    "block_number,tx_index,log_index,expected",
+    ("block_number", "tx_index", "log_index", "expected"),
     [
         (17684000, 66, 123, "000017684000_000066_000123"),
         (1, 2, 3, "000000000001_000002_000003"),

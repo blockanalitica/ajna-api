@@ -20,7 +20,7 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
     days_ago_required = True
 
     def get_raw_sql(self, **kwargs):
-        sql = """
+        sql = f"""
             SELECT
                   at.uid
                 , at.settle_time
@@ -34,70 +34,57 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
                 , at.pool_address
                 , p.collateral_token_symbol AS collateral_token_symbol
                 , p.quote_token_symbol AS quote_token_symbol
-            FROM {auction_table} at
-            JOIN {auction_kick_table} ak
+            FROM {self.models.auction._meta.db_table} at
+            JOIN {self.models.auction_kick._meta.db_table} ak
                 ON at.uid = ak.auction_uid
-            JOIN {pool_table} p
+            JOIN {self.models.pool._meta.db_table} p
                 ON at.pool_address = p.address
-            LEFT JOIN {wallet_table} w
+            LEFT JOIN {self.models.wallet._meta.db_table} w
                 on at.borrower = w.address
             WHERE at.settled = TRUE
                 AND at.settle_time >= %s
-        """.format(
-            auction_table=self.models.auction._meta.db_table,
-            auction_kick_table=self.models.auction_kick._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            wallet_table=self.models.wallet._meta.db_table,
-        )
+        """
         sql_vars = [self.days_ago_dt]
         return sql, sql_vars
 
 
 class AuctionsSettledGraphsView(BaseChainView):
     def _get_collateral_graph_data(self, from_ts, date_trunc):
-        sql = """
+        sql = f"""
             SELECT
                   DATE_TRUNC(%s, at.settle_time) AS date
                 , p.collateral_token_symbol AS symbol
                 , SUM(at.collateral) AS amount
                 , SUM(at.collateral * ak.collateral_token_price) AS amount_usd
-            FROM {auction_table} at
-            JOIN {auction_kick_table} ak
+            FROM {self.models.auction._meta.db_table} at
+            JOIN {self.models.auction_kick._meta.db_table} ak
                 ON at.uid = ak.auction_uid
-            JOIN {pool_table} p
+            JOIN {self.models.pool._meta.db_table} p
                 ON at.pool_address = p.address
             WHERE at.settled = TRUE
                 AND at.settle_time >= %s
             GROUP BY 1, 2
-        """.format(
-            auction_table=self.models.auction._meta.db_table,
-            auction_kick_table=self.models.auction_kick._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-        )
+        """
 
         auctions = fetch_all(sql, [date_trunc, from_ts])
         return auctions
 
     def _get_debt_graph_data(self, from_ts, date_trunc):
-        sql = """
+        sql = f"""
             SELECT
                   DATE_TRUNC(%s, at.settle_time) AS date
                 , p.quote_token_symbol AS symbol
                 , SUM(at.debt) AS amount
                 , SUM(at.debt * ak.quote_token_price) AS amount_usd
-            FROM {auction_table} at
-            JOIN {auction_kick_table} ak
+            FROM {self.models.auction._meta.db_table} at
+            JOIN {self.models.auction_kick._meta.db_table} ak
                 ON at.uid = ak.auction_uid
-            JOIN {pool_table} p
+            JOIN {self.models.pool._meta.db_table} p
                 ON at.pool_address = p.address
             WHERE at.settled = TRUE
                 AND at.settle_time >= %s
             GROUP BY 1, 2
-        """.format(
-            auction_table=self.models.auction._meta.db_table,
-            auction_kick_table=self.models.auction_kick._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-        )
+        """
 
         auctions = fetch_all(sql, [date_trunc, from_ts])
         return auctions
@@ -121,22 +108,19 @@ class AuctionsSettledGraphsView(BaseChainView):
 
 class AuctionsSettledOverviewView(BaseChainView):
     def get(self, request):
-        sql = """
+        sql = f"""
             SELECT
                   SUM(at.debt * ak.quote_token_price) AS debt_usd
                 , SUM(at.collateral * ak.collateral_token_price) AS collateral_usd
                 , COUNT(at.uid) AS count
-            FROM {auction_table} at
-            JOIN {auction_kick_table} ak
+            FROM {self.models.auction._meta.db_table} at
+            JOIN {self.models.auction_kick._meta.db_table} ak
                 ON at.uid = ak.auction_uid
             WHERE at.settled = TRUE
-        """.format(
-            auction_table=self.models.auction._meta.db_table,
-            auction_kick_table=self.models.auction_kick._meta.db_table,
-        )
+        """
 
         data = fetch_one(sql, [])
-        change_sql = "{} AND at.settle_time >= %s".format(sql)
+        change_sql = f"{sql} AND at.settle_time >= %s"
         change_data = fetch_one(change_sql, [self.days_ago_dt])
 
         data["change"] = change_data
@@ -152,7 +136,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
     ]
 
     def get_raw_sql(self, **kwargs):
-        sql = """
+        sql = f"""
             SELECT
                   at.uid
                 , at.pool_address
@@ -167,20 +151,15 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
                 , ak.block_datetime AS kick_time
                 , p.lup
                 , p.lup * ak.quote_token_price AS lup_usd
-            FROM {auction_table} at
-            JOIN {auction_kick_table} ak
+            FROM {self.models.auction._meta.db_table} at
+            JOIN {self.models.auction_kick._meta.db_table} ak
                 ON at.uid = ak.auction_uid
-            JOIN {pool_table} p
+            JOIN {self.models.pool._meta.db_table} p
                 ON at.pool_address = p.address
-            LEFT JOIN {wallet_table} w
+            LEFT JOIN {self.models.wallet._meta.db_table} w
                 on at.borrower = w.address
             WHERE at.settled = False
-        """.format(
-            auction_table=self.models.auction._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            auction_kick_table=self.models.auction_kick._meta.db_table,
-            wallet_table=self.models.wallet._meta.db_table,
-        )
+        """
 
         sql_vars = []
         return sql, sql_vars
@@ -189,7 +168,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
 class AuctionView(BaseChainView):
     def get(self, request, uid):
         sql_vars = [uid]
-        sql = """
+        sql = f"""
             SELECT
                   at.uid
                 , at.pool_address
@@ -218,20 +197,15 @@ class AuctionView(BaseChainView):
                 , p.collateral_token_symbol AS collateral_token_symbol
                 , p.quote_token_symbol AS quote_token_symbol
                 , p.lup
-            FROM {auction_table} at
-            LEFT JOIN {wallet_table} w
+            FROM {self.models.auction._meta.db_table} at
+            LEFT JOIN {self.models.wallet._meta.db_table} w
                 on at.borrower = w.address
-            JOIN {auction_kick_table} ak
+            JOIN {self.models.auction_kick._meta.db_table} ak
                 ON at.uid = ak.auction_uid
-            JOIN {pool_table} p
+            JOIN {self.models.pool._meta.db_table} p
                 ON at.pool_address = p.address
             WHERE at.uid = %s
-        """.format(
-            auction_table=self.models.auction._meta.db_table,
-            auction_kick_table=self.models.auction_kick._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            wallet_table=self.models.wallet._meta.db_table,
-        )
+        """
 
         data = fetch_one(sql, sql_vars)
 
@@ -245,7 +219,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
     default_order = "-order_index"
 
     def get_raw_sql(self, auction_uid, **kwargs):
-        sql = """
+        sql = f"""
             SELECT
                   at.order_index
                 , 'Take' AS event
@@ -262,7 +236,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                     'bond_change', at.bond_change::text,
                     'is_reward', at.is_reward
                 ) AS data
-            FROM {auction_take_table} at
+            FROM {self.models.auction_take._meta.db_table} at
             WHERE at.auction_uid = %s
 
             UNION
@@ -284,7 +258,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                     'bond_change', abt.bond_change::text,
                     'is_reward', abt.is_reward
                 ) AS data
-            FROM {auction_bucket_take_table} abt
+            FROM {self.models.auction_bucket_take._meta.db_table} abt
             WHERE abt.auction_uid = %s
 
             UNION
@@ -303,7 +277,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                     'collateral', akt.collateral::text,
                     'bond', akt.bond::text
                 ) AS data
-            FROM {auction_kick_table} akt
+            FROM {self.models.auction_kick._meta.db_table} akt
             WHERE akt.auction_uid = %s
 
             UNION
@@ -319,7 +293,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                 , jsonb_build_object(
                     'settled_debt', ast.settled_debt::text
                 ) AS data
-            FROM {auction_settle_table} ast
+            FROM {self.models.auction_settle._meta.db_table} ast
             WHERE ast.auction_uid = %s
 
             UNION
@@ -335,7 +309,7 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                 , jsonb_build_object(
                     'collateral', aast.collateral::text
                 ) AS data
-            FROM {auction_auction_settle_table} aast
+            FROM {self.models.auction_auction_settle._meta.db_table} aast
             WHERE aast.auction_uid = %s
 
             UNION
@@ -352,16 +326,9 @@ class AuctionEventsView(RawSQLPaginatedChainView):
                     'collateral', aanst.collateral::text,
                     'index', aanst.index::text
                 ) AS data
-            FROM {auction_auction_nft_settle_table} aanst
+            FROM {self.models.auction_auction_nft_settle._meta.db_table} aanst
             WHERE aanst.auction_uid = %s
-        """.format(
-            auction_take_table=self.models.auction_take._meta.db_table,
-            auction_bucket_take_table=self.models.auction_bucket_take._meta.db_table,
-            auction_kick_table=self.models.auction_kick._meta.db_table,
-            auction_settle_table=self.models.auction_settle._meta.db_table,
-            auction_auction_settle_table=self.models.auction_auction_settle._meta.db_table,
-            auction_auction_nft_settle_table=self.models.auction_auction_nft_settle._meta.db_table,
-        )
+        """
 
         sql_vars = [auction_uid] * 6
         return sql, sql_vars

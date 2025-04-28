@@ -783,7 +783,6 @@ class NetworkStatsDaily(models.Model):
     network = models.CharField(max_length=42, db_index=True)
     tvl = models.DecimalField(max_digits=32, decimal_places=18)
     collateral_usd = models.DecimalField(max_digits=32, decimal_places=18)
-    debt_usd = models.DecimalField(max_digits=32, decimal_places=18)
     supply_usd = models.DecimalField(max_digits=32, decimal_places=18)
     debt_usd = models.DecimalField(max_digits=32, decimal_places=18)
     date = models.DateField()

@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 
 from celery.schedules import crontab
 
-from ajna.celery import app
+from ajna.celery_app import app
 from ajna.v4.modules.at_risk import wallets_at_risk_notification
 from ajna.v4.modules.events import fetch_and_save_events_for_all_pools
 from ajna.v4.modules.networks import save_network_stats_for_date

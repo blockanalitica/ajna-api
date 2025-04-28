@@ -115,21 +115,18 @@ def _estimate_price_from_pools_for_token(models, address, symbol):
     if symbol in STABLECOIN_SYMBOLS:
         return Decimal("1")
 
-    sql = """
+    sql = f"""
         SELECT
             MIN(x.price) AS price
         FROM (
             SELECT
                 p.hpb * qt.underlying_price AS price
-            FROM {pool_table} AS p
-            JOIN {token_table} AS qt
+            FROM {models.pool._meta.db_table} AS p
+            JOIN {models.token._meta.db_table} AS qt
                 ON p.quote_token_address = qt.underlying_address
             WHERE p.collateral_token_address = %s AND p.hpb < %s
         ) x
-    """.format(
-        pool_table=models.pool._meta.db_table,
-        token_table=models.token._meta.db_table,
-    )
+    """
 
     sql_vars = [address, MAX_PRICE_DECIMAL]
     data = fetch_one(sql, sql_vars)

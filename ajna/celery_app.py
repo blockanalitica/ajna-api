@@ -30,9 +30,9 @@ def config_loggers(*args, **kwargs):
 def _celery_task_key(task):
     prefix = "celery"
     if isinstance(task, str):
-        return "{}.{}".format(prefix, task)
+        return f"{prefix}.{task}"
     else:
-        return "{}.{}".format(prefix, task.name)
+        return f"{prefix}.{task.name}"
 
 
 def _start_timer(name, group, instance):
@@ -71,7 +71,7 @@ def _send_queue_sizes_to_statsd():
         with app.pool.acquire(block=True) as conn:
             for queue in queues:
                 queue_size = conn.default_channel.client.llen(queue)
-                gauge("celery.queues.{}.size".format(queue), queue_size)
+                gauge(f"celery.queues.{queue}.size", queue_size)
     except Exception:
         log.exception("Error sending queue sizes to statsd")
 

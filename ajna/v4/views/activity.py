@@ -11,11 +11,11 @@ class ActivityView(BaseChainView):
     days_ago_options = [1, 7, 30, 90, 365, 9999]
 
     def get(self, request):
-        sql = """
+        sql = f"""
             WITH previous AS (
                 SELECT
                     ast.total_wallets
-                FROM {activity_snapshot_table} ast
+                FROM {self.chain.activity_snapshot._meta.db_table} ast
                 WHERE ast.date = %s
             )
 
@@ -26,11 +26,11 @@ class ActivityView(BaseChainView):
                 , ast.active_this_month
                 , ast.new_this_month
                 , prev.total_wallets AS prev_total_wallets
-            FROM {activity_snapshot_table} ast
+            FROM {self.chain.activity_snapshot._meta.db_table} ast
             LEFT JOIN previous AS prev ON 1 = 1
             ORDER BY ast.date DESC
             LIMIT 1
-        """.format(activity_snapshot_table=self.chain.activity_snapshot._meta.db_table)
+        """
         data = fetch_one(sql, [self.days_ago_dt.date()])
         return Response(data, status.HTTP_200_OK)
 
@@ -42,36 +42,36 @@ class ActivityHistoricView(BaseChainView):
 
     def get(self, request):
         if self.days_ago > 30:
-            sql = """
+            sql = f"""
                 SELECT
                       latest.dt AS date
                     , a.active_this_month AS active
                     , a.new_this_month AS new
                     , a.total_wallets AS total
-                FROM {activity_snapshot_table} a
+                FROM {self.chain.activity_snapshot._meta.db_table} a
                 JOIN (
                     SELECT
                           DATE_TRUNC('month', ast.date) AS dt
                         , MAX(ast.date) AS max_datetime
-                    FROM {activity_snapshot_table} ast
+                    FROM {self.chain.activity_snapshot._meta.db_table} ast
                     WHERE ast.date >= %s
                     GROUP BY 1
                 ) latest
                 ON a.date = latest.max_datetime
                 ORDER BY 1
-            """.format(activity_snapshot_table=self.chain.activity_snapshot._meta.db_table)
+            """
             data = fetch_all(sql, [self.days_ago_dt.date()])
         else:
-            sql = """
+            sql = f"""
                 SELECT
                       ast.date
                     , ast.active_wallets AS active
                     , ast.total_wallets AS total
                     , ast.new_wallets AS new
-                FROM {activity_snapshot_table} ast
+                FROM {self.chain.activity_snapshot._meta.db_table} ast
                 WHERE ast.date >= %s
                 ORDER BY ast.date
-            """.format(activity_snapshot_table=self.chain.activity_snapshot._meta.db_table)
+            """
             data = fetch_all(sql, [self.days_ago_dt.date()])
 
         return Response(data, status.HTTP_200_OK)

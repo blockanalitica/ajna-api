@@ -13,7 +13,7 @@ class OverviewView(BaseChainView):
 
     def get(self, request):
         sql_vars = {"days_ago_dt": self.days_ago_dt}
-        sql = """
+        sql = f"""
             WITH previous AS (
                 SELECT DISTINCT ON (ps.address)
                       ps.address
@@ -23,7 +23,7 @@ class OverviewView(BaseChainView):
                     , ps.t0debt
                     , ps.collateral_token_balance
                     , ps.quote_token_balance
-                FROM {pool_snapshot_table} ps
+                FROM {self.models.pool_snapshot._meta.db_table} ps
                 WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
                     AND ps.datetime <= %(days_ago_dt)s
                 ORDER BY ps.address, ps.datetime DESC
@@ -57,19 +57,15 @@ class OverviewView(BaseChainView):
                     , (prev.collateral_token_balance * ct.underlying_price) +
                         (prev.quote_token_balance * qt.underlying_price) AS prev_tvl
                     , prev.total_ajna_burned AS prev_total_ajna_burned
-                FROM {pool_table} AS pool
-                JOIN {token_table} AS ct
+                FROM {self.models.pool._meta.db_table} AS pool
+                JOIN {self.models.token._meta.db_table} AS ct
                     ON pool.collateral_token_address = ct.underlying_address
-                JOIN {token_table} AS qt
+                JOIN {self.models.token._meta.db_table} AS qt
                     ON pool.quote_token_address = qt.underlying_address
                 FULL JOIN previous AS prev
                     ON prev.address = pool.address
             ) AS sub
-        """.format(
-            token_table=self.models.token._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-        )
+        """
 
         data = fetch_one(sql, sql_vars)
 
@@ -81,7 +77,7 @@ class OverviewView(BaseChainView):
 
 class HistoryView(BaseChainView):
     def _get_collateral(self):
-        sql = """
+        sql = f"""
             SELECT
                   x.dt
                 , SUM(x.amount) AS amount
@@ -89,21 +85,18 @@ class HistoryView(BaseChainView):
                 SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
                       ps.pledged_collateral * ct.underlying_price AS amount
                     , DATE_TRUNC('day', ps.datetime) AS dt
-                FROM {pool_snapshot_table} ps
-                JOIN {token_table} AS ct
+                FROM {self.models.pool_snapshot._meta.db_table} ps
+                JOIN {self.models.token._meta.db_table} AS ct
                     ON ps.collateral_token_address = ct.underlying_address
                 ORDER BY dt, ps.address, ps.datetime
             ) x
             GROUP BY x.dt
             ORDER BY x.dt
-        """.format(
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            token_table=self.models.token._meta.db_table,
-        )
+        """
         return sql, []
 
     def _get_deposit(self):
-        sql = """
+        sql = f"""
             SELECT
                   x.dt
                 , SUM(x.amount) AS amount
@@ -111,21 +104,18 @@ class HistoryView(BaseChainView):
                 SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
                       ps.pool_size * qt.underlying_price AS amount
                     , DATE_TRUNC('day', ps.datetime) AS dt
-                FROM {pool_snapshot_table} ps
-                JOIN {token_table} AS qt
+                FROM {self.models.pool_snapshot._meta.db_table} ps
+                JOIN {self.models.token._meta.db_table} AS qt
                     ON ps.quote_token_address = qt.underlying_address
                 ORDER BY dt, ps.address, ps.datetime
             ) x
             GROUP BY x.dt
             ORDER BY x.dt
-        """.format(
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            token_table=self.models.token._meta.db_table,
-        )
+        """
         return sql, []
 
     def _get_debt(self):
-        sql = """
+        sql = f"""
             SELECT
                   x.dt
                 , SUM(x.amount) AS amount
@@ -133,21 +123,18 @@ class HistoryView(BaseChainView):
                 SELECT DISTINCT ON (DATE_TRUNC('day', ps.datetime), ps.address)
                       ps.debt * qt.underlying_price AS amount
                     , DATE_TRUNC('day', ps.datetime) AS dt
-                FROM {pool_snapshot_table} ps
-                JOIN {token_table} AS qt
+                FROM {self.models.pool_snapshot._meta.db_table} ps
+                JOIN {self.models.token._meta.db_table} AS qt
                     ON ps.quote_token_address = qt.underlying_address
                 ORDER BY dt, ps.address, ps.datetime
             ) x
             GROUP BY x.dt
             ORDER BY x.dt
-        """.format(
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            token_table=self.models.token._meta.db_table,
-        )
+        """
         return sql, []
 
     def _get_tvl(self):
-        sql = """
+        sql = f"""
             SELECT
                   x.dt
                 , SUM(x.amount) AS amount
@@ -156,32 +143,27 @@ class HistoryView(BaseChainView):
                       (ps.collateral_token_balance * ct.underlying_price
                         + ps.quote_token_balance * qt.underlying_price) AS amount
                     , DATE_TRUNC('day', ps.datetime) AS dt
-                FROM {pool_snapshot_table} ps
-                JOIN {token_table} AS qt
+                FROM {self.models.pool_snapshot._meta.db_table} ps
+                JOIN {self.models.token._meta.db_table} AS qt
                     ON ps.quote_token_address = qt.underlying_address
-                JOIN {token_table} AS ct
+                JOIN {self.models.token._meta.db_table} AS ct
                     ON ps.collateral_token_address = ct.underlying_address
                 ORDER BY dt, ps.address, ps.datetime
             ) x
             GROUP BY x.dt
             ORDER BY x.dt
-        """.format(
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            token_table=self.models.token._meta.db_table,
-        )
+        """
         return sql, []
 
     def _get_volume(self):
-        sql = """
+        sql = f"""
             SELECT
                   pvs.date AS dt
                 , SUM(pvs.amount) AS amount
-            FROM {pool_volume_snapshot_table} pvs
+            FROM {self.models.pool_volume_snapshot._meta.db_table} pvs
             GROUP BY pvs.date
             ORDER BY pvs.date
-        """.format(
-            pool_volume_snapshot_table=self.models.pool_volume_snapshot._meta.db_table,
-        )
+        """
         return sql, []
 
     def get(self, request):

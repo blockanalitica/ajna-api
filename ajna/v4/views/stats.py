@@ -13,7 +13,7 @@ class OverviewView(BaseChainView):
 
     def get(self, request):
         sql_vars = {"days_ago_dt": self.days_ago_dt}
-        sql = """
+        sql = f"""
             WITH previous AS (
                 SELECT DISTINCT ON (ps.address)
                       ps.address
@@ -25,7 +25,7 @@ class OverviewView(BaseChainView):
                     , ps.reserves * ps.quote_token_price AS reserves_usd
                     , COALESCE(ps.collateral_token_balance * ps.collateral_token_price, 0) +
                         COALESCE(ps.quote_token_balance * ps.quote_token_price, 0) AS tvl
-                FROM {pool_snapshot_table} ps
+                FROM {self.models.pool_snapshot._meta.db_table} ps
                 WHERE ps.datetime > (%(days_ago_dt)s - INTERVAL '7 DAY')
                     AND ps.datetime <= %(days_ago_dt)s
                 ORDER BY ps.address, ps.datetime DESC
@@ -67,19 +67,15 @@ class OverviewView(BaseChainView):
                     , prev.tvl AS prev_tvl
                     , prev.total_ajna_burned AS prev_total_ajna_burned
                     , prev.reserves_usd AS prev_reserves_usd
-                FROM {pool_table} AS pool
-                JOIN {token_table} AS ct
+                FROM {self.models.pool._meta.db_table} AS pool
+                JOIN {self.models.token._meta.db_table} AS ct
                     ON pool.collateral_token_address = ct.underlying_address
-                JOIN {token_table} AS qt
+                JOIN {self.models.token._meta.db_table} AS qt
                     ON pool.quote_token_address = qt.underlying_address
                 FULL JOIN previous AS prev
                     ON prev.address = pool.address
             ) AS sub
-        """.format(
-            token_table=self.models.token._meta.db_table,
-            pool_table=self.models.pool._meta.db_table,
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-        )
+        """
 
         data = fetch_one(sql, sql_vars)
 
@@ -101,17 +97,17 @@ class HistoryView(BaseChainView):
             days_ago_filter = "WHERE pst.datetime >= %s"
             sql_vars.append(self.days_ago_dt)
 
-        sql = """
+        sql = f"""
             SELECT
                   latest.dt
                 , {amount_select}
-            FROM {pool_snapshot_table} ps
+            FROM {self.models.pool_snapshot._meta.db_table} ps
             JOIN (
                 SELECT
                       DATE(pst.datetime) AS dt
                     , pst.address
                     , MAX(pst.datetime) AS max_datetime
-                FROM {pool_snapshot_table} pst
+                FROM {self.models.pool_snapshot._meta.db_table} pst
                 {days_ago_filter}
                 GROUP BY 1,2
             ) latest
@@ -120,29 +116,23 @@ class HistoryView(BaseChainView):
                 AND ps.datetime = latest.max_datetime
             GROUP BY 1
             ORDER BY 1
-        """.format(
-            pool_snapshot_table=self.models.pool_snapshot._meta.db_table,
-            days_ago_filter=days_ago_filter,
-            amount_select=amount_select,
-        )
+        """
         return sql, sql_vars
 
     def _get_volume(self):
-        sql = """
+        sql = f"""
             SELECT
                   pvs.date AS dt
                 , SUM(pvs.amount) AS amount
-            FROM {pool_volume_snapshot_table} pvs
+            FROM {self.models.pool_volume_snapshot._meta.db_table} pvs
             WHERE pvs.date >= %s
             GROUP BY pvs.date
             ORDER BY pvs.date
-        """.format(
-            pool_volume_snapshot_table=self.models.pool_volume_snapshot._meta.db_table,
-        )
+        """
         return sql, [self.days_ago_dt]
 
     def _get_burn(self):
-        sql = """
+        sql = f"""
             SELECT
                   rat.block_datetime AS date
                 , SUM(rat.ajna_burned) OVER (
@@ -151,11 +141,9 @@ class HistoryView(BaseChainView):
                 , SUM(rat.ajna_burned * rat.ajna_price) OVER (
                     ORDER BY rat.block_datetime)
                     AS cumulative_ajna_burned_usd
-            FROM {reserve_auction_take_table} rat
+            FROM {self.models.reserve_auction_take._meta.db_table} rat
             ORDER BY rat.block_datetime
-        """.format(
-            reserve_auction_take_table=self.models.reserve_auction_take._meta.db_table,
-        )
+        """
         return sql, []
 
     def get(self, request):

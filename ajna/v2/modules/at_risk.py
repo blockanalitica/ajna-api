@@ -81,7 +81,7 @@ def wallets_at_risk_notification(chain):
             },
         )
         if not created and datetime.now() >= notification.datetime + timedelta(days=1):
-            notification.key = "{}_{}".format(notification.key, notification.datetime.timestamp())
+            notification.key = f"{notification.key}_{notification.datetime.timestamp()}"
             notification.save()
             chain.notification.objects.create(
                 key=row["wallet_address"],
