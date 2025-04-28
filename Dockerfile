@@ -27,8 +27,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
 
-COPY ./src/ /code/
-COPY ./abis/ /code/abis/
+COPY . /code/
 
 ENV PATH="/code/.venv/bin:$PATH"
 
