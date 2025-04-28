@@ -58,6 +58,7 @@ class OverallView(DaysAgoMixin, APIView):
             "rari": "RARI",
             "avalanche": "Avalanche",
         }
+
         chain_models_map = {
             "ethereum": EthereumModels(),
             "arbitrum": ArbitrumModels(),
