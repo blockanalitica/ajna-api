@@ -110,9 +110,9 @@ requires-dist = [
     { name = "celery", specifier = ">=5.5.2" },
     { name = "chain-harvester", specifier = ">=1.17.0" },
     { name = "discord-webhook", specifier = ">=1.4.1" },
-    { name = "django", specifier = ">=5.2.0" },
+    { name = "django", specifier = ">=5.1.0" },
     { name = "django-bulk-load", specifier = ">=1.4.3" },
-    { name = "django-celery-beat", specifier = ">=2.8.0" },
+    { name = "django-celery-beat", specifier = "==2.7.0" },
     { name = "django-cors-headers", specifier = ">=4.7.0" },
     { name = "django-environ", specifier = ">=0.12.0" },
     { name = "django-extensions", specifier = ">=4.1" },
@@ -502,16 +502,16 @@ wheels = [
 
 [[package]]
 name = "django"
-version = "5.2"
+version = "5.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
     { name = "sqlparse" },
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4c/1b/c6da718c65228eb3a7ff7ba6a32d8e80fa840ca9057490504e099e4dd1ef/Django-5.2.tar.gz", hash = "sha256:1a47f7a7a3d43ce64570d350e008d2949abe8c7e21737b351b6a1611277c6d89", size = 10824891, upload_time = "2025-04-02T13:08:06.874Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/40/45adc1b93435d1b418654a734b68351bb6ce0a0e5e37b2f0e9aeb1a2e233/Django-5.1.8.tar.gz", hash = "sha256:42e92a1dd2810072bcc40a39a212b693f94406d0ba0749e68eb642f31dc770b4", size = 10723602, upload_time = "2025-04-02T11:19:56.028Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/63/e0/6a5b5ea350c5bd63fe94b05e4c146c18facb51229d9dee42aa39f9fc2214/Django-5.2-py3-none-any.whl", hash = "sha256:91ceed4e3a6db5aedced65e3c8f963118ea9ba753fc620831c77074e620e7d83", size = 8301361, upload_time = "2025-04-02T13:08:01.465Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/0d/e6dd0ed898b920fec35c6eeeb9acbeb831fff19ad21c5e684744df1d4a36/Django-5.1.8-py3-none-any.whl", hash = "sha256:11b28fa4b00e59d0def004e9ee012fefbb1065a5beb39ee838983fd24493ad4f", size = 8277130, upload_time = "2025-04-02T11:19:51.591Z" },
 ]
 
 [[package]]
@@ -529,7 +529,7 @@ wheels = [
 
 [[package]]
 name = "django-celery-beat"
-version = "2.8.0"
+version = "2.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "celery" },
@@ -539,9 +539,9 @@ dependencies = [
     { name = "python-crontab" },
     { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d5/c8/f29ec081372fb1d800933a3effebbd19b97a93be27a88a5ab100f01babc2/django_celery_beat-2.8.0.tar.gz", hash = "sha256:955bfb3c4b8f1026a8d20144d0da39c941e1eb23acbaee9e12a7e7cc1f74959a", size = 172052, upload_time = "2025-04-16T07:15:40.122Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/03/8f/8a18f234173001bd7a7d63826d2d7f456b38031c892514d27c0f7aea10be/django_celery_beat-2.7.0.tar.gz", hash = "sha256:8482034925e09b698c05ad61c36ed2a8dbc436724a3fe119215193a4ca6dc967", size = 163472, upload_time = "2024-08-22T11:12:24.943Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2e/d6/d83c9664b03f41281a0ae975756ce23fb8da7c6844f400f2d13c840ea941/django_celery_beat-2.8.0-py3-none-any.whl", hash = "sha256:f8fd2e1ffbfa8e570ab9439383b2cd15a6642b347662d0de79c62ba6f68d4b38", size = 103583, upload_time = "2025-04-16T07:15:38.196Z" },
+    { url = "https://files.pythonhosted.org/packages/29/f8/f5a25472222b19258c3a53ce71c4efd171a12ab3c988bb3026dec0522a64/django_celery_beat-2.7.0-py3-none-any.whl", hash = "sha256:851c680d8fbf608ca5fecd5836622beea89fa017bc2b3f94a5b8c648c32d84b1", size = 94097, upload_time = "2024-08-22T11:12:23.172Z" },
 ]
 
 [[package]]
