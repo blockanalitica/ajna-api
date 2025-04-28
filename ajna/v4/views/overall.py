@@ -17,6 +17,7 @@ from ..base.chain import BaseModels
 from ..blast.chain import BlastModels
 from ..ethereum.chain import EthereumModels
 from ..gnosis.chain import GnosisModels
+from ..linea.chain import LineaModels
 from ..mode.chain import ModeModels
 from ..models import V4NetworkStatsDaily, V4OverallStats
 from ..optimism.chain import OptimismModels
@@ -57,6 +58,7 @@ class OverallView(DaysAgoMixin, APIView):
             "mode": "Mode",
             "rari": "RARI",
             "avalanche": "Avalanche",
+            "linea": "Linea",
         }
 
         chain_models_map = {
@@ -70,6 +72,7 @@ class OverallView(DaysAgoMixin, APIView):
             "mode": ModeModels(),
             "rari": RariModels(),
             "avalanche": AvalancheModels(),
+            "linea": LineaModels(),
         }
         prev_sqls = []
         selects = []
