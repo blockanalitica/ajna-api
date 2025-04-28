@@ -22,8 +22,8 @@ jobs:
       db:
         image: postgres:17.2
         env:
-          POSTGRES_DB: aave
-          POSTGRES_USER: blockanalitica
+          POSTGRES_DB: ajna
+          POSTGRES_USER: ajna
           POSTGRES_PASSWORD: postgres
         options: >-
           --health-cmd pg_isready

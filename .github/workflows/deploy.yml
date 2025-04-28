@@ -51,7 +51,7 @@ jobs:
       - name: Set up Python 3.x
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11.6
+          python-version: 3.13.3
           cache: 'pip'
       - name: Install dependencies
         run: |
