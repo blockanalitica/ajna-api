@@ -138,6 +138,7 @@ CELERY_IMPORTS = [
     "ajna.v4.mode.tasks",
     "ajna.v4.rari.tasks",
     "ajna.v4.avalanche.tasks",
+    "ajna.v4.linea.tasks",
 ]
 
 # django-celery-beat configuration options
