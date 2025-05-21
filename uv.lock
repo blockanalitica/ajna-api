@@ -108,7 +108,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "celery", specifier = ">=5.5.2" },
-    { name = "chain-harvester", specifier = ">=2.0.0" },
+    { name = "chain-harvester", specifier = ">=2.0.1" },
     { name = "discord-webhook", specifier = ">=1.4.1" },
     { name = "django", specifier = ">=5.2.1" },
     { name = "django-bulk-load", specifier = ">=1.4.3" },
@@ -291,7 +291,7 @@ wheels = [
 
 [[package]]
 name = "chain-harvester"
-version = "2.0.0"
+version = "2.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "eth-abi" },
@@ -299,9 +299,9 @@ dependencies = [
     { name = "requests" },
     { name = "web3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/24/4d/c8eff9848f57c744ddaaa56a4f6603bf907a1db079e18172d707e8958c9e/chain_harvester-2.0.0.tar.gz", hash = "sha256:b4586eaf95fe1e79a4a1a9c2951e5cbad8342f48089852ebac6755f0ab59e789", size = 88665, upload_time = "2025-05-21T15:30:12.476Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/dd/330fdd2c3eb865fb1ef15c5920fe9088f5fab9f5a787e0ba96d6c0f9c4a3/chain_harvester-2.0.1.tar.gz", hash = "sha256:e99a71f36bddae5a9bcea17df0912f0e5a8190ddea999536e06d86f00b242045", size = 88682, upload_time = "2025-05-21T16:33:35.984Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/49/8249b90b7a6c4a1ac3a8d7edbfdad394293c24c050c7611afa791c04855b/chain_harvester-2.0.0-py3-none-any.whl", hash = "sha256:dd6fe15015d307b28c2f5010001dde63fe0300e1abbf13dff69228e60c032062", size = 101344, upload_time = "2025-05-21T15:30:11.269Z" },
+    { url = "https://files.pythonhosted.org/packages/4f/17/cbeae651418c8aff6c2d246bec57123fa963a5934e8844f67e4f6c7ff55b/chain_harvester-2.0.1-py3-none-any.whl", hash = "sha256:e70ce5e3e93bfc1f7566935accdafcdf45f085d6087e76b4bf74311aafbdc0b3", size = 101348, upload_time = "2025-05-21T16:33:34.341Z" },
 ]
 
 [[package]]

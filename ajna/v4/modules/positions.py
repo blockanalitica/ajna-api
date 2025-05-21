@@ -456,7 +456,8 @@ class EventProcessor:
                 # auctions and reserve auctions as they rely on those models to be
                 # populated correctly
                 self._create_notifications(event)
-                send_notification_for_event(self._chain, event)
+                if self._chain.chain != "hemi":
+                    send_notification_for_event(self._chain, event)
 
             # Update pools last_block_number to the last event block number
             # so on the next run we start from that block number onwards
