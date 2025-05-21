@@ -23,7 +23,3 @@ POLYGON_NODE = "http://eth_node/polygon"
 OPTIMISM_NODE = "http://eth_node/optimism"
 
 ETHERSCAN_API_KEY = "no-key"
-ARBISCAN_API_KEY = "no-key"
-BASESCAN_API_KEY = "no-key"
-OPTIMISTIC_ETHERSCAN_API_KEY = "no-key"
-POLYGONSCAN_API_KEY = "no-key"

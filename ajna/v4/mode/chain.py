@@ -50,7 +50,6 @@ class Mode(AjnaChainMixin, ModeMainnetChain):
     def __init__(self):
         super().__init__(
             rpc=settings.MODE_NODE,
-            api_key="don't need",
             step=10000,
         )
         self.unique_key = "v4_mode"

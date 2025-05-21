@@ -50,7 +50,7 @@ class Blast(AjnaChainMixin, BlastMainnetChain):
     def __init__(self):
         super().__init__(
             rpc=settings.BLAST_NODE,
-            api_key=settings.BLASTSCAN_API_KEY,
+            etherscan_api_key=settings.ETHERSCAN_API_KEY,
             step=10000,
         )
         self.unique_key = "v4_blast"

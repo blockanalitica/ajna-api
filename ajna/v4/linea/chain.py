@@ -49,7 +49,9 @@ class LineaModels:
 class Linea(AjnaChainMixin, LineaMainnetChain):
     def __init__(self):
         super().__init__(
-            rpc=settings.LINEA_NODE, api_key=settings.LINEASCAN_API_KEY, step=1_000_000
+            rpc=settings.LINEA_NODE,
+            etherscan_api_key=settings.ETHERSCAN_API_KEY,
+            step=1_000_000,
         )
         self.unique_key = "v4_linea"
 
