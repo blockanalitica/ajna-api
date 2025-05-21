@@ -50,7 +50,6 @@ class Rari(AjnaChainMixin, RariMainnetChain):
     def __init__(self):
         super().__init__(
             rpc=settings.RARI_NODE,
-            api_key="n/a",
             step=10000,
         )
         self.unique_key = "v4_rari"

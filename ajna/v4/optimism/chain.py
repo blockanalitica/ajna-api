@@ -50,7 +50,7 @@ class Optimism(AjnaChainMixin, OptimismMainnetChain):
     def __init__(self):
         super().__init__(
             rpc=settings.OPTIMISM_NODE,
-            api_key=settings.OPTIMISTIC_ETHERSCAN_API_KEY,
+            etherscan_api_key=settings.ETHERSCAN_API_KEY,
             step=50000,
         )
         self.unique_key = "v4_optimism"

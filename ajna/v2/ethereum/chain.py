@@ -47,7 +47,7 @@ class Ethereum(AjnaChainMixin, EthereumMainnetChain):
     def __init__(self):
         super().__init__(
             rpc=settings.ETHEREUM_NODE,
-            api_key=settings.ETHERSCAN_API_KEY,
+            etherscan_api_key=settings.ETHERSCAN_API_KEY,
             step=50000,
         )
         self.unique_key = "v2_ethereum"

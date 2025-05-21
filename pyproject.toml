@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "celery>=5.5.2",
-    "chain-harvester>=1.17.0",
+    "chain-harvester>=2.0.0",
     "django-bulk-load>=1.4.3",
     "django-celery-beat==2.8.1",
     "django-cors-headers>=4.7.0",
