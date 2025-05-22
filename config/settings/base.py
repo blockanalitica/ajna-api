@@ -282,6 +282,7 @@ MODE_NODE = env("MODE_NODE", default="")
 RARI_NODE = env("RARI_NODE", default="")
 AVALANCHE_NODE = env("AVALANCHE_NODE", default="")
 LINEA_NODE = env("LINEA_NODE", default="")
+HEMI_NODE = env("HEMI_NODE", default="")
 
 ETHERSCAN_API_KEY = env("ETHERSCAN_API_KEY", default="")
 

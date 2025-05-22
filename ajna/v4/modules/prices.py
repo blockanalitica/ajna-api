@@ -65,6 +65,7 @@ STABLECOIN_SYMBOLS = {
     "BAC",
     "USDS",
     "savUSD",
+    "USDC.e",
 }
 
 RHINOFI_MAP = {

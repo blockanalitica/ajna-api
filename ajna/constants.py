@@ -26,6 +26,7 @@ AJNA_DEPLOYMENTS = {
         "rari",
         "avalanche",
         "linea",
+        "hemi",
     ],
 }
 
