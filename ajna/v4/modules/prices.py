@@ -75,6 +75,11 @@ RHINOFI_MAP = {
     }
 }
 
+HEMI_FORCE_MAP = {
+    # msBTC 1:1 with WBTC
+    "msBTC": {"network": "ethereum", "address": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"}
+}
+
 DEFILLAMA_CHAIN_MAP = {"avalanche": "avax"}
 
 # Note: make sure the address is lowercase
@@ -161,6 +166,10 @@ def update_token_prices(models, network):
             try:
                 if address in RHINOFI_MAP:
                     price = _get_rhiofi_price(models, address)
+                elif network == "hemi" and symbol in HEMI_FORCE_MAP:
+                    coin = HEMI_FORCE_MAP[symbol]
+                    hemi_price_map = get_current_prices_map([coin["address"]], coin["network"], {})
+                    price = hemi_price_map.get(coin["address"])
                 else:
                     price = _estimate_price_from_pools_for_token(models, address, symbol)
                     is_estimated_price = True
