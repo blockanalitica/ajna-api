@@ -457,7 +457,10 @@ class EventProcessor:
                 # populated correctly
                 self._create_notifications(event)
                 # Only send notifications for the latest version of the protocol
-                if self.chain.unique_key.startswith("v4") or self.chain.unique_key == "v3_ethereum":
+                if (
+                    self._chain.unique_key.startswith("v4")
+                    or self._chain.unique_key == "v3_ethereum"
+                ):
                     send_notification_for_event(self._chain, event)
 
             # Update pools last_block_number to the last event block number
