@@ -183,6 +183,10 @@ class BasePoolManager:
                 from_block_number = self.pool_factory_start_block
 
         to_block = self._chain.get_latest_block()
+        if from_block_number > to_block:
+            # for slow chains (eg. rari) from_block_number can be greater than to_block
+            # because of how we store the value in cache
+            return
 
         events = self._chain.get_events_for_contract_topics(
             self.pool_factory_address,
