@@ -442,6 +442,11 @@ def fetch_and_save_events_for_all_pools(chain):
 
     to_block = chain.get_latest_block()
 
+    if from_block > to_block:
+        # for slow chains (eg. rari) from_block_number can be greater than to_block
+        # because of how we store the value in cache
+        return
+
     pool_addresses = [Web3.to_checksum_address(address) for address in pool_addresses]
     events = chain.get_events_for_contracts(
         pool_addresses, from_block=from_block, to_block=to_block
