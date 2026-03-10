@@ -90,6 +90,11 @@ COINGECKO_MAP = {
 
 
 def _save_price_for_address(models, address, price, is_estimated_price=False):
+    if abs(price) >= Decimal("1e14"):
+        log.debug("Price for address %s is greater than 1e14: %s. Skipping...", address, price)
+        # skip or handle invalid value
+        return
+
     models.token.objects.filter(underlying_address=address).update(
         underlying_price=price, is_estimated_price=is_estimated_price
     )
