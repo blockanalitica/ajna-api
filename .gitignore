@@ -133,3 +133,4 @@ dmypy.json
 *.ipynb
 .idea/
 Makefile
+spongebob.py
