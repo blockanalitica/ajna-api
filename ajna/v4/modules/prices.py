@@ -90,11 +90,6 @@ COINGECKO_MAP = {
 
 
 def _save_price_for_address(models, address, price, is_estimated_price=False):
-    if abs(price) >= Decimal("1e10"):
-        log.debug("Price for address %s is greater than 1e10: %s. Skipping...", address, price)
-        # skip or handle invalid value
-        return
-
     models.token.objects.filter(underlying_address=address).update(
         underlying_price=price, is_estimated_price=is_estimated_price
     )
@@ -161,9 +156,17 @@ def update_token_prices(models, network):
     price_mapping = get_current_prices_map(
         underlying_addresses, chain_name=chain_name, coingecko_map=COINGECKO_MAP
     )
+    filtered_price_mapping = {}
+    for addr, price in price_mapping.items():
+        if abs(price) >= Decimal("1e10"):
+            log.debug("Price for address %s is greater than 1e10: %s. Skipping...", addr, price)
+            # skip or handle invalid value
+            continue
+        filtered_price_mapping[addr] = price
+
     for address, symbol in tokens:
-        if address in price_mapping:
-            _save_price_for_address(models, address, price_mapping[address])
+        if address in filtered_price_mapping:
+            _save_price_for_address(models, address, filtered_price_mapping[address])
         else:
             # Catch all and any exceptions so that defillama prices are saved even
             # if any other price fetching/calculation fails.
