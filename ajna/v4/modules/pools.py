@@ -15,6 +15,7 @@ from ajna.utils.wad import wad_to_decimal
 
 log = logging.getLogger(__name__)
 
+IERC1155_TOKEN = {"base": {"0x8e57b765720d660c541e66c1468a118a65664903"}}
 
 VOLUME_SQL = """
     SELECT
@@ -226,16 +227,33 @@ class BasePoolManager:
                         ["balanceOf(address)(uint256)", pool_address],
                         [f"{pool_address}:quoteTokenBalance", None],
                     ),
+                ]
+            )
+
+            if pool_data["collateral_token_address"] in IERC1155_TOKEN.get("base", set()):
+                collateral_token = self.token_info(pool_data["collateral_token_address"])
+                collateral_scale = Decimal("1e{}".format(18 - collateral_token["decimals"]))
+                calls.append(
+                    (
+                        pool_data["collateral_token_address"],
+                        [
+                            "balanceOf(address,uint256)(uint256)",
+                            pool_address,
+                            int(collateral_scale),
+                        ],
+                        [f"{pool_address}:collateralTokenBalance", None],
+                    )
+                )
+            else:
+                calls.append(
                     (
                         pool_data["collateral_token_address"],
                         ["balanceOf(address)(uint256)", pool_address],
                         [f"{pool_address}:collateralTokenBalance", None],
                     ),
-                ]
-            )
+                )
 
         data = self._chain.multicall(calls, block_identifier=block_number)
-
         for pool_address, pool_data in pools_data.items():
             meaningful_deposit = wad_to_decimal(data[f"{pool_address}:depositUpToIndex"])
             quote_token_balance = data[f"{pool_address}:quoteTokenBalance"]
