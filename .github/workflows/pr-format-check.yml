@@ -8,29 +8,38 @@ on:
 
 jobs:
   check-pull-request:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404-arm
+    permissions:
+      pull-requests: read
 
     steps:
-      - name: 'Pull Request - Title verification (eg: "feat: PR title")'
-        if: always()
-        uses: gsactions/commit-message-checker@v2
+      - name: Pull Request - Title verification
+        uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          pattern: '^(feat|fix|docs|style|refactor|revert|perf|test|build|ci|deps|chore|chore\(\S+\))\!?: [A-Za-z].+$'
-          flags: 'g'
-          error: 'Pull request - Title not in correct format (e.g.: "feat: Short title" or "revert: Short title")'
-          excludeDescription: 'true'
-
-      - name: Pull Request - Title verification (must not end with "." dot)
-        uses: gsactions/commit-message-checker@v2
-        with:
-          pattern: '^.+[^\.]$'
-          error: 'Pull request - Title must not end with dot "."'
-          excludeDescription: 'true'
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            revert
+            perf
+            test
+            build
+            ci
+            deps
+            chore
+          subjectPattern: '^[A-Za-z].*[^.]$'
+          subjectPatternError: 'Pull request title "{title}" must start its subject with a letter and must not end with a dot.'
 
       - name: Pull Request - Title length validation
         if: always()
-        uses: gsactions/commit-message-checker@v2
-        with:
-          pattern: '^[^#].{0,80}$'
-          error: 'Pull Request - Maximum title line length is 80 characters'
-          excludeDescription: 'true'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if (( ${#PR_TITLE} > 80 )); then
+            echo "::error::Pull request title must not exceed 80 characters."
+            exit 1
+          fi
