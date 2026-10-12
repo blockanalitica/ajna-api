@@ -1,8 +1,7 @@
 import logging
 from datetime import date, datetime, timedelta
 
-from celery.schedules import crontab
-
+# from celery.schedules import crontab
 from ajna.celery_app import app
 
 from ..modules.activity import sync_activity_snapshots
@@ -21,49 +20,49 @@ from .chain import Blast, BlastModels
 log = logging.getLogger(__name__)
 
 SCHEDULE = {
-    "fetch_market_price_task": {
-        "schedule": crontab(minute="*/1"),
-    },
-    "sync_activity_snapshots_task": {
-        "schedule": crontab(minute="*/5"),
-    },
-    "fetch_erc20_pool_created_events_task": {
-        "schedule": crontab(minute="0-59/5"),
-    },
-    "fetch_erc721_pool_created_events_task": {
-        "schedule": crontab(minute="0-59/5"),
-    },
-    "fetch_erc20_pools_data_task": {
-        "schedule": crontab(minute="1-59/5"),
-    },
-    "fetch_erc721_pools_data_task": {
-        "schedule": crontab(minute="1-59/5"),
-    },
-    "fetch_and_save_events_for_all_pools_task": {
-        "schedule": crontab(minute="1-59/5"),
-    },
-    "process_events_for_all_pools_task": {
-        "schedule": crontab(minute="2-59/5"),
-    },
-    "save_wallets_at_risk_notification_task": {
-        "schedule": crontab(minute="3-59/5"),
-    },
-    "save_all_pools_volume_for_today_task": {
-        "schedule": crontab(minute="3-59/5"),
-    },
-    "save_network_stats_for_today_task": {
-        "schedule": crontab(minute="3-59/5"),
-    },
-    "save_all_pools_volume_for_yesterday_task": {
-        # Run 10 past midnight to make sure we get all events saved before taking
-        # the snapshot
-        "schedule": crontab(minute="10", hour="0"),
-    },
-    "save_network_stats_for_yesterday_task": {
-        # Run 11 past midnight to make sure we get all events saved before taking
-        # the snapshot
-        "schedule": crontab(minute="11", hour="0"),
-    },
+    # "fetch_market_price_task": {
+    #     "schedule": crontab(minute="*/1"),
+    # },
+    # "sync_activity_snapshots_task": {
+    #     "schedule": crontab(minute="*/5"),
+    # },
+    # "fetch_erc20_pool_created_events_task": {
+    #     "schedule": crontab(minute="0-59/5"),
+    # },
+    # "fetch_erc721_pool_created_events_task": {
+    #     "schedule": crontab(minute="0-59/5"),
+    # },
+    # "fetch_erc20_pools_data_task": {
+    #     "schedule": crontab(minute="1-59/5"),
+    # },
+    # "fetch_erc721_pools_data_task": {
+    #     "schedule": crontab(minute="1-59/5"),
+    # },
+    # "fetch_and_save_events_for_all_pools_task": {
+    #     "schedule": crontab(minute="1-59/5"),
+    # },
+    # "process_events_for_all_pools_task": {
+    #     "schedule": crontab(minute="2-59/5"),
+    # },
+    # "save_wallets_at_risk_notification_task": {
+    #     "schedule": crontab(minute="3-59/5"),
+    # },
+    # "save_all_pools_volume_for_today_task": {
+    #     "schedule": crontab(minute="3-59/5"),
+    # },
+    # "save_network_stats_for_today_task": {
+    #     "schedule": crontab(minute="3-59/5"),
+    # },
+    # "save_all_pools_volume_for_yesterday_task": {
+    #     # Run 10 past midnight to make sure we get all events saved before taking
+    #     # the snapshot
+    #     "schedule": crontab(minute="10", hour="0"),
+    # },
+    # "save_network_stats_for_yesterday_task": {
+    #     # Run 11 past midnight to make sure we get all events saved before taking
+    #     # the snapshot
+    #     "schedule": crontab(minute="11", hour="0"),
+    # },
 }
 
 
