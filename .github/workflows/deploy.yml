@@ -70,9 +70,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-1
         run: ecs deploy maker-cluster ajna-celery-beat --tag production-${{ github.sha }} --timeout -1
-      - name: Deploy new celery worker default version
+      - name: Deploy new celery worker version
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-1
-        run: ecs deploy maker-cluster ajna-celery-default --tag production-${{ github.sha }} --timeout -1
+        run: ecs deploy maker-cluster ajna-celery-worker --tag production-${{ github.sha }} --timeout -1
