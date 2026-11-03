@@ -157,7 +157,7 @@ class OverallView(DaysAgoMixin, APIView):
         if overall:
             total_ajna_burned = overall.total_ajna_burned
         else:
-            total_ajna_burned = Decimal("0")
+            total_ajna_burned = Decimal(0)
 
         try:
             prev_overall = V4OverallStats.objects.get(date=self.days_ago_dt.date())
@@ -170,14 +170,14 @@ class OverallView(DaysAgoMixin, APIView):
         totals["total_ajna_burned"] = total_ajna_burned
         totals["prev_total_ajna_burned"] = prev_total_ajna_burned
         for row in data:
-            totals["tvl"] += row["tvl"] or Decimal("0")
-            totals["debt_usd"] += row["debt_usd"] or Decimal("0")
-            totals["supply_usd"] += row["supply_usd"] or Decimal("0")
-            totals["collateral_usd"] += row["collateral_usd"] or Decimal("0")
-            totals["prev_tvl"] += row["prev_tvl"] or Decimal("0")
-            totals["prev_debt_usd"] += row["prev_debt_usd"] or Decimal("0")
-            totals["prev_supply_usd"] += row["prev_supply_usd"] or Decimal("0")
-            totals["prev_collateral_usd"] += row["prev_collateral_usd"] or Decimal("0")
+            totals["tvl"] += row["tvl"] or Decimal(0)
+            totals["debt_usd"] += row["debt_usd"] or Decimal(0)
+            totals["supply_usd"] += row["supply_usd"] or Decimal(0)
+            totals["collateral_usd"] += row["collateral_usd"] or Decimal(0)
+            totals["prev_tvl"] += row["prev_tvl"] or Decimal(0)
+            totals["prev_debt_usd"] += row["prev_debt_usd"] or Decimal(0)
+            totals["prev_supply_usd"] += row["prev_supply_usd"] or Decimal(0)
+            totals["prev_collateral_usd"] += row["prev_collateral_usd"] or Decimal(0)
 
         return Response({"results": data, "totals": totals}, status.HTTP_200_OK)
 

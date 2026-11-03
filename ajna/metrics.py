@@ -124,9 +124,9 @@ def gauge(key, value=1, subname=None):
 
 def function_long_name(func, extra=None):
     if extra:
-        return ".".join([func.__module__, func.__name__, extra])
+        return f"{func.__module__}.{func.__name__}.{extra}"
     else:
-        return ".".join([func.__module__, func.__name__])
+        return f"{func.__module__}.{func.__name__}"
 
 
 def auto_named_statsd_timer(function_to_decorate):

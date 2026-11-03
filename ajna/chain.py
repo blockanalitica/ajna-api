@@ -59,8 +59,6 @@ class AjnaChainMixin:
         return super().load_abi(contract_address, abi_name=abi_name, refetch_on_block=None)
 
     def get_block_datetime(self, block_number):
-        global BLOCK_DATETIMES
-
         if block_number not in BLOCK_DATETIMES:
             block_info = self.get_block_info(block_number)
             BLOCK_DATETIMES[block_number] = datetime.fromtimestamp(block_info["timestamp"])

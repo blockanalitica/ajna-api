@@ -214,7 +214,7 @@ class RawSQLPaginatedApiView(APIView):
 
 
 def _get_module(version, network):
-    module_path = ".".join([version.lower(), network.lower()])
+    module_path = f"{version.lower()}.{network.lower()}"
     module = importlib.import_module(f"ajna.{module_path}.chain")
     return module
 

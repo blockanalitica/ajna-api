@@ -51,7 +51,7 @@ def _handle_proposal_created(chain, event):
         distribution_id=distribution_id
     )
 
-    total_tokens_requested = Decimal("0")
+    total_tokens_requested = Decimal(0)
     params = []
     for i, target in enumerate(event.data["targets"]):
         call_data = event.data["calldatas"][i]
