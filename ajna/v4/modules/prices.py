@@ -119,7 +119,7 @@ def _get_rhiofi_price(models, address):
 def _estimate_price_from_pools_for_token(models, address, symbol):
     # When estimating, if it's a stablecoin, set it to $1
     if symbol in STABLECOIN_SYMBOLS:
-        return Decimal("1")
+        return Decimal(1)
 
     sql = f"""
         SELECT

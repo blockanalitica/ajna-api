@@ -21,7 +21,7 @@ def save_overall_ajna_burned(chain):
     data = chain.multicall(calls)
     total_supply = wad_to_decimal(data["totalSupply"])
 
-    initial_supply = Decimal("1000000000")
+    initial_supply = Decimal(1000000000)
     burned = initial_supply - total_supply
 
     V4OverallStats.objects.update_or_create(

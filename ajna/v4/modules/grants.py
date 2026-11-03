@@ -51,7 +51,7 @@ def _handle_proposal_created(chain, event):
         distribution_id=distribution_id
     )
 
-    total_tokens_requested = Decimal("0")
+    total_tokens_requested = Decimal(0)
     params = []
     for i, target in enumerate(event.data["targets"]):
         call_data = event.data["calldatas"][i]
@@ -95,17 +95,17 @@ def _handle_vote_cast(chain, event):
     match stage:
         case "SCREENING":
             if proposal.screening_votes_received is None:
-                proposal.screening_votes_received = Decimal("0")
+                proposal.screening_votes_received = Decimal(0)
 
             proposal.screening_votes_received += wad_to_decimal(event.data["weight"])
             proposal.save()
         case "FUNDING":
             if proposal.funding_votes_received is None:
-                proposal.funding_votes_received = Decimal("0")
+                proposal.funding_votes_received = Decimal(0)
             if proposal.funding_votes_positive is None:
-                proposal.funding_votes_positive = Decimal("0")
+                proposal.funding_votes_positive = Decimal(0)
             if proposal.funding_votes_negative is None:
-                proposal.funding_votes_negative = Decimal("0")
+                proposal.funding_votes_negative = Decimal(0)
 
             weight = wad_to_decimal(event.data["weight"])
             if event.data["support"] == 1:

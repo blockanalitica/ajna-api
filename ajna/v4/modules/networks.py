@@ -38,9 +38,9 @@ def save_network_stats_for_date(models, dt, network):
         network=network,
         date=dt,
         defaults={
-            "tvl": data["tvl"] or Decimal("0"),
-            "collateral_usd": data["collateral_usd"] or Decimal("0"),
-            "supply_usd": data["supply_usd"] or Decimal("0"),
-            "debt_usd": data["debt_usd"] or Decimal("0"),
+            "tvl": data["tvl"] or Decimal(0),
+            "collateral_usd": data["collateral_usd"] or Decimal(0),
+            "supply_usd": data["supply_usd"] or Decimal(0),
+            "debt_usd": data["debt_usd"] or Decimal(0),
         },
     )

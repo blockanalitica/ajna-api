@@ -162,7 +162,7 @@ class EventProcessor:
             else:
                 supply = position.supply
 
-        return supply or Decimal("0")
+        return supply or Decimal(0)
 
     def _save_wallet_positions(self, block_number, to_update, results):
         # NOTE: this function must be called after the _save_buckets, otherwise supply
@@ -255,8 +255,10 @@ class EventProcessor:
                         (
                             self._chain.pool_info_address,
                             [
-                                "bucketInfo(address,uint256)"
-                                "((uint256,uint256,uint256,uint256,uint256,uint256))",
+                                (
+                                    "bucketInfo(address,uint256)"
+                                    "((uint256,uint256,uint256,uint256,uint256,uint256))"
+                                ),
                                 pool_address,
                                 bucket_index,
                             ],
@@ -314,7 +316,7 @@ class EventProcessor:
                 if event.quote_token_price:
                     amount = wad_to_decimal(event.data["amount"])
                     amount_usd = amount * event.quote_token_price
-                    if amount_usd >= Decimal("1000000"):
+                    if amount_usd >= Decimal(1000000):
                         self._chain.notification.objects.get_or_create(
                             type=event.name,
                             key=event.order_index,
@@ -334,7 +336,7 @@ class EventProcessor:
                 if event.quote_token_price:
                     amount = wad_to_decimal(event.data["amountBorrowed"])
                     amount_usd = amount * event.quote_token_price
-                    if amount_usd >= Decimal("1000000"):
+                    if amount_usd >= Decimal(1000000):
                         self._chain.notification.objects.get_or_create(
                             type=event.name,
                             key=event.order_index,

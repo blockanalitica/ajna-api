@@ -53,7 +53,7 @@ def process_kick_reserve_auction_event(chain, event):
         claimable_reserves_remaining=kick.claimable_reserves,
         last_take_price=kick.starting_price,
         burn_epoch=kick.burn_epoch,
-        ajna_burned=Decimal("0"),
+        ajna_burned=Decimal(0),
     )
 
 

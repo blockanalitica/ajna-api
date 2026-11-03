@@ -1,5 +1,5 @@
-FROM python:3.13.3-slim-bookworm
-COPY --from=ghcr.io/astral-sh/uv:0.6.17 /uv /uvx /bin/
+FROM python:3.13.18-slim-bookworm
+COPY --from=ghcr.io/astral-sh/uv:0.13.6 /uv /uvx /usr/local/bin/
 
 SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
 
@@ -14,7 +14,6 @@ ENV PYTHONPATH=/code \
 RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recommends -y \
     build-essential \
     libpq-dev \
-    screen \
     # Cleaning cache:
     && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*

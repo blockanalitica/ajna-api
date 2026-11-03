@@ -41,9 +41,11 @@ def _update_auction(chain, auction_uid, block_number, last_take_price=None):
         (
             auction.pool_address,
             [
-                "auctionInfo(address)("
-                "(address,uint256,uint256,uint256,uint256,uint256,address,"
-                "address,address))",
+                (
+                    "auctionInfo(address)("
+                    "(address,uint256,uint256,uint256,uint256,uint256,address,"
+                    "address,address))"
+                ),
                 auction.borrower,
             ],
             ["auctionInfo", None],
@@ -112,9 +114,11 @@ def process_kick_event(chain, event):
         (
             event.pool_address,
             [
-                "auctionInfo(address)("
-                "(address,uint256,uint256,uint256,uint256,uint256,address,"
-                "address,address))",
+                (
+                    "auctionInfo(address)("
+                    "(address,uint256,uint256,uint256,uint256,uint256,address,"
+                    "address,address))"
+                ),
                 event.data["borrower"],
             ],
             ["auctionInfo", None],
@@ -358,6 +362,6 @@ def calculate_current_auction_price(kick_datetime, reserves):
     minute_half_life = Decimal("0.988514020352896135356867505")  # 0.5^(1/60)
     minutes_component = Decimal(str(math.pow(minute_half_life, seconds % 3600 // 60)))
 
-    initial_price = Decimal("1000000000") / reserves
+    initial_price = Decimal(1000000000) / reserves
 
     return initial_price * (hours_component * minutes_component)

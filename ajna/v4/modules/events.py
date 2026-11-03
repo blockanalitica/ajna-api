@@ -403,8 +403,6 @@ def _get_token_price(chain, token_address, dt):
 
 
 def _get_pool_info(chain, pool_address):
-    global POOL_INFO
-
     if pool_address not in POOL_INFO:
         pool = chain.pool.objects.get(address=pool_address)
         POOL_INFO[pool_address] = {

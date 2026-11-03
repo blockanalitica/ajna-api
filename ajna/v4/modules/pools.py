@@ -71,7 +71,7 @@ def save_all_pools_volume_for_date(chain, dt):
             pool_address=volume["pool_address"],
             date=dt,
             defaults={
-                "amount": volume["amount"] or Decimal("0"),
+                "amount": volume["amount"] or Decimal(0),
             },
         )
 
@@ -260,7 +260,7 @@ class BasePoolManager:
             collateral_token_balance = data[f"{pool_address}:collateralTokenBalance"]
 
             utilization = None
-            lend_rate = Decimal("0")
+            lend_rate = Decimal(0)
             if meaningful_deposit:
                 utilization = pool_data["debt"] / meaningful_deposit
                 lend_rate = (
@@ -420,9 +420,9 @@ class BasePoolManager:
             pending_inflator = wad_to_decimal(loans_info[3])
             pool_size = wad_to_decimal(loans_info[0])
 
-            utilization = Decimal("0")
+            utilization = Decimal(0)
             if pool_size > 0:
-                utilization = min(pending_debt / pool_size, Decimal("1"))
+                utilization = min(pending_debt / pool_size, Decimal(1))
 
             pools_data[pool_address] = {
                 "lender_interest_margin": wad_to_decimal(lim),
@@ -496,7 +496,7 @@ class BasePoolManager:
                         allowed_token_ids=created_event.data.get("token_ids"),
                         collateral_token_symbol=collateral_token["symbol"],
                         quote_token_symbol=quote_token["symbol"],
-                        total_ajna_burned=Decimal("0"),
+                        total_ajna_burned=Decimal(0),
                     )
 
                 for field, value in pool_data.items():
@@ -558,7 +558,7 @@ class PoolERC20Manager(BasePoolManager):
         sql_vars = [dt, pool_address]
         volume = fetch_one(sql, sql_vars)
 
-        return volume["amount"] if volume and volume["amount"] else Decimal("0")
+        return volume["amount"] if volume and volume["amount"] else Decimal(0)
 
     def fetch_and_save_pool_created_events(self):
         token_created = False
@@ -657,7 +657,7 @@ class PoolERC721Manager(BasePoolManager):
         sql_vars = [dt, pool_address]
         volume = fetch_one(sql, sql_vars)
 
-        return volume["amount"] if volume and volume["amount"] else Decimal("0")
+        return volume["amount"] if volume and volume["amount"] else Decimal(0)
 
     def fetch_and_save_pool_created_events(self):
         token_created = False
