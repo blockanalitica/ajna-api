@@ -4,15 +4,7 @@ from django.urls import include, path, re_path
 from django.views import defaults as default_views
 from django.views.generic import RedirectView
 
-
-def trigger_error(request):
-    division_by_zero = 1 / 0
-    return division_by_zero
-
-
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("sentry-debug/", trigger_error),
     path("v2/ethereum/", include("ajna.v2.ethereum.urls")),
     re_path(
         r"^v3/ethereum/(?P<rest>.*)",
