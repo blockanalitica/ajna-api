@@ -39,22 +39,22 @@ urlpatterns = [
         name="pool-buckets-list",
     ),
     path(
-        "pools/<pool_address>/buckets/<bucket_index>/",
+        "pools/<pool_address>/buckets/<bucket_index:bucket_index>/",
         pools.BucketView.as_view(),
         name="pool-bucket",
     ),
     path(
-        "pools/<pool_address>/buckets/<bucket_index>/depositors/",
+        "pools/<pool_address>/buckets/<bucket_index:bucket_index>/depositors/",
         pools.BucketDepositorsView.as_view(),
         name="pool-bucket-depositors",
     ),
     path(
-        "pools/<pool_address>/buckets/<bucket_index>/historic/",
+        "pools/<pool_address>/buckets/<bucket_index:bucket_index>/historic/",
         pools.BucketHistoricView.as_view(),
         name="pool-bucket-historic",
     ),
     path(
-        "pools/<pool_address>/buckets/<bucket_index>/events/",
+        "pools/<pool_address>/buckets/<bucket_index:bucket_index>/events/",
         pools.BucketEventsView.as_view(),
         name="pool-bucket-events",
     ),

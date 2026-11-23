@@ -997,10 +997,10 @@ class AuctionsSettledView(RawSQLPaginatedChainView):
 
 
 class AuctionsActiveView(RawSQLPaginatedChainView):
-    default_order = "-collateral"
+    default_order = "-collateral_remaining"
     ordering_fields = [
-        "collateral",
-        "debt",
+        "collateral_remaining",
+        "debt_remaining",
         "kick_time",
     ]
 
