@@ -198,9 +198,8 @@ sentry_sdk.init(
 )
 ignore_logger("django.security.DisallowedHost")
 
-STATSD_HOST = env("STATSD_HOST", default="localhost")
-STATSD_PORT = env("STATSD_PORT", default=8125)
-STATSD_PREFIX = env("STATSD_PREFIX", default=None)
+OTLP_METRICS_ENDPOINT = env("OTLP_METRICS_ENDPOINT", default="")
+OTLP_SERVICE_NAME = env("OTLP_SERVICE_NAME", default="ajna-api")
 
 LOGGING = {
     "version": 1,

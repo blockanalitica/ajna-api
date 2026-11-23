@@ -1,143 +1,132 @@
-from functools import wraps
+import gc
+import logging
+import os
+from functools import cache
+from threading import Lock
+from uuid import uuid4
 
-import statsd
 from django.conf import settings
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.metrics import NoOpMeterProvider
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
 
-statsd_client = statsd.StatsClient(
-    settings.STATSD_HOST, settings.STATSD_PORT, settings.STATSD_PREFIX
+log = logging.getLogger(__name__)
+_provider = None
+_provider_pid = None
+_lock = Lock()
+_noop_meter = NoOpMeterProvider().get_meter("ajna.metrics")
+_DURATION_BUCKETS = (
+    0.001,
+    0.005,
+    0.01,
+    0.025,
+    0.05,
+    0.1,
+    0.25,
+    0.5,
+    1,
+    2.5,
+    5,
+    10,
+    30,
+    60,
+    120,
+    300,
+    600,
 )
 
 
-class Timer:
-    """Metrics wrapper for Statsd Timer Object
-
-    >>> import time
-    >>> with metrics.Timer('unique_key'):
-    ...     time.sleep(1)
-    """
-
-    def __init__(self, key):
-        self.timer = statsd_client.timer(str(key))
-        self.key = key
-
-    def __enter__(self):
-        self.timer.start()
-
-    def __exit__(self, type_, value, traceback):
-        self.timer.stop()
+def _prepare_fork():
+    global _provider, _provider_pid
+    _lock.acquire()
+    try:
+        shutdown()
+    finally:
+        _provider = None
+        _provider_pid = None
+        _instrument.cache_clear()
+        gc.collect()
 
 
-def timerd(key):
-    """
-    Decorator function to set up a timer around a function call.
-    This is a function only decorator!
+def _resume_after_fork():
+    _lock.release()
 
-    Example:
-    >>> import time
-    >>> @metrics.timerd('time_sleep_key')
-    >>> def timed_function():
-    ...     time.sleep(1)
-    """
 
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            if not key:
-                raise Exception("Using an empty key name")
-            with Timer(key):
-                return func(*args, **kwargs)
+def _reset_after_fork():
+    global _lock
+    _lock = Lock()
 
-        return wrapper
 
-    return decorator
+os.register_at_fork(
+    before=_prepare_fork,
+    after_in_parent=_resume_after_fork,
+    after_in_child=_reset_after_fork,
+)
+
+
+def get_meter():
+    if not settings.OTLP_METRICS_ENDPOINT:
+        return _noop_meter
+
+    global _provider, _provider_pid
+    pid = os.getpid()
+    with _lock:
+        if _provider is None or _provider_pid != pid:
+            exporter = OTLPMetricExporter(endpoint=settings.OTLP_METRICS_ENDPOINT)
+            reader = PeriodicExportingMetricReader(exporter)
+            _provider = MeterProvider(
+                metric_readers=[reader],
+                resource=Resource.create(
+                    {
+                        "service.name": settings.OTLP_SERVICE_NAME,
+                        "service.instance.id": str(uuid4()),
+                    }
+                ),
+            )
+            _provider_pid = pid
+        return _provider.get_meter("ajna.metrics")
+
+
+@cache
+def _instrument(meter, kind, name, unit):
+    create = getattr(meter, f"create_{kind}")
+    if kind == "histogram" and unit == "s":
+        return create(name, unit=unit, explicit_bucket_boundaries_advisory=_DURATION_BUCKETS)
+    return create(name, unit=unit)
+
+
+def _record(kind, name, value, unit="1"):
+    try:
+        instrument = _instrument(get_meter(), kind, str(name), unit)
+        if kind == "gauge":
+            instrument.set(value)
+        elif kind == "histogram":
+            instrument.record(value)
+        else:
+            instrument.add(value)
+    except Exception:
+        log.exception("Unable to record metric %s", name)
 
 
 def raw_timer(key, value):
-    """Send a timing directly to Graphite, without need to call start() and stop().
-
-    :keyword value: The time in seconds, it must be an int or a float
-
-    >>> # Got a timing from frontend!
-    >>> metrics.raw_timer('unique_key', 31.3)
-    """
-
-    # Validating "value" to be an int or a float
-    if not isinstance(value, (int, float)):
-        return None
-
-    return statsd_client.timing(str(key), value)
+    if isinstance(value, int | float):
+        _record("histogram", key, value / 1000, unit="s")
 
 
-def increment(key, delta=1, subname=None):
-    """Increment the counter identified with `key` and `subname` with `delta`
-
-    >>> # After a user logs in....
-    >>> metrics.increment('auth.successful_login', 1)
-
-        :keyword delta: The delta to add to the counter, default is 1
-        :keyword subname: The subname to report the data to (appended to the
-            client name). Like "hits", or "sales".
-    """
-    name = f"counters.{key}"
+def increment(key, delta=1, subname=None, *, prefix="counters."):
+    name = f"{prefix}{key}"
     if subname:
         name += f".{subname}"
-
-    return statsd_client.incr(name, delta)
-
-
-def decrement(key, delta=1, subname=None):
-    """Decrement the counter identified with `key` and `subname` with `delta`
-
-    >>> # Users that log out...
-    >>> metrics.decrement('auth.connected_users', 1)
-
-        :keyword delta: The delta to substract from the counter, default is 1
-        :keyword subname: The subname to report the data to (appended to the
-            client name)
-    """
-
-    name = f"counters.{key}"
-    if subname:
-        name += f".{subname}"
-
-    return statsd_client.decr(name, delta)
+    _record("up_down_counter", name, delta)
 
 
 def gauge(key, value=1, subname=None):
-    """Set the value of the gauge identified with `key` and `subname` with `value`
-
-    :keyword value: The value to set the gauge at, default is 1
-    :keyword subname: The subname to report the data to (appended to the
-        client name)
-    """
-
-    name = key
-    if subname:
-        name += f".{subname}"
-
-    # We never use the relative changes behaviour so attempt to always make it do the
-    # set value behaviour instead.
-    if value < 0:
-        statsd_client.gauge(name, 0)
-    return statsd_client.gauge(name, value)
+    name = f"{key}.{subname}" if subname else key
+    _record("gauge", name, value)
 
 
-def function_long_name(func, extra=None):
-    if extra:
-        return f"{func.__module__}.{func.__name__}.{extra}"
-    else:
-        return f"{func.__module__}.{func.__name__}"
-
-
-def auto_named_statsd_timer(function_to_decorate):
-    call_name = function_long_name(function_to_decorate, "call")
-
-    @wraps(function_to_decorate)
-    def incr_and_call(*args, **kwargs):
-        statsd_client.incr(call_name)
-        return function_to_decorate(*args, **kwargs)
-
-    timer_name = function_long_name(function_to_decorate, "time")
-    named_decorator = statsd_client.timer(timer_name)
-
-    return named_decorator(incr_and_call)
+def shutdown():
+    if _provider is not None and _provider_pid == os.getpid():
+        _provider.shutdown()

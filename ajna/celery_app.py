@@ -6,7 +6,7 @@ import celery.signals
 from celery import Celery
 from celery.signals import setup_logging
 
-from ajna.metrics import gauge, raw_timer, statsd_client
+from ajna.metrics import gauge, increment, raw_timer, shutdown
 
 log = logging.getLogger(__name__)
 
@@ -36,10 +36,9 @@ def _celery_task_key(task):
 
 
 def _start_timer(name, group, instance):
-    try:
-        _state.timers[(name, group, instance)] = time.time()
-    except AttributeError:
-        _state.timers = {(name, group, instance): time.time()}
+    if not hasattr(_state, "timers"):
+        _state.timers = {}
+    _state.timers[(name, group, instance)] = time.perf_counter()
 
 
 def _stop_timer(name, group, instance):
@@ -48,73 +47,76 @@ def _stop_timer(name, group, instance):
     except (AttributeError, KeyError):
         return
 
-    total = time.time() - start
+    total = time.perf_counter() - start
 
     raw_timer(f"{group}.{name}", total * 1000)
 
 
 def _inc_counter(name, group):
-    statsd_client.incr(f"{group}.{name}")
+    increment(f"{group}.{name}", prefix="")
 
 
-def _send_queue_sizes_to_statsd():
+def _send_queue_sizes_to_metrics():
     global _prev_queue_size_check
-    # Limit sending queue sizes to statsd to every 5 seconds as to not spam stats
-    # on every task execution which might kill statsd :)
 
     try:
-        if (time.time() - _prev_queue_size_check) < 5:
+        if (time.perf_counter() - _prev_queue_size_check) < 5:
             return
 
-        _prev_queue_size_check = time.time()
+        _prev_queue_size_check = time.perf_counter()
         queues = ["default", "compute", "priority"]
         with app.pool.acquire(block=True) as conn:
             for queue in queues:
                 queue_size = conn.default_channel.client.llen(queue)
                 gauge(f"celery.queues.{queue}.size", queue_size)
     except Exception:
-        log.exception("Error sending queue sizes to statsd")
+        log.exception("Error sending queue sizes to metrics")
 
 
 @celery.signals.before_task_publish.connect
-def statsd_before_task_publish(sender, body, headers, **kwargs):
+def metrics_before_task_publish(sender, body, headers, **kwargs):
     task_id = headers.get("id") or body.get("id")
     _start_timer("enqueue", _celery_task_key(sender), task_id)
 
 
 @celery.signals.after_task_publish.connect
-def statsd_after_task_publish(sender, body, headers, **kwargs):
+def metrics_after_task_publish(sender, body, headers, **kwargs):
     task_id = headers.get("id") or body.get("id")
     _stop_timer("enqueue", _celery_task_key(sender), task_id)
 
 
 @celery.signals.task_prerun.connect
-def statsd_task_prerun(sender, task_id, **kwargs):
+def metrics_task_prerun(sender, task_id, **kwargs):
     _start_timer("run", _celery_task_key(sender), task_id)
 
 
 @celery.signals.task_postrun.connect
-def statsd_task_postrun(sender, task_id, **kwargs):
+def metrics_task_postrun(sender, task_id, **kwargs):
     _stop_timer("run", _celery_task_key(sender), task_id)
-    # On postrun, send queue sizes to statsd
-    _send_queue_sizes_to_statsd()
+    _send_queue_sizes_to_metrics()
 
 
 @celery.signals.task_retry.connect
-def statsd_task_retry(sender, **kwargs):
+def metrics_task_retry(sender, **kwargs):
     _inc_counter("retry", _celery_task_key(sender))
 
 
 @celery.signals.task_success.connect
-def statsd_task_success(sender, **kwargs):
+def metrics_task_success(sender, **kwargs):
     _inc_counter("success", _celery_task_key(sender))
 
 
 @celery.signals.task_failure.connect
-def statsd_task_failure(sender, **kwargs):
+def metrics_task_failure(sender, **kwargs):
     _inc_counter("failure", _celery_task_key(sender))
 
 
 @celery.signals.task_revoked.connect
-def statsd_task_revoked(sender, **kwargs):
+def metrics_task_revoked(sender, **kwargs):
     _inc_counter("revoked", _celery_task_key(sender))
+
+
+@celery.signals.worker_process_shutdown.connect
+@celery.signals.worker_shutdown.connect
+def shutdown_metrics(**kwargs):
+    shutdown()
