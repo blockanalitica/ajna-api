@@ -135,6 +135,9 @@ def test_otlp_http_payload(settings, mocker, responses, fresh_provider):
         metrics.increment("task.success")
         metrics.gauge("queue.size", 5)
         metrics.raw_timer("task.run", 1250)
+        metrics.record_request(
+            0.25, {"http.route": "pools/<pool_address>/", "http.response.status_code": 200}
+        )
 
         assert metrics._provider.force_flush()
         request = responses.calls[0].request
@@ -148,6 +151,8 @@ def test_otlp_http_payload(settings, mocker, responses, fresh_provider):
         assert values["counters.task.success"].sum.data_points[0].as_int == 1
         assert values["queue.size"].gauge.data_points[0].as_int == 5
         assert values["task.run"].histogram.data_points[0].sum == 1.25
+        assert values["http.server.requests"].sum.data_points[0].as_int == 1
+        assert values["http.server.request.duration"].histogram.data_points[0].sum == 0.25
     finally:
         metrics.shutdown()
 

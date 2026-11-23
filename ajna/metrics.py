@@ -97,22 +97,26 @@ def _instrument(meter, kind, name, unit):
     return create(name, unit=unit)
 
 
-def _record(kind, name, value, unit="1"):
+def _record(kind, name, value, unit="1", attributes=None):
     try:
         instrument = _instrument(get_meter(), kind, str(name), unit)
         if kind == "gauge":
-            instrument.set(value)
+            instrument.set(value, attributes)
         elif kind == "histogram":
-            instrument.record(value)
+            instrument.record(value, attributes)
         else:
-            instrument.add(value)
+            instrument.add(value, attributes)
     except Exception:
         log.exception("Unable to record metric %s", name)
 
 
+def record_duration(name, seconds, attributes=None):
+    _record("histogram", name, seconds, unit="s", attributes=attributes)
+
+
 def raw_timer(key, value):
     if isinstance(value, int | float):
-        _record("histogram", key, value / 1000, unit="s")
+        record_duration(key, value / 1000)
 
 
 def increment(key, delta=1, subname=None, *, prefix="counters."):
@@ -125,6 +129,11 @@ def increment(key, delta=1, subname=None, *, prefix="counters."):
 def gauge(key, value=1, subname=None):
     name = f"{key}.{subname}" if subname else key
     _record("gauge", name, value)
+
+
+def record_request(duration, attributes):
+    _record("counter", "http.server.requests", 1, attributes=attributes)
+    record_duration("http.server.request.duration", duration, attributes)
 
 
 def shutdown():
