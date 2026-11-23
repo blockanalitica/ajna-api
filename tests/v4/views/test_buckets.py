@@ -1,36 +1,26 @@
 import factory
 import pytest
 
-from ajna.v4.ethereum.models import V3EthereumBucket, V3EthereumPool, V3EthereumToken
+from ajna.v4.ethereum.chain import MODEL_MAP
 from tests.factories import BucketFactory, PoolFactory, TokenFactory
-
-
-class EthereumPoolFactory(PoolFactory):
-    class Meta:
-        model = V3EthereumPool
-
-
-class EthereumTokenFactory(TokenFactory):
-    class Meta:
-        model = V3EthereumToken
-
-
-class EthereumBucketFactory(BucketFactory):
-    class Meta:
-        model = V3EthereumBucket
-
-    pool_address = factory.Faker("ethereum_address")
 
 
 @pytest.fixture
 def bucket():
-    collateral_token = EthereumTokenFactory()
-    quote_token = EthereumTokenFactory()
-    pool = EthereumPoolFactory(
+    collateral_token = factory.create(MODEL_MAP["token"], FACTORY_CLASS=TokenFactory)
+    quote_token = factory.create(MODEL_MAP["token"], FACTORY_CLASS=TokenFactory)
+    pool = factory.create(
+        MODEL_MAP["pool"],
+        FACTORY_CLASS=PoolFactory,
         collateral_token_address=collateral_token.underlying_address,
         quote_token_address=quote_token.underlying_address,
     )
-    return EthereumBucketFactory(pool_address=pool.address, bucket_index=4156)
+    return factory.create(
+        MODEL_MAP["bucket"],
+        FACTORY_CLASS=BucketFactory,
+        pool_address=pool.address,
+        bucket_index=4156,
+    )
 
 
 @pytest.mark.django_db

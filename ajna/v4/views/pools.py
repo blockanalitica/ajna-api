@@ -1073,11 +1073,6 @@ class BucketEventsView(RawSQLPaginatedChainView):
     ordering_fields = ["order_index"]
 
     def get_raw_sql(self, pool_address, bucket_index, query_params, **kwargs):
-        try:
-            bucket_index = int(bucket_index)
-        except ValueError:
-            raise Http404 from None
-
         event_name = query_params.get("name")
         sql = f"""
             SELECT
