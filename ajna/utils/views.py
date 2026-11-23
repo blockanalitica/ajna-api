@@ -252,7 +252,7 @@ class DaysAgoMixin:
             try:
                 self.days_ago = int(days_ago)
                 self.days_ago_dt = datetime.now() - timedelta(days=self.days_ago)
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, OverflowError):
                 raise ValidationError("Wrong value for days_ago") from None
 
             if self.days_ago_options and self.days_ago not in self.days_ago_options:

@@ -1,7 +1,11 @@
 from django.conf import settings
-from django.urls import include, path, re_path
+from django.urls import include, path, re_path, register_converter
 from django.views import defaults as default_views
 from django.views.generic import RedirectView
+
+from ajna.utils.converters import BucketIndexConverter
+
+register_converter(BucketIndexConverter, "bucket_index")
 
 urlpatterns = [
     path("v2/ethereum/", include("ajna.v2.ethereum.urls")),

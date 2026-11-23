@@ -144,7 +144,7 @@ class AuctionsActiveView(RawSQLPaginatedChainView):
     default_order = "-kick_time"
     ordering_fields = [
         "collateral_remaining",
-        "debt",
+        "debt_remaining",
         "kick_time",
     ]
 
