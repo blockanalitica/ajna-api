@@ -798,7 +798,7 @@ class WalletsAtRiskView(RawSQLPaginatedChainView):
     def get_raw_sql(self, query_params, **kwargs):
         try:
             change = int(query_params.get("change"))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             change = -5
 
         price_change = change / 100

@@ -44,7 +44,7 @@ def _start_timer(name, group, instance):
 def _stop_timer(name, group, instance):
     try:
         start = _state.timers.pop((name, group, instance))
-    except (AttributeError, KeyError):
+    except AttributeError, KeyError:
         return
 
     total = time.perf_counter() - start
