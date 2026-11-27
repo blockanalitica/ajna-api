@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from ajna.utils.db import fetch_all, fetch_one
-from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView
+from ajna.utils.views import BaseChainView, RawSQLPaginatedChainView, get_block_param
 
 from ..modules.at_risk import WALLETS_AT_RISK_SQL
 from ..modules.events import parse_event_data
@@ -220,12 +220,8 @@ class WalletView(BaseChainView):
         return wallet
 
     def get(self, request, address):
-        block = request.GET.get("block")
-        if block:
-            try:
-                block = int(block)
-            except ValueError:
-                raise Http404 from None
+        block = get_block_param(request)
+        if block is not None:
             wallet = self._get_for_block(address, block)
         else:
             wallet = self._get_current(address)
@@ -242,7 +238,7 @@ class WalletEventsView(RawSQLPaginatedChainView):
 
     def get_raw_sql(self, address, query_params, **kwargs):
         event_name = query_params.get("name")
-        block = self.request.GET.get("block")
+        block = get_block_param(self.request)
         sql = f"""
             SELECT
                   pe.pool_address
@@ -272,7 +268,7 @@ class WalletEventsView(RawSQLPaginatedChainView):
             sql = f"{sql} AND pe.name = %s"
             sql_vars.append(event_name)
 
-        if block:
+        if block is not None:
             sql = f"{sql} AND pe.block_number <= %s"
             sql_vars.append(block)
 
@@ -441,8 +437,8 @@ class WalletPoolsView(RawSQLPaginatedChainView):
         return sql, sql_vars
 
     def get_raw_sql(self, address, **kwargs):
-        block = self.request.GET.get("block")
-        if block:
+        block = get_block_param(self.request)
+        if block is not None:
             return self._get_for_block(address, block)
         else:
             return self._get_current(address)

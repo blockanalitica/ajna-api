@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ajna.constants import AJNA_DEPLOYMENTS
+from ajna.utils.converters import BIGINT_MAX
 from ajna.utils.db import fetch_all
 
 log = logging.getLogger(__name__)
@@ -237,6 +238,19 @@ class ModelMapping:
         if hasattr(module, "MODEL_MAP"):
             for key, model in module.MODEL_MAP.items():
                 setattr(self, key, model)
+
+
+def get_block_param(request):
+    block = request.GET.get("block")
+    if not block:
+        return None
+    try:
+        block = int(block)
+    except ValueError:
+        raise ValidationError("Wrong value for block") from None
+    if not 0 <= block <= BIGINT_MAX:
+        raise ValidationError("Wrong value for block")
+    return block
 
 
 class DaysAgoMixin:
