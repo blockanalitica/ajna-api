@@ -3,44 +3,60 @@ name: Test
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Set up the environment
         uses: ./.github/actions/setup-uv-env
+        with:
+          dependency-group: lint
       - name: Run ruff check
-        run: uv run ruff check .
+        run: uv run --no-sync ruff check .
       - name: Run ruff format check
-        run: uv run ruff format . --check
+        run: uv run --no-sync ruff format . --check
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 30
     services:
       db:
-        image: postgres:17.2
+        image: postgres:18.3-alpine
         env:
           POSTGRES_DB: ajna
           POSTGRES_USER: ajna
           POSTGRES_PASSWORD: postgres
+          POSTGRES_INITDB_ARGS: "--no-sync"
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
+          --health-interval 2s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 20
+          --shm-size 512m
+          --tmpfs /var/lib/postgresql:rw,size=512m
         ports:
           - 5432:5432
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Set up the environment
         uses: ./.github/actions/setup-uv-env
+        with:
+          dependency-group: test
       - name: Run pytest
-        run: uv run pytest --ds=config.settings.test tests/
+        run: uv run --no-sync pytest tests/
         env:
           AJNA_DB_NAME: ajna
           AJNA_DB_USER: ajna
-          AJNA_DB_HOST: localhost
+          AJNA_DB_HOST: 127.0.0.1
           AJNA_DB_PASSWORD: postgres

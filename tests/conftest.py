@@ -10,7 +10,7 @@ def pytest_runtest_teardown(item):
     try:
         responses_.stop()
         responses_.reset()
-    except (AttributeError, RuntimeError):
+    except AttributeError, RuntimeError:
         # patcher was already uninstalled (or not installed at all) and
         # responses doesnt let us force maintain it
         pass

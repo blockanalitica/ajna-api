@@ -9,7 +9,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
-      - ipython_data_local:/root/.ipython/profile_default # persist ipython data, including ipython history
+      - ipython_data_local:/home/bowser/.ipython/profile_default # persist ipython data, including ipython history
     ports:
       - "8000:8000"
     depends_on:
@@ -29,7 +29,7 @@ services:
       - AJNA_REDIS_PORT=6379
     mem_limit: 800M
   db:
-    image: postgres:18.4
+    image: postgres:18.3-alpine
     command: >
       -c max_wal_size=16384
     volumes:
@@ -42,6 +42,6 @@ services:
       - "5436:5432"
 
   cache:
-    image: redis:7.0
+    image: redis:6.0
     ports:
       - "6375:6379"

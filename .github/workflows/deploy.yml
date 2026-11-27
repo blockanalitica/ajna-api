@@ -1,6 +1,11 @@
 name: Deploy
 
-concurrency: deploy_production
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 on:
   push:
@@ -11,68 +16,74 @@ jobs:
   test:
     uses: ./.github/workflows/test.yml
 
-  build-and-push:
+  build-and-push-to-ecr:
     name: Build and push to ECR
     needs: [test]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          persist-credentials: false
+
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
+
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
+        uses: aws-actions/amazon-ecr-login@7290e214a610b32bc0eef81748948b6d466a8783 # v2.2.0
+
+      - name: Set up Docker Buildx
+        uses: useblacksmith/setup-docker-builder@06dd9c83a5d541274d2e3ac67625560979275267 # v2.3.0
+        with:
+          cache-key: ${{ github.repository }}/ajna-api
+          platforms: linux/amd64
+
+      - name: Build and push
+        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2.3.0
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ajna-api
-          IMAGE_TAG: production-${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          REPOSITORY: ajna-api
+        with:
+          context: .
+          platforms: linux/amd64
+          provenance: false
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:production-${{ github.sha }}
 
   deploy:
-    needs: [build-and-push]
-    runs-on: ubuntu-latest
+    needs: [test, build-and-push-to-ecr]
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 15
+    env:
+      ECS_CLUSTER: maker-cluster
+      IMAGE_TAG: production-${{ github.sha }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          ref: main
+          version: "0.13.9"
+          python-version: "3.14"
+          enable-cache: true
+          cache-dependency-glob: ""
+          cache-suffix: ecs-deploy-1.17.0
 
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v6
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
-          python-version: "3.13"
-          cache: "pip"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ecs-deploy==1.15.2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
 
       - name: Deploy new api version
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-1
-        run: ecs deploy maker-cluster ajna-api --tag production-${{ github.sha }} --timeout -1
+        run: uv tool run --with 'certifi>=2026.10.19' --from ecs-deploy==1.17.0 ecs deploy "$ECS_CLUSTER" ajna-api --tag "$IMAGE_TAG" --timeout -1
+
       - name: Deploy new celery beat version
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-1
-        run: ecs deploy maker-cluster ajna-celery-beat --tag production-${{ github.sha }} --timeout -1
+        run: uv tool run --with 'certifi>=2026.10.19' --from ecs-deploy==1.17.0 ecs deploy "$ECS_CLUSTER" ajna-celery-beat --tag "$IMAGE_TAG" --timeout -1
+
       - name: Deploy new celery worker version
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-1
-        run: ecs deploy maker-cluster ajna-celery-worker --tag production-${{ github.sha }} --timeout -1
+        run: uv tool run --with 'certifi>=2026.10.19' --from ecs-deploy==1.17.0 ecs deploy "$ECS_CLUSTER" ajna-celery-worker --tag "$IMAGE_TAG" --timeout -1
