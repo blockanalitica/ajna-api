@@ -42,7 +42,7 @@ dev = [
     "werkzeug==3.1.9",
 ]
 lint = [
-    "ruff==0.17.5",
+    "ruff==0.17.6",
 ]
 test = [
     "factory-boy==3.3.3",
