@@ -213,8 +213,8 @@ class WalletView(BaseChainView):
                     , ps.collateral_token_price
                     , ps.pending_inflator
                 FROM {self.models.pool_snapshot._meta.db_table} ps
-                WHERE ps.datetime > (%(dt)s - INTERVAL '7 DAY')
-                    AND ps.datetime <= %(dt)s
+                WHERE ps.datetime > (%(dt)s::timestamptz - INTERVAL '7 DAY')
+                    AND ps.datetime <= %(dt)s::timestamptz
                 ORDER BY ps.address, ps.datetime DESC
             ),
 

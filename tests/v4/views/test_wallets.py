@@ -29,3 +29,10 @@ def test_wallet_events_filters_by_block(client):
 
     assert response.status_code == 200
     assert response.json()["results"] == []
+
+
+@pytest.mark.django_db
+def test_wallet_returns_404_when_no_events_before_block(client):
+    response = client.get(f"/v4/ethereum/wallets/{ADDRESS}/", {"block": "1"})
+
+    assert response.status_code == 404
